@@ -2,9 +2,10 @@
  * Internal — not exported from the package.
  *
  * Renders invisible characters as visual markers:
- *   - Tab        → arrow (→) with tab-width inline-block
- *   - Space      → middle dot (·)
- *   - Known invisible Unicode → 3-char uppercase mnemonic chip
+ *   - Tab (U+0009)          → arrow (→) with tab-width inline-block
+ *   - Space (U+0020)        → middle dot (·)
+ *   - ASCII control chars   → 3-char uppercase mnemonic chip
+ *   - Unicode invisible     → 3-char uppercase mnemonic chip
  */
 import type { ReactNode } from "react";
 import type { CodeViewTheme } from "./CodeView.types";
@@ -19,8 +20,49 @@ const CHIP_COLORS: Record<CodeViewTheme, { background: string; color: string }> 
   dark: { background: "rgba(255,255,255,0.12)", color: "rgba(255,255,255,0.5)" },
 };
 
-/** Unicode invisible characters → 3-char mnemonic */
+/**
+ * Invisible / non-printing characters → 3-char uppercase mnemonic.
+ *
+ * U+0009 (HT) and U+0020 (SP) are handled separately before this map
+ * and must NOT be added here.
+ */
 const MNEMONICS: Readonly<Record<string, string>> = {
+  // ── ASCII control characters U+0000–U+001F ──────────────────────────────
+  "\u0000": "NUL", // Null
+  "\u0001": "SOH", // Start of Heading
+  "\u0002": "STX", // Start of Text
+  "\u0003": "ETX", // End of Text
+  "\u0004": "EOT", // End of Transmission
+  "\u0005": "ENQ", // Enquiry
+  "\u0006": "ACK", // Acknowledge
+  "\u0007": "BEL", // Bell
+  "\u0008": "BSP", // Backspace
+  // U+0009 HT — handled as → (tab arrow), not here
+  "\u000A": "LFD", // Line Feed
+  "\u000B": "VTB", // Vertical Tab
+  "\u000C": "FFD", // Form Feed
+  "\u000D": "CRT", // Carriage Return
+  "\u000E": "SFO", // Shift Out
+  "\u000F": "SFI", // Shift In
+  "\u0010": "DLE", // Data Link Escape
+  "\u0011": "DC1", // Device Control 1 (XON)
+  "\u0012": "DC2", // Device Control 2
+  "\u0013": "DC3", // Device Control 3 (XOFF)
+  "\u0014": "DC4", // Device Control 4
+  "\u0015": "NAK", // Negative Acknowledge
+  "\u0016": "SYN", // Synchronous Idle
+  "\u0017": "ETB", // End of Transmission Block
+  "\u0018": "CAN", // Cancel
+  "\u0019": "EOM", // End of Medium
+  "\u001A": "SUB", // Substitute
+  "\u001B": "ESC", // Escape
+  "\u001C": "FSP", // File Separator
+  "\u001D": "GSP", // Group Separator
+  "\u001E": "RSP", // Record Separator
+  "\u001F": "USP", // Unit Separator
+  // ── ASCII delete ────────────────────────────────────────────────────────
+  "\u007F": "DEL", // Delete
+  // ── Unicode invisible / formatting characters ───────────────────────────
   "\u00A0": "NBS", // Non-breaking space
   "\u00AD": "SHY", // Soft hyphen
   "\u034F": "CGJ", // Combining grapheme joiner
