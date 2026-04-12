@@ -46,6 +46,14 @@ const JSON_SAMPLE = `{
   }
 }`;
 
+// Contains tabs, spaces, and a zero-width space (U+200B) after the colon
+const INVISIBLES_SAMPLE = `function greet(name: string) {
+\tconst message = "Hello, " + name;
+\t// tab-indented line  with trailing spaces
+\tconst url = "https://example.com\u200B/path";
+\treturn message;
+}`;
+
 const USAGE_CODE = `import { CodeView } from "plastic";
 
 <CodeView
@@ -121,6 +129,24 @@ export function CodeViewPage() {
           theme={theme}
           showLineNumbers={false}
           showAlternatingRows={false}
+        />
+      </section>
+
+      <section>
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+          Show Invisibles
+        </p>
+        <p className="text-sm text-gray-500 mb-3">
+          탭 → <code className="bg-gray-100 px-1 rounded">→</code> &nbsp;
+          공백 → <code className="bg-gray-100 px-1 rounded">·</code> &nbsp;
+          특수 불가시 문자 → <code className="bg-gray-100 px-1 rounded">ZWS</code> 형태의 니모닉 칩
+        </p>
+        <CodeView
+          code={INVISIBLES_SAMPLE}
+          language="typescript"
+          theme={theme}
+          showInvisibles
+          tabSize={2}
         />
       </section>
 

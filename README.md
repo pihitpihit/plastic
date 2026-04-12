@@ -141,6 +141,8 @@ import { Card, Button } from "plastic";
 | `theme` | `"light" \| "dark"` | `"light"` | 색상 테마 (light: VS Light, dark: VS Dark) |
 | `showLineNumbers` | `boolean` | `true` | 라인 번호 표시 여부 |
 | `showAlternatingRows` | `boolean` | `true` | 홀짝 라인 배경색 구분 여부 |
+| `showInvisibles` | `boolean` | `false` | 탭·공백·불가시 유니코드 문자 시각화 여부 |
+| `tabSize` | `number` | `2` | 탭 너비 (`tab-size` CSS 및 불가시 문자 렌더링에 적용) |
 | `className` | `string` | — | 외부 컨테이너에 추가할 클래스 |
 
 #### Usage
@@ -167,6 +169,17 @@ import { CodeView } from "plastic";
   language="json"
   showLineNumbers={false}
   showAlternatingRows={false}
+/>
+
+// 불가시 문자 시각화
+// - 탭 → →  (tabSize 너비의 inline-block)
+// - 공백 → ·
+// - 특수 불가시 유니코드 → ZWS, NBS, BOM 등 3자 니모닉 칩 (hover 시 U+XXXX 툴팁)
+<CodeView
+  code={myCode}
+  language="typescript"
+  showInvisibles
+  tabSize={2}
 />
 ```
 

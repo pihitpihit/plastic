@@ -1,5 +1,6 @@
 import { Highlight, themes } from "prism-react-renderer";
 import type { CodeViewProps } from "./CodeView.types";
+import { renderWithInvisibles } from "./CodeView.invisibles";
 
 // Internal — not exported
 const internalThemes = {
@@ -22,6 +23,8 @@ export function CodeView({
   language = "typescript",
   showLineNumbers = true,
   showAlternatingRows = true,
+  showInvisibles = false,
+  tabSize = 2,
   theme = "light",
   className = "",
 }: CodeViewProps) {
@@ -36,7 +39,7 @@ export function CodeView({
           className={["overflow-x-auto rounded-lg text-sm", hlClassName, className]
             .filter(Boolean)
             .join(" ")}
-          style={style}
+          style={{ ...style, tabSize }}
         >
           <code>
             {tokens.map((line, lineIndex) => {
@@ -71,9 +74,16 @@ export function CodeView({
                     </span>
                   )}
                   <span style={{ flex: 1 }}>
-                    {line.map((token, tokenIndex) => (
-                      <span key={tokenIndex} {...getTokenProps({ token })} />
-                    ))}
+                    {line.map((token, tokenIndex) => {
+                      const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
+                      return (
+                        <span key={tokenIndex} {...tokenSpanProps}>
+                          {showInvisibles
+                            ? renderWithInvisibles(token.content, theme, tabSize)
+                            : tokenContent}
+                        </span>
+                      );
+                    })}
                   </span>
                 </div>
               );
