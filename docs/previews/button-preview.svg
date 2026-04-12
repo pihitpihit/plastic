@@ -1,0 +1,36 @@
+<svg width="600" height="176" viewBox="0 0 600 176" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="176" rx="8" fill="#f9fafb"/>
+  <rect x="0.5" y="0.5" width="599" height="175" rx="7.5" stroke="#e5e7eb"/>
+
+  <!-- Variants label -->
+  <text x="20" y="26" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="10" font-weight="600" letter-spacing="0.08em" fill="#9ca3af">VARIANTS</text>
+
+  <!-- Primary button -->
+  <rect x="20" y="36" width="110" height="36" rx="5" fill="#2563eb"/>
+  <text x="75" y="60" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="14" font-weight="500" fill="#ffffff">Primary</text>
+
+  <!-- Secondary button -->
+  <rect x="142" y="36" width="115" height="36" rx="5" fill="#e5e7eb"/>
+  <text x="199" y="60" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="14" font-weight="500" fill="#111827">Secondary</text>
+
+  <!-- Ghost button -->
+  <text x="284" y="60" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="14" font-weight="500" fill="#374151">Ghost</text>
+
+  <!-- Divider -->
+  <line x1="20" y1="92" x2="580" y2="92" stroke="#e5e7eb" stroke-width="1"/>
+
+  <!-- Sizes label -->
+  <text x="20" y="114" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="10" font-weight="600" letter-spacing="0.08em" fill="#9ca3af">SIZES</text>
+
+  <!-- sm button -->
+  <rect x="20" y="122" width="70" height="28" rx="4" fill="#2563eb"/>
+  <text x="55" y="141" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="12" font-weight="500" fill="#ffffff">Small</text>
+
+  <!-- md button -->
+  <rect x="102" y="118" width="94" height="36" rx="4" fill="#2563eb"/>
+  <text x="149" y="141" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="14" font-weight="500" fill="#ffffff">Medium</text>
+
+  <!-- lg button -->
+  <rect x="208" y="114" width="112" height="44" rx="4" fill="#2563eb"/>
+  <text x="264" y="141" text-anchor="middle" font-family="ui-sans-serif,system-ui,-apple-system,sans-serif" font-size="16" font-weight="500" fill="#ffffff">Large</text>
+</svg>

@@ -1,0 +1,82 @@
+<svg width="600" height="220" viewBox="0 0 600 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Light theme panel -->
+  <rect width="600" height="220" rx="8" fill="#ffffff" stroke="#e5e7eb"/>
+
+  <!-- Line numbers column bg -->
+  <rect x="0" y="0" width="44" height="220" rx="8" fill="#f8f8f8"/>
+  <rect x="44" y="0" width="1" height="220" fill="#e5e7eb"/>
+
+  <!-- Alternating row (odd) -->
+  <rect x="0" y="28" width="600" height="28" fill="rgba(0,0,0,0.025)"/>
+  <rect x="0" y="84" width="600" height="28" fill="rgba(0,0,0,0.025)"/>
+  <rect x="0" y="140" width="600" height="28" fill="rgba(0,0,0,0.025)"/>
+  <rect x="0" y="196" width="600" height="24" fill="rgba(0,0,0,0.025)"/>
+
+  <!-- Line numbers -->
+  <text x="34" y="20" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">1</text>
+  <text x="34" y="48" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">2</text>
+  <text x="34" y="76" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">3</text>
+  <text x="34" y="104" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">4</text>
+  <text x="34" y="132" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">5</text>
+  <text x="34" y="160" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">6</text>
+  <text x="34" y="188" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">7</text>
+  <text x="34" y="210" text-anchor="end" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#9ca3af">8</text>
+
+  <!-- Code line 1: interface User { -->
+  <text x="56" y="20" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12">
+    <tspan fill="#0000ff">interface</tspan>
+    <tspan fill="#267f99"> User</tspan>
+    <tspan fill="#000000"> {</tspan>
+  </text>
+
+  <!-- Code line 2 (alternating):   id: number; -->
+  <text x="56" y="48" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12">
+    <tspan fill="#000000">  id</tspan>
+    <tspan fill="#000000">: </tspan>
+    <tspan fill="#267f99">number</tspan>
+    <tspan fill="#000000">;</tspan>
+  </text>
+
+  <!-- Code line 3:   name: string; -->
+  <text x="56" y="76" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12">
+    <tspan fill="#000000">  name</tspan>
+    <tspan fill="#000000">: </tspan>
+    <tspan fill="#267f99">string</tspan>
+    <tspan fill="#000000">;</tspan>
+  </text>
+
+  <!-- Code line 4 (alternating): } -->
+  <text x="56" y="104" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12" fill="#000000">}</text>
+
+  <!-- Code line 5: blank -->
+
+  <!-- Code line 6 (alternating): async function fetchUser -->
+  <text x="56" y="132" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12">
+    <tspan fill="#0000ff">async function </tspan>
+    <tspan fill="#795e26">fetchUser</tspan>
+    <tspan fill="#000000">(id: </tspan>
+    <tspan fill="#267f99">number</tspan>
+    <tspan fill="#000000">)</tspan>
+  </text>
+
+  <!-- Code line 7: const res = await fetch -->
+  <text x="56" y="160" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12">
+    <tspan fill="#0000ff">  const </tspan>
+    <tspan fill="#001080">res </tspan>
+    <tspan fill="#000000">= </tspan>
+    <tspan fill="#0000ff">await </tspan>
+    <tspan fill="#795e26">fetch</tspan>
+    <tspan fill="#000000">(</tspan>
+    <tspan fill="#a31515">`/api/users/`</tspan>
+    <tspan fill="#000000">)</tspan>
+  </text>
+
+  <!-- Code line 8 (alternating): return res.json() -->
+  <text x="56" y="188" font-family="ui-monospace,'Cascadia Code',monospace" font-size="12">
+    <tspan fill="#0000ff">  return </tspan>
+    <tspan fill="#001080">res</tspan>
+    <tspan fill="#000000">.</tspan>
+    <tspan fill="#795e26">json</tspan>
+    <tspan fill="#000000">();</tspan>
+  </text>
+</svg>
