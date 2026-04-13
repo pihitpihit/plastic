@@ -61,6 +61,9 @@ export function CodeView({
   editable = false,
   onValueChange,
   highlightLines,
+  wordWrap = false,
+  gutterWidth: gutterWidthProp,
+  gutterGap: gutterGapProp,
   className = "",
 }: CodeViewProps) {
   const [editValue, setEditValue]     = useState(code);
@@ -183,15 +186,17 @@ export function CodeView({
       language={language}
     >
       {({ className: hlClassName, style, tokens, getLineProps, getTokenProps }) => {
-        const gutterWidth  = showLineNumbers ? getGutterWidth(tokens.length) : "0";
-        const gutterPad    = "1rem";
+        const gutterWidth  = showLineNumbers
+          ? (gutterWidthProp ?? getGutterWidth(tokens.length))
+          : "0";
+        const gutterPad    = gutterGapProp ?? "1rem";
         const textareaLeft = showLineNumbers ? `calc(${gutterWidth} + ${gutterPad})` : "0";
 
         return (
           // 외부 div가 scroll 컨테이너 & position 기준점 역할
           <div
             ref={containerRef}
-            className={["overflow-x-auto rounded-lg text-sm", hlClassName, className]
+            className={[wordWrap ? "" : "overflow-x-auto", "rounded-lg text-sm", hlClassName, className]
               .filter(Boolean)
               .join(" ")}
             style={{ ...style, tabSize, position: "relative" }}
@@ -221,7 +226,7 @@ export function CodeView({
               {copyState === "copied" ? "✓ 복사됨" : "복사"}
             </button>
 
-            <pre style={{ overflow: "visible", margin: 0 }}>
+            <pre style={{ overflow: "visible", margin: 0, whiteSpace: wordWrap ? "pre-wrap" : "pre", wordBreak: wordWrap ? "break-all" : "normal" }}>
               <code>
                 {tokens.map((line, lineIndex) => {
                   const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
@@ -309,9 +314,9 @@ export function CodeView({
                   fontSize:      "inherit",
                   lineHeight:    "inherit",
                   overflow:      "hidden",
-                  whiteSpace:    "pre",
-                  wordBreak:     "normal",
-                  overflowWrap:  "normal",
+                  whiteSpace:    wordWrap ? "pre-wrap" : "pre",
+                  wordBreak:     wordWrap ? "break-all" : "normal",
+                  overflowWrap:  wordWrap ? "break-word" : "normal",
                   tabSize,
                 }}
               />
