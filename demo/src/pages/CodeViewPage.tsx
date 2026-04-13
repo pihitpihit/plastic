@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { CodeView, Button } from "plastic";
 import type { CodeViewTheme } from "plastic";
 
@@ -152,6 +152,17 @@ export function CodeViewPage() {
 
       <section>
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+          Editable
+        </p>
+        <p className="text-sm text-gray-500 mb-3">
+          <code className="bg-gray-100 px-1 rounded">editable</code> 활성 시 인라인 편집 가능.
+          포커스 진입 시 줄 배경색이 파란 계열로 전환되어 편집 상태를 시각적으로 구분합니다.
+        </p>
+        <EditableDemo theme={theme} />
+      </section>
+
+      <section>
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Props
         </p>
         <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
@@ -172,6 +183,8 @@ export function CodeViewPage() {
                 ["theme", '"light" | "dark"', '"light"', "색상 테마"],
                 ["showLineNumbers", "boolean", "true", "라인 번호 표시"],
                 ["showAlternatingRows", "boolean", "true", "홀짝 배경 구분"],
+                ["editable", "boolean", "false", "인라인 편집 활성화"],
+                ["onValueChange", "(value: string) => void", "—", "편집 시 호출되는 콜백"],
               ].map(([prop, type, def, desc]) => (
                 <tr key={prop}>
                   <td className="px-4 py-2.5 font-mono text-xs text-blue-700">{prop}</td>
@@ -191,6 +204,44 @@ export function CodeViewPage() {
         </p>
         <CodeView code={USAGE_CODE} language="tsx" showAlternatingRows={false} />
       </section>
+    </div>
+  );
+}
+
+// ── Editable demo (별도 컴포넌트로 분리하여 상태 관리) ──────────────────────
+
+const EDITABLE_INITIAL = `function add(a: number, b: number): number {
+  return a + b;
+}
+
+// 이 코드를 직접 편집해 보세요.
+const result = add(1, 2);
+console.log(result);`;
+
+function EditableDemo({ theme }: { theme: import("plastic").CodeViewTheme }) {
+  const [code, setCode] = useState(EDITABLE_INITIAL);
+  const handleReset = useCallback(() => setCode(EDITABLE_INITIAL), []);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end">
+        <button
+          onClick={handleReset}
+          className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+        >
+          초기화
+        </button>
+      </div>
+      <CodeView
+        code={code}
+        language="typescript"
+        theme={theme}
+        editable
+        onValueChange={setCode}
+      />
+      <p className="text-xs text-gray-400">
+        클릭하여 편집 — 포커스 시 줄 배경이 파란 계열로 변경됩니다.
+      </p>
     </div>
   );
 }
