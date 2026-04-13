@@ -171,16 +171,35 @@ import { CodeView } from "plastic";
   showAlternatingRows={false}
 />
 
-// 불가시 문자 시각화
-// - 탭 → →  (tabSize 너비의 inline-block)
-// - 공백 → ·
-// - 특수 불가시 유니코드 → ZWS, NBS, BOM 등 3자 니모닉 칩 (hover 시 U+XXXX 툴팁)
+// 불가시 문자 시각화 (showInvisibles)
+// 아래 코드는 탭 들여쓰기, 연속 공백, ESC 시퀀스, ZWS를 모두 포함합니다.
+const sample = `function greet(name: string) {\n\tconst msg = "Hello, " + name;\n\tconst esc = "\x1b[31mred\x1b[0m";\n\tconst url = "https://example.com\u200B/path";\n\treturn msg;\n}`;
+
 <CodeView
-  code={myCode}
+  code={sample}
   language="typescript"
   showInvisibles
   tabSize={2}
 />
+
+// showInvisibles 렌더링 규칙:
+//
+//  문자           표시          설명
+//  ─────────────────────────────────────────────────────────
+//  \t (U+0009)   →             탭 — tabSize ch 너비 inline-block
+//  ' ' (U+0020)  ·             공백 — 미들 닷
+//  \x1b (U+001B) [ESC]         ASCII 제어 문자 — 3자 니모닉 칩
+//  \x00 (U+0000) [NUL]           "
+//  \x07 (U+0007) [BEL]           "
+//  \x08 (U+0008) [BSP]           "
+//  \x0d (U+000D) [CRT]           "
+//  ... 총 32종 (U+0000–U+001F, U+007F)
+//  \u200B        [ZWS]         Unicode 불가시 문자 — 3자 니모닉 칩
+//  \uFEFF        [BOM]           "
+//  \u00A0        [NBS]           "
+//  ... 총 20종
+//
+//  모든 칩은 hover 시 "U+001B ESC" 형식의 툴팁을 표시합니다.
 ```
 
 ---
