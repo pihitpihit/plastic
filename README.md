@@ -2,6 +2,8 @@
 
 TypeScript + React 기반 UI 컴포넌트 라이브러리.
 
+**[데모 보기 →](https://pihitpihit.github.io/plastic/)**
+
 ---
 
 ## Installation
@@ -143,8 +145,9 @@ import { Card, Button } from "plastic";
 | `showAlternatingRows` | `boolean` | `true` | 홀짝 라인 배경색 구분 여부 |
 | `showInvisibles` | `boolean` | `false` | 탭·공백·불가시 유니코드 문자 시각화 여부 |
 | `tabSize` | `number` | `2` | 탭 너비 (`tab-size` CSS 및 불가시 문자 렌더링에 적용) |
-| `editable` | `boolean` | `false` | 인라인 편집 활성화. 포커스 시 줄 배경이 파란 계열로 전환 |
+| `editable` | `boolean` | `false` | 인라인 편집 활성화. 포커스 시 줄 배경이 파란 계열로 전환. Tab/Shift+Tab 들여쓰기, Enter 자동 들여쓰기 지원 |
 | `onValueChange` | `(value: string) => void` | — | 편집 시 호출되는 콜백 |
+| `highlightLines` | `number[]` | — | 강조할 라인 번호 배열 (1-indexed, 황색 배경 적용) |
 | `className` | `string` | — | 외부 컨테이너에 추가할 클래스 |
 
 #### Usage

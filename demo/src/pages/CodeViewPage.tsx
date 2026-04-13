@@ -152,11 +152,27 @@ export function CodeViewPage() {
 
       <section>
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+          Highlight Lines
+        </p>
+        <p className="text-sm text-gray-500 mb-3">
+          <code className="bg-gray-100 px-1 rounded">highlightLines</code> prop에 강조할 라인 번호(1-indexed) 배열을 전달합니다.
+        </p>
+        <CodeView
+          code={TS_SAMPLE}
+          language="typescript"
+          theme={theme}
+          highlightLines={[1, 2, 3, 11]}
+        />
+      </section>
+
+      <section>
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Editable
         </p>
         <p className="text-sm text-gray-500 mb-3">
           <code className="bg-gray-100 px-1 rounded">editable</code> 활성 시 인라인 편집 가능.
           포커스 진입 시 줄 배경색이 파란 계열로 전환되어 편집 상태를 시각적으로 구분합니다.
+          Tab으로 다중 라인 들여쓰기, Shift+Tab으로 내어쓰기, Enter로 자동 들여쓰기를 지원합니다.
         </p>
         <EditableDemo theme={theme} />
       </section>
@@ -183,6 +199,7 @@ export function CodeViewPage() {
                 ["theme", '"light" | "dark"', '"light"', "색상 테마"],
                 ["showLineNumbers", "boolean", "true", "라인 번호 표시"],
                 ["showAlternatingRows", "boolean", "true", "홀짝 배경 구분"],
+                ["highlightLines", "number[]", "—", "강조할 라인 번호 배열 (1-indexed)"],
                 ["editable", "boolean", "false", "인라인 편집 활성화"],
                 ["onValueChange", "(value: string) => void", "—", "편집 시 호출되는 콜백"],
               ].map(([prop, type, def, desc]) => (

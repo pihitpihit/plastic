@@ -23,5 +23,7 @@ export interface CodeViewProps {
   editable?: boolean;
   /** editable=true 시 코드 변경 콜백 */
   onValueChange?: (value: string) => void;
+  /** 강조할 라인 번호 배열 (1-indexed) */
+  highlightLines?: number[];
   className?: string;
 }
