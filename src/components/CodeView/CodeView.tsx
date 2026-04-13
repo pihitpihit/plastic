@@ -199,7 +199,7 @@ export function CodeView({
             className={[wordWrap ? "" : "overflow-x-auto", "rounded-lg text-sm", hlClassName, className]
               .filter(Boolean)
               .join(" ")}
-            style={{ ...style, tabSize, position: "relative" }}
+            style={{ ...style, tabSize, position: "relative", fontFamily: "ui-monospace, 'Cascadia Code', Menlo, monospace" }}
           >
             {/* 복사 버튼 */}
             <button
@@ -226,7 +226,7 @@ export function CodeView({
               {copyState === "copied" ? "✓ 복사됨" : "복사"}
             </button>
 
-            <pre style={{ overflow: "visible", margin: 0, whiteSpace: wordWrap ? "pre-wrap" : "pre", wordBreak: wordWrap ? "break-all" : "normal" }}>
+            <pre style={{ overflow: "visible", margin: 0, padding: 0, whiteSpace: wordWrap ? "pre-wrap" : "pre", wordBreak: wordWrap ? "break-all" : "normal" }}>
               <code>
                 {tokens.map((line, lineIndex) => {
                   const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
@@ -252,6 +252,7 @@ export function CodeView({
                           style={{
                             minWidth:    gutterWidth,
                             paddingRight: gutterPad,
+                            boxSizing:   "content-box",
                             textAlign:   "right",
                             userSelect:  "none",
                             color:       lineNumberColor[theme],
@@ -310,7 +311,7 @@ export function CodeView({
                   resize:        "none",
                   border:        "none",
                   outline:       "none",
-                  fontFamily:    "ui-monospace, 'Cascadia Code', Menlo, monospace",
+                  fontFamily:    "inherit",
                   fontSize:      "inherit",
                   lineHeight:    "inherit",
                   overflow:      "hidden",
