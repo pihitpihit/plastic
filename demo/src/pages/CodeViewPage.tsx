@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { CodeView, Button } from "plastic";
-import type { CodeViewTheme } from "plastic";
+import type { CodeViewTheme, CodeViewLanguage } from "plastic";
 
 const TS_SAMPLE = `interface User {
   id: number;
@@ -221,6 +221,16 @@ export function CodeViewPage() {
         </p>
         <CodeView code={USAGE_CODE} language="tsx" showAlternatingRows={false} />
       </section>
+
+      <section>
+        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
+          Playground
+        </p>
+        <p className="text-sm text-gray-500 mb-4">
+          Props를 직접 조정하여 실시간으로 결과를 확인하세요.
+        </p>
+        <PlaygroundSection />
+      </section>
     </div>
   );
 }
@@ -259,6 +269,160 @@ function EditableDemo({ theme }: { theme: import("plastic").CodeViewTheme }) {
       <p className="text-xs text-gray-400">
         클릭하여 편집 — 포커스 시 줄 배경이 파란 계열로 변경됩니다.
       </p>
+    </div>
+  );
+}
+
+// ── Playground ───────────────────────────────────────────────────────────────
+
+const PLAYGROUND_LANGUAGES: CodeViewLanguage[] = [
+  "typescript", "javascript", "tsx", "jsx",
+  "python", "json", "css", "bash", "markup",
+];
+
+const PLAYGROUND_INITIAL = `interface User {
+  id: number;
+  name: string;
+}
+
+async function fetchUser(id: number): Promise<User> {
+  const res = await fetch(\`/api/users/\${id}\`);
+  return res.json() as Promise<User>;
+}`;
+
+function PlaygroundSection() {
+  const [code, setCode]                       = useState(PLAYGROUND_INITIAL);
+  const [language, setLanguage]               = useState<CodeViewLanguage>("typescript");
+  const [theme, setTheme]                     = useState<CodeViewTheme>("light");
+  const [showLineNumbers, setShowLineNumbers] = useState(true);
+  const [showAlternatingRows, setShowAlternatingRows] = useState(true);
+  const [showInvisibles, setShowInvisibles]   = useState(false);
+  const [tabSize, setTabSize]                 = useState(2);
+  const [editable, setEditable]               = useState(false);
+  const [hlInput, setHlInput]                 = useState("");
+
+  const highlightLines = hlInput
+    .split(",")
+    .map((s) => parseInt(s.trim(), 10))
+    .filter((n) => !isNaN(n) && n > 0);
+
+  const boolProps = [
+    { label: "showLineNumbers",    value: showLineNumbers,    set: setShowLineNumbers },
+    { label: "showAlternatingRows",value: showAlternatingRows,set: setShowAlternatingRows },
+    { label: "showInvisibles",     value: showInvisibles,     set: setShowInvisibles },
+    { label: "editable",           value: editable,           set: setEditable },
+  ] as const;
+
+  return (
+    <div className="space-y-4">
+      {/* ── Controls ── */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3 text-sm">
+
+        {/* theme / language / tabSize */}
+        <div className="flex flex-wrap gap-x-5 gap-y-2 items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">theme</span>
+            <div className="flex rounded border border-gray-200 overflow-hidden">
+              {(["light", "dark"] as CodeViewTheme[]).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => setTheme(t)}
+                  className={`px-3 py-1 text-xs transition-colors ${
+                    theme === t
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">language</span>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as CodeViewLanguage)}
+              className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none"
+            >
+              {PLAYGROUND_LANGUAGES.map((l) => (
+                <option key={l} value={l}>{l}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">tabSize</span>
+            <select
+              value={tabSize}
+              onChange={(e) => setTabSize(Number(e.target.value))}
+              className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none"
+            >
+              {[2, 4, 8].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* boolean props */}
+        <div className="flex flex-wrap gap-x-5 gap-y-2">
+          {boolProps.map(({ label, value, set }) => (
+            <label key={label} className="flex items-center gap-1.5 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={value}
+                onChange={(e) => set(e.target.checked)}
+                className="rounded"
+              />
+              <span className="text-xs font-mono text-gray-600">{label}</span>
+            </label>
+          ))}
+        </div>
+
+        {/* highlightLines */}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 w-24">highlightLines</span>
+          <input
+            type="text"
+            value={hlInput}
+            onChange={(e) => setHlInput(e.target.value)}
+            placeholder="1, 3, 5"
+            className="text-xs font-mono border border-gray-200 rounded px-2 py-1 bg-white w-36 focus:outline-none"
+          />
+          <span className="text-xs text-gray-400">콤마로 구분 (1-indexed)</span>
+        </div>
+      </div>
+
+      {/* ── Code input ── */}
+      <div>
+        <p className="text-xs text-gray-400 mb-1.5 font-medium">code</p>
+        <textarea
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          rows={8}
+          spellCheck={false}
+          className="w-full font-mono text-xs border border-gray-200 rounded-lg p-3 bg-white resize-y focus:outline-none focus:ring-1 focus:ring-blue-300"
+        />
+      </div>
+
+      {/* ── Preview ── */}
+      <div>
+        <p className="text-xs text-gray-400 mb-1.5 font-medium">preview</p>
+        <CodeView
+          code={code}
+          language={language}
+          theme={theme}
+          showLineNumbers={showLineNumbers}
+          showAlternatingRows={showAlternatingRows}
+          showInvisibles={showInvisibles}
+          tabSize={tabSize}
+          editable={editable}
+          onValueChange={editable ? setCode : undefined}
+          highlightLines={highlightLines.length > 0 ? highlightLines : undefined}
+        />
+      </div>
     </div>
   );
 }
