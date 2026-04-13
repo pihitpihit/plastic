@@ -1,0 +1,79 @@
+<svg width="600" height="128" viewBox="0 0 600 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="clip"><rect width="600" height="128" rx="8"/></clipPath>
+  </defs>
+  <g clip-path="url(#clip)">
+    <!-- Background -->
+    <rect width="600" height="128" fill="#ffffff"/>
+    <!-- Line number column -->
+    <rect width="44" height="128" fill="#f8f8f8"/>
+    <line x1="44.5" y1="0" x2="44.5" y2="128" stroke="#e5e7eb"/>
+    <!-- Alternating rows (index 1, 3) -->
+    <rect x="0" y="26" width="600" height="26" fill="rgba(0,0,0,0.03)"/>
+    <rect x="0" y="78" width="600" height="26" fill="rgba(0,0,0,0.03)"/>
+    <!-- Legend strip -->
+    <rect x="0" y="104" width="600" height="24" fill="#f9fafb"/>
+    <line x1="0" y1="104" x2="600" y2="104" stroke="#e5e7eb"/>
+
+    <!-- Line numbers -->
+    <text x="34" y="18" text-anchor="end" font-family="ui-monospace,monospace" font-size="11" fill="#c0c0c0">1</text>
+    <text x="34" y="44" text-anchor="end" font-family="ui-monospace,monospace" font-size="11" fill="#c0c0c0">2</text>
+    <text x="34" y="70" text-anchor="end" font-family="ui-monospace,monospace" font-size="11" fill="#c0c0c0">3</text>
+    <text x="34" y="96" text-anchor="end" font-family="ui-monospace,monospace" font-size="11" fill="#c0c0c0">4</text>
+
+    <!-- Line 1: function·greet()·{ -->
+    <text x="56"  y="18" font-family="ui-monospace,monospace" font-size="12" fill="#0000ff">function</text>
+    <text x="114" y="18" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="121" y="18" font-family="ui-monospace,monospace" font-size="12" fill="#795e26">greet</text>
+    <text x="157" y="18" font-family="ui-monospace,monospace" font-size="12" fill="#000000">()</text>
+    <text x="171" y="18" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="178" y="18" font-family="ui-monospace,monospace" font-size="12" fill="#000000">{</text>
+
+    <!-- Line 2 (alt): →const·url·=·"ex.com[ZWS]/path"; -->
+    <text x="56"  y="44" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">→</text>
+    <text x="70"  y="44" font-family="ui-monospace,monospace" font-size="12" fill="#0000ff">const</text>
+    <text x="106" y="44" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="113" y="44" font-family="ui-monospace,monospace" font-size="12" fill="#001080">url</text>
+    <text x="135" y="44" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="142" y="44" font-family="ui-monospace,monospace" font-size="12" fill="#000000">=</text>
+    <text x="149" y="44" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="156" y="44" font-family="ui-monospace,monospace" font-size="12" fill="#a31515">"ex.com</text>
+    <!-- ZWS chip -->
+    <rect x="208" y="33" width="26" height="14" rx="3" fill="#e8e8e8"/>
+    <text x="221" y="44" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" font-weight="700" fill="#787878">ZWS</text>
+    <text x="236" y="44" font-family="ui-monospace,monospace" font-size="12" fill="#a31515">/path";</text>
+
+    <!-- Line 3: →const·c·=·"[ESC][31m"; -->
+    <text x="56"  y="70" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">→</text>
+    <text x="70"  y="70" font-family="ui-monospace,monospace" font-size="12" fill="#0000ff">const</text>
+    <text x="106" y="70" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="113" y="70" font-family="ui-monospace,monospace" font-size="12" fill="#001080">c</text>
+    <text x="120" y="70" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="127" y="70" font-family="ui-monospace,monospace" font-size="12" fill="#000000">=</text>
+    <text x="134" y="70" font-family="ui-monospace,monospace" font-size="12" fill="#c0c0c0">·</text>
+    <text x="141" y="70" font-family="ui-monospace,monospace" font-size="12" fill="#a31515">"</text>
+    <!-- ESC chip -->
+    <rect x="150" y="59" width="26" height="14" rx="3" fill="#e8e8e8"/>
+    <text x="163" y="70" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" font-weight="700" fill="#787878">ESC</text>
+    <text x="178" y="70" font-family="ui-monospace,monospace" font-size="12" fill="#a31515">[31m";</text>
+
+    <!-- Line 4 (alt): } -->
+    <text x="56" y="96" font-family="ui-monospace,monospace" font-size="12" fill="#000000">}</text>
+
+    <!-- Legend -->
+    <text x="16"  y="120" font-family="ui-monospace,monospace" font-size="11" fill="#c0c0c0">→</text>
+    <text x="28"  y="120" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" fill="#6b7280">tab</text>
+    <text x="58"  y="120" font-family="ui-monospace,monospace" font-size="11" fill="#c0c0c0">·</text>
+    <text x="70"  y="120" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" fill="#6b7280">space</text>
+    <!-- ESC chip in legend -->
+    <rect x="120" y="110" width="26" height="14" rx="3" fill="#e8e8e8"/>
+    <text x="133" y="121" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" font-weight="700" fill="#787878">ESC</text>
+    <text x="149" y="120" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" fill="#6b7280">ASCII 제어 (32종)</text>
+    <!-- ZWS chip in legend -->
+    <rect x="286" y="110" width="26" height="14" rx="3" fill="#e8e8e8"/>
+    <text x="299" y="121" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" font-weight="700" fill="#787878">ZWS</text>
+    <text x="315" y="120" font-family="ui-sans-serif,system-ui,sans-serif" font-size="11" fill="#6b7280">Unicode 불가시 (20종)</text>
+  </g>
+  <!-- Outer border (on top of content) -->
+  <rect width="600" height="128" rx="8" fill="none" stroke="#e5e7eb"/>
+</svg>
