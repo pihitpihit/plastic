@@ -113,10 +113,7 @@ export function CodeView({
                   <div
                     key={lineIndex}
                     className={["flex", lineClassName].filter(Boolean).join(" ")}
-                    style={{
-                      ...lineStyle,
-                      ...(isOdd ? { backgroundColor: rowColor } : {}),
-                    }}
+                    style={{ ...lineStyle }}
                     {...lineRest}
                   >
                     {showLineNumbers && (
@@ -129,12 +126,18 @@ export function CodeView({
                           userSelect: "none",
                           color: lineNumberColor[theme],
                           flexShrink: 0,
+                          fontSize: "0.85em",
                         }}
                       >
                         {lineIndex + 1}
                       </span>
                     )}
-                    <span style={{ flex: 1 }}>
+                    <span
+                      style={{
+                        flex: 1,
+                        ...(isOdd ? { backgroundColor: rowColor } : {}),
+                      }}
+                    >
                       {line.map((token, tokenIndex) => {
                         const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
                         return (
