@@ -19,5 +19,9 @@ export interface CodeViewProps {
   tabSize?: number;
   /** 라이트 / 다크 테마 (기본값: "light") */
   theme?: CodeViewTheme;
+  /** 편집 가능 여부. true 시 textarea 오버레이로 인라인 편집 활성화 (기본값: false) */
+  editable?: boolean;
+  /** editable=true 시 코드 변경 콜백 */
+  onValueChange?: (value: string) => void;
   className?: string;
 }
