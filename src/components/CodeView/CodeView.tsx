@@ -199,7 +199,7 @@ export function CodeView({
             className={[wordWrap ? "" : "overflow-x-auto", "rounded-lg text-sm", hlClassName, className]
               .filter(Boolean)
               .join(" ")}
-            style={{ ...style, tabSize, position: "relative", fontFamily: "ui-monospace, 'Cascadia Code', Menlo, monospace" }}
+            style={{ ...style, tabSize, position: "relative", fontFamily: "ui-monospace, 'Cascadia Code', Menlo, monospace", fontVariantLigatures: "none", fontKerning: "none" }}
           >
             {/* 복사 버튼 */}
             <button
