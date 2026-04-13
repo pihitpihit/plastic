@@ -27,5 +27,9 @@ export interface CodeViewProps {
   highlightLines?: number[];
   /** 긴 줄 자동 줄바꿈 여부 (기본값: false) */
   wordWrap?: boolean;
+  /** 라인번호 컬럼 너비 명시 (예: "3rem"). 미설정 시 줄 수에 따라 자동 계산 */
+  gutterWidth?: string;
+  /** 라인번호와 코드 내용 사이 간격 (기본값: "1rem") */
+  gutterGap?: string;
   className?: string;
 }

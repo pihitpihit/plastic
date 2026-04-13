@@ -301,6 +301,8 @@ function PlaygroundSection() {
   const [editable, setEditable]               = useState(false);
   const [wordWrap, setWordWrap]               = useState(false);
   const [hlInput, setHlInput]                 = useState("");
+  const [gutterWidth, setGutterWidth]         = useState("");
+  const [gutterGap, setGutterGap]             = useState("");
 
   const highlightLines = hlInput
     .split(",")
@@ -383,17 +385,39 @@ function PlaygroundSection() {
           ))}
         </div>
 
-        {/* highlightLines */}
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 w-24">highlightLines</span>
-          <input
-            type="text"
-            value={hlInput}
-            onChange={(e) => setHlInput(e.target.value)}
-            placeholder="1, 3, 5"
-            className="text-xs font-mono border border-gray-200 rounded px-2 py-1 bg-white w-36 focus:outline-none"
-          />
-          <span className="text-xs text-gray-400">콤마로 구분 (1-indexed)</span>
+        {/* highlightLines / gutterWidth / gutterGap */}
+        <div className="flex flex-wrap gap-x-4 gap-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-24">highlightLines</span>
+            <input
+              type="text"
+              value={hlInput}
+              onChange={(e) => setHlInput(e.target.value)}
+              placeholder="1, 3, 5"
+              className="text-xs font-mono border border-gray-200 rounded px-2 py-1 bg-white w-28 focus:outline-none"
+            />
+            <span className="text-xs text-gray-400">콤마 구분</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-24">gutterWidth</span>
+            <input
+              type="text"
+              value={gutterWidth}
+              onChange={(e) => setGutterWidth(e.target.value)}
+              placeholder="auto"
+              className="text-xs font-mono border border-gray-200 rounded px-2 py-1 bg-white w-24 focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-24">gutterGap</span>
+            <input
+              type="text"
+              value={gutterGap}
+              onChange={(e) => setGutterGap(e.target.value)}
+              placeholder="1rem"
+              className="text-xs font-mono border border-gray-200 rounded px-2 py-1 bg-white w-24 focus:outline-none"
+            />
+          </div>
         </div>
       </div>
 
@@ -424,6 +448,8 @@ function PlaygroundSection() {
           editable={editable}
           onValueChange={editable ? setCode : undefined}
           highlightLines={highlightLines.length > 0 ? highlightLines : undefined}
+          gutterWidth={gutterWidth || undefined}
+          gutterGap={gutterGap || undefined}
         />
       </div>
     </div>

@@ -62,6 +62,8 @@ export function CodeView({
   onValueChange,
   highlightLines,
   wordWrap = false,
+  gutterWidth: gutterWidthProp,
+  gutterGap: gutterGapProp,
   className = "",
 }: CodeViewProps) {
   const [editValue, setEditValue]     = useState(code);
@@ -184,8 +186,10 @@ export function CodeView({
       language={language}
     >
       {({ className: hlClassName, style, tokens, getLineProps, getTokenProps }) => {
-        const gutterWidth  = showLineNumbers ? getGutterWidth(tokens.length) : "0";
-        const gutterPad    = "1rem";
+        const gutterWidth  = showLineNumbers
+          ? (gutterWidthProp ?? getGutterWidth(tokens.length))
+          : "0";
+        const gutterPad    = gutterGapProp ?? "1rem";
         const textareaLeft = showLineNumbers ? `calc(${gutterWidth} + ${gutterPad})` : "0";
 
         return (

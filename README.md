@@ -8,8 +8,23 @@ TypeScript + React 기반 UI 컴포넌트 라이브러리.
 
 ## Installation
 
+### GitHub에서 직접 설치 (npm 7+)
+
 ```bash
-npm install plastic
+# 최신 main 브랜치
+npm install github:pihitpihit/plastic
+
+# 특정 태그/커밋 고정
+npm install github:pihitpihit/plastic#v0.1.0
+```
+
+npm이 설치 후 자동으로 `prepare` 스크립트를 실행해 `dist/`를 빌드합니다.  
+**npm 7 이상** 필요 (npm 7+는 GitHub dependency 설치 시 devDependencies 설치 및 `prepare` 자동 실행).
+
+### npm 배포판 설치 (추후)
+
+```bash
+npm install @pihitpihit/plastic
 ```
 
 > **참고** — plastic 컴포넌트는 Tailwind CSS 클래스를 사용합니다.  
@@ -18,7 +33,7 @@ npm install plastic
 > ```js
 > content: [
 >   "./src/**/*.{ts,tsx}",
->   "./node_modules/plastic/dist/**/*.js", // plastic 컴포넌트 클래스 스캔
+>   "./node_modules/@pihitpihit/plastic/dist/**/*.js",
 > ]
 > ```
 
@@ -27,11 +42,11 @@ npm install plastic
 ## Quick Start
 
 ```ts
-import { Button, Card, CodeView } from "plastic";
-import type { ButtonProps, CardRootProps, CodeViewProps } from "plastic";
+import { Button, Card, CodeView } from "@pihitpihit/plastic";
+import type { ButtonProps, CardRootProps, CodeViewProps } from "@pihitpihit/plastic";
 ```
 
-모든 컴포넌트와 타입은 `"plastic"` 단일 진입점에서 import합니다.
+모든 컴포넌트와 타입은 `"@pihitpihit/plastic"` 단일 진입점에서 import합니다.
 
 ---
 
@@ -149,6 +164,8 @@ import { Card, Button } from "plastic";
 | `onValueChange` | `(value: string) => void` | — | 편집 시 호출되는 콜백 |
 | `highlightLines` | `number[]` | — | 강조할 라인 번호 배열 (1-indexed, 황색 배경 적용) |
 | `wordWrap` | `boolean` | `false` | 긴 줄 자동 줄바꿈 여부 |
+| `gutterWidth` | `string` | auto | 라인번호 컬럼 너비 (예: `"3rem"`). 미설정 시 줄 수에 따라 자동 계산 |
+| `gutterGap` | `string` | `"1rem"` | 라인번호와 코드 내용 사이 간격 |
 | `className` | `string` | — | 외부 컨테이너에 추가할 클래스 |
 
 #### Usage
@@ -237,6 +254,42 @@ src/
 ```
 
 `src/index.ts`에서 명시적으로 export된 심볼만 외부에 노출됩니다. 내부 구현 파일(`CardRoot.tsx`, 스타일 맵, 컨텍스트 등)은 직접 import할 수 없습니다.
+
+---
+
+## CodeView Layout Contract
+
+CodeView를 다른 프로젝트에 통합할 때 안전하게 조작할 수 있는 부분과 주의해야 할 부분입니다.
+
+### 안전한 외부 조작
+
+| 방법 | 설명 |
+|------|------|
+| `className` | 외부 컨테이너(scroll wrapper)에 클래스 추가. `max-w-*`, `shadow-*`, `border-*` 등 레이아웃 외부 스타일에 사용 |
+| `gutterWidth` | 라인번호 컬럼 너비 명시적 지정. textarea paddingLeft에 자동 반영됨 |
+| `gutterGap` | 라인번호와 코드 내용 사이 간격 지정. textarea paddingLeft에 자동 반영됨 |
+| `tabSize`, `showLineNumbers`, `wordWrap` 등 | 모든 공개 prop은 안전하게 사용 가능 |
+
+### 주의사항 — geometry가 깨지는 경우
+
+| 금지 사항 | 이유 |
+|-----------|------|
+| `className`으로 `padding` 추가 | 내부 textarea는 `inset: 0`으로 컨테이너를 꽉 채우므로, outer padding이 생기면 textarea와 렌더링 영역이 misalign됨 |
+| `<pre>` / gutter `<span>` 직접 스타일 조작 | flex 레이아웃 계산이 gutterWidth·gutterGap 기준으로 이루어지므로, 직접 조작 시 textarea overlay와 위치가 어긋남 |
+| `editable` 모드에서 font-size 변경 | `fontSize: "inherit"`으로 맞춰져 있지만, 외부에서 font-size를 계단식으로 바꾸면 줄 높이가 달라져 caret 위치가 어긋날 수 있음 |
+
+### editable 모드 통합 시
+
+```tsx
+// ✅ 안전 — 외부 컨테이너에 크기 제한
+<CodeView editable className="max-w-2xl" ... />
+
+// ❌ 위험 — outer padding이 textarea overlay와 misalign 유발
+<CodeView editable className="p-4" ... />
+
+// ✅ 안전 — gutter 간격 조정은 prop으로
+<CodeView editable gutterWidth="2rem" gutterGap="0.75rem" ... />
+```
 
 ---
 
