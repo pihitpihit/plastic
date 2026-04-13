@@ -299,6 +299,7 @@ function PlaygroundSection() {
   const [showInvisibles, setShowInvisibles]   = useState(false);
   const [tabSize, setTabSize]                 = useState(2);
   const [editable, setEditable]               = useState(false);
+  const [wordWrap, setWordWrap]               = useState(false);
   const [hlInput, setHlInput]                 = useState("");
 
   const highlightLines = hlInput
@@ -310,6 +311,7 @@ function PlaygroundSection() {
     { label: "showLineNumbers",    value: showLineNumbers,    set: setShowLineNumbers },
     { label: "showAlternatingRows",value: showAlternatingRows,set: setShowAlternatingRows },
     { label: "showInvisibles",     value: showInvisibles,     set: setShowInvisibles },
+    { label: "wordWrap",           value: wordWrap,           set: setWordWrap },
     { label: "editable",           value: editable,           set: setEditable },
   ] as const;
 
@@ -418,6 +420,7 @@ function PlaygroundSection() {
           showAlternatingRows={showAlternatingRows}
           showInvisibles={showInvisibles}
           tabSize={tabSize}
+          wordWrap={wordWrap}
           editable={editable}
           onValueChange={editable ? setCode : undefined}
           highlightLines={highlightLines.length > 0 ? highlightLines : undefined}

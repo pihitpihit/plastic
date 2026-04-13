@@ -148,6 +148,7 @@ import { Card, Button } from "plastic";
 | `editable` | `boolean` | `false` | 인라인 편집 활성화. 포커스 시 줄 배경이 파란 계열로 전환. Tab/Shift+Tab 들여쓰기, Enter 자동 들여쓰기 지원 |
 | `onValueChange` | `(value: string) => void` | — | 편집 시 호출되는 콜백 |
 | `highlightLines` | `number[]` | — | 강조할 라인 번호 배열 (1-indexed, 황색 배경 적용) |
+| `wordWrap` | `boolean` | `false` | 긴 줄 자동 줄바꿈 여부 |
 | `className` | `string` | — | 외부 컨테이너에 추가할 클래스 |
 
 #### Usage

@@ -25,5 +25,7 @@ export interface CodeViewProps {
   onValueChange?: (value: string) => void;
   /** 강조할 라인 번호 배열 (1-indexed) */
   highlightLines?: number[];
+  /** 긴 줄 자동 줄바꿈 여부 (기본값: false) */
+  wordWrap?: boolean;
   className?: string;
 }
