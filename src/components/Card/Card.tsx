@@ -14,6 +14,7 @@ import { CardFooter } from "./CardFooter";
  *   </Card.Root>
  */
 export const Card = Object.assign(CardRoot, {
+  Root: CardRoot,
   Header: CardHeader,
   Body: CardBody,
   Footer: CardFooter,
