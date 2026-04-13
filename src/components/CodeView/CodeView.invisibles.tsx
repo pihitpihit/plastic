@@ -85,16 +85,30 @@ const MNEMONICS: Readonly<Record<string, string>> = {
   "\uFEFF": "BOM", // Zero-width no-break space / BOM
 };
 
+// 칩 외곽 컨테이너: 레이아웃상 정확히 1ch를 차지 (textarea와 동일)
+const CHIP_OUTER_STYLE = {
+  display: "inline-block" as const,
+  width: "1ch",
+  height: "1em",
+  position: "relative" as const,
+  verticalAlign: "middle" as const,
+  overflow: "visible" as const,
+};
+
+// 칩 본체: absolute로 1ch 컨테이너 중앙에 위치, 시각적으로만 오버플로우
 const CHIP_BASE_STYLE = {
+  position: "absolute" as const,
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
   display: "inline-flex" as const,
   alignItems: "center" as const,
+  whiteSpace: "nowrap" as const,
   fontSize: "0.6em",
   fontWeight: 700 as const,
   lineHeight: 1 as const,
   padding: "1px 3px",
   borderRadius: "3px",
-  verticalAlign: "middle" as const,
-  marginInline: "1px",
   letterSpacing: "0.03em",
 };
 
@@ -157,17 +171,24 @@ export function renderWithInvisibles(
       const mnemonic = MNEMONICS[char]!;
       const hex = char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0");
       result.push(
+        // 외곽 span: 레이아웃상 정확히 1ch (textarea 문자 너비와 일치)
         <span
           key={key++}
           title={`U+${hex} ${mnemonic}`}
           aria-label={mnemonic}
-          style={{
-            ...CHIP_BASE_STYLE,
-            background: CHIP_COLORS[theme].background,
-            color: CHIP_COLORS[theme].color,
-          }}
+          style={CHIP_OUTER_STYLE}
         >
-          {mnemonic}
+          {/* 칩 본체: absolute로 중앙에 위치, 시각적으로만 오버플로우 */}
+          <span
+            aria-hidden="true"
+            style={{
+              ...CHIP_BASE_STYLE,
+              background: CHIP_COLORS[theme].background,
+              color: CHIP_COLORS[theme].color,
+            }}
+          >
+            {mnemonic}
+          </span>
         </span>
       );
     } else {
