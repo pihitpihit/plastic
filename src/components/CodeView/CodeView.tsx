@@ -168,6 +168,7 @@ export function CodeView({
               style={{
                 position: "absolute",
                 inset: 0,
+                padding: 0,
                 paddingLeft: showLineNumbers ? "calc(2.5rem + 1rem)" : 0,
                 background: "transparent",
                 color: "transparent",
@@ -178,8 +179,6 @@ export function CodeView({
                 fontFamily: "ui-monospace, 'Cascadia Code', Menlo, monospace",
                 fontSize: "inherit",
                 lineHeight: "inherit",
-                padding: 0,
-                paddingLeft: showLineNumbers ? "calc(2.5rem + 1rem)" : 0,
                 overflow: "hidden",
                 whiteSpace: "pre",
                 wordBreak: "normal",
