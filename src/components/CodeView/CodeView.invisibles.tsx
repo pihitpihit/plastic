@@ -219,7 +219,6 @@ export function renderWithInvisibles(
             width: `${tabSize}ch`,
             color: INVISIBLE_COLOR[theme],
             overflow: "hidden",
-            userSelect: "none",
           }}
         >
           →
@@ -236,7 +235,6 @@ export function renderWithInvisibles(
           {...atomicProps}
           style={{
             color: INVISIBLE_COLOR[theme],
-            userSelect: "none",
           }}
         >
           ·
