@@ -176,11 +176,17 @@ const CHIP_BASE_STYLE = {
 /**
  * Splits a token's string content into an array of ReactNodes,
  * replacing each invisible character with its visual representation.
+ *
+ * @param atomic  true = contenteditable 편집 모드용.
+ *                모든 칩 span에 `contentEditable="false"` + `data-char` 속성을 추가하여
+ *                브라우저가 칩 전체를 하나의 커서 단위로 처리하게 하고,
+ *                커스텀 DOM 워커가 실제 문자를 추출할 수 있게 한다.
  */
 export function renderWithInvisibles(
   content: string,
   theme: CodeViewTheme,
-  tabSize: number
+  tabSize: number,
+  atomic = false,
 ): ReactNode[] {
   const result: ReactNode[] = [];
   let buffer = "";
@@ -193,6 +199,11 @@ export function renderWithInvisibles(
     }
   };
 
+  // atomic 모드에서 공통으로 쓰이는 contentEditable props
+  const atomicProps = atomic
+    ? ({ contentEditable: "false" as const, suppressContentEditableWarning: true })
+    : {};
+
   for (const char of content) {
     if (char === "\t") {
       flush();
@@ -201,6 +212,8 @@ export function renderWithInvisibles(
           key={key++}
           role="presentation"
           aria-label="tab"
+          data-char={"\t"}
+          {...atomicProps}
           style={{
             display: "inline-block",
             width: `${tabSize}ch`,
@@ -219,6 +232,8 @@ export function renderWithInvisibles(
           key={key++}
           role="presentation"
           aria-label="space"
+          data-char={" "}
+          {...atomicProps}
           style={{
             color: INVISIBLE_COLOR[theme],
             userSelect: "none",
@@ -234,14 +249,14 @@ export function renderWithInvisibles(
       const category = MNEMONIC_CATEGORY[mnemonic] ?? "null";
       const chipColors = CHIP_CATEGORY_COLORS[category][theme];
       result.push(
-        // 외곽 span: 레이아웃상 정확히 1ch (textarea 문자 너비와 일치)
         <span
           key={key++}
           title={`U+${hex} ${mnemonic}`}
           aria-label={mnemonic}
+          data-char={char}
+          {...atomicProps}
           style={CHIP_OUTER_STYLE}
         >
-          {/* 칩 본체: absolute로 중앙에 위치, 시각적으로만 오버플로우 */}
           <span
             aria-hidden="true"
             style={{

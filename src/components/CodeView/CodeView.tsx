@@ -40,46 +40,131 @@ function getGutterWidth(lineCount: number): string {
 // ── contenteditable 커서 헬퍼 ─────────────────────────────────────────────────
 
 /**
- * (targetNode, targetOffset) → root 내 선형 문자 오프셋.
- * root 아래의 텍스트 노드를 순서대로 순회하여 누적 길이를 반환한다.
+ * "유효 콘텐츠 노드" 목록을 반환한다.
+ *
+ * - text  : <pre> 아래의 일반 텍스트 노드 (칩 내부 텍스트는 제외)
+ * - chip  : data-char 속성이 있는 요소 (탭·공백·니모닉 칩).
+ *           브라우저는 contentEditable=false 칩을 1개의 커서 단위로 처리하고,
+ *           칩 내부 텍스트를 커서/선택 계산에 포함하지 않는다.
+ *           parent + indexInParent 를 함께 저장하여 element-based 커서 위치를 처리한다.
+ */
+type EffectiveNode =
+  | { type: "text"; node: Text }
+  | { type: "chip"; element: Element; parent: Element; indexInParent: number };
+
+function walkEffectiveNodes(root: Element): EffectiveNode[] {
+  const result: EffectiveNode[] = [];
+
+  function walk(node: Node, parent: Element): void {
+    if (node.nodeType === Node.TEXT_NODE) {
+      result.push({ type: "text", node: node as Text });
+      return;
+    }
+    const el = node as Element;
+    if (el.hasAttribute("data-char")) {
+      // 칩 요소: 1 문자로 계산하고 내부 텍스트는 순회하지 않는다
+      const siblings = Array.from(parent.childNodes);
+      result.push({
+        type: "chip",
+        element: el,
+        parent,
+        indexInParent: siblings.indexOf(el as ChildNode),
+      });
+      return;
+    }
+    for (const child of Array.from(el.childNodes)) walk(child, el);
+  }
+
+  for (const child of Array.from(root.childNodes)) walk(child, root);
+  return result;
+}
+
+/**
+ * (container, offset) → editValue 내 선형 문자 오프셋.
+ *
+ * container가 텍스트 노드인 경우: 일반 텍스트 오프셋.
+ * container가 요소인 경우: 칩 인접 위치 (contentEditable=false 처리).
  */
 function domPosToOffset(
   root: Element,
-  targetNode: Node,
-  targetOffset: number
+  container: Node,
+  offset: number,
 ): number {
+  const nodes = walkEffectiveNodes(root);
   let count = 0;
-  const iter = document.createNodeIterator(root, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  while ((n = iter.nextNode())) {
-    if (n === targetNode) return count + targetOffset;
-    count += (n as Text).length;
+
+  for (const item of nodes) {
+    if (item.type === "text") {
+      if (item.node === container) return count + offset;
+      count += item.node.length;
+    } else {
+      // 커서가 칩의 부모 요소 안에서 child index 로 표현된 경우
+      if (
+        container.nodeType === Node.ELEMENT_NODE &&
+        (container as Element) === item.parent
+      ) {
+        if (offset === item.indexInParent)     return count;      // 칩 바로 앞
+        if (offset === item.indexInParent + 1) return count + 1;  // 칩 바로 뒤
+      }
+      count += 1;
+    }
   }
   return count;
 }
 
 /**
- * 선형 문자 오프셋 → root 내 { node, offset }.
- * 오프셋이 텍스트 범위를 벗어나면 마지막 노드의 끝을 반환한다.
+ * editValue 내 선형 문자 오프셋 → (node, offset) DOM 위치.
+ *
+ * 칩 앞/뒤는 parent 요소의 child index 로 표현한다.
  */
 function offsetToDomPos(
   root: Element,
-  charOffset: number
+  charOffset: number,
 ): { node: Node; offset: number } | null {
+  const nodes = walkEffectiveNodes(root);
   let remaining = charOffset;
-  const iter = document.createNodeIterator(root, NodeFilter.SHOW_TEXT);
-  let n: Node | null;
-  let lastNode: Node | null = null;
-  let lastLen = 0;
-  while ((n = iter.nextNode())) {
-    const len = (n as Text).length;
-    if (remaining <= len) return { node: n, offset: remaining };
-    remaining -= len;
-    lastNode = n;
-    lastLen = len;
+
+  for (const item of nodes) {
+    if (item.type === "text") {
+      if (remaining <= item.node.length) return { node: item.node, offset: remaining };
+      remaining -= item.node.length;
+    } else {
+      if (remaining === 0) {
+        // 칩 바로 앞: parent 요소에서 칩의 child index
+        return { node: item.parent, offset: item.indexInParent };
+      }
+      remaining -= 1;
+      // remaining이 0이 되면 다음 반복에서 "다음 노드의 앞" 위치로 자연스럽게 처리됨
+    }
   }
-  if (lastNode) return { node: lastNode, offset: lastLen };
+
+  // 범위 초과: 마지막 유효 노드 끝
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const last = nodes[i];
+    if (!last) continue;
+    if (last.type === "text")
+      return { node: last.node, offset: last.node.length };
+    if (last.type === "chip")
+      return { node: last.parent, offset: last.indexInParent + 1 };
+  }
   return null;
+}
+
+/**
+ * <pre contenteditable> DOM에서 실제 코드 문자열을 추출한다.
+ * 일반 텍스트 노드의 텍스트 + 칩의 data-char 값을 순서대로 결합한다.
+ * (pre.innerText는 칩의 니모닉 텍스트 "NUL" 등을 반환하므로 사용 불가)
+ */
+function extractCodeFromPre(pre: HTMLPreElement): string {
+  let result = "";
+  for (const item of walkEffectiveNodes(pre)) {
+    if (item.type === "text") {
+      result += item.node.data;
+    } else {
+      result += item.element.getAttribute("data-char") ?? "";
+    }
+  }
+  return result.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────────────────
@@ -189,8 +274,9 @@ export function CodeView({
       savedCursorRef.current = { start, end };
     }
 
-    // innerText: <pre> 안의 텍스트를 줄바꿈 포함해 추출
-    const newValue = (pre.innerText ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+    // extractCodeFromPre: 일반 텍스트 + 칩의 data-char 를 결합하여 실제 코드 추출
+    // (pre.innerText 는 칩의 니모닉 텍스트 "NUL" 등을 포함하므로 사용 불가)
+    const newValue = extractCodeFromPre(pre);
     setEditValue(newValue);
     onValueChange?.(newValue);
   }
@@ -439,7 +525,9 @@ export function CodeView({
                       const { className: tc, style: ts } = getTokenProps({ token });
                       return (
                         <span key={ti} className={tc} style={ts}>
-                          {token.content}
+                          {showInvisibles
+                            ? renderWithInvisibles(token.content, theme, tabSize, true)
+                            : token.content}
                         </span>
                       );
                     })}
