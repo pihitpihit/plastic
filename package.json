@@ -2,6 +2,7 @@
   "name": "@pihitpihit/plastic",
   "version": "0.0.1",
   "description": "Reusable UI component library built with TypeScript and React",
+  "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",

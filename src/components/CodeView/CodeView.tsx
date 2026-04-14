@@ -64,6 +64,7 @@ export function CodeView({
   wordWrap = false,
   gutterWidth: gutterWidthProp,
   gutterGap: gutterGapProp,
+  showCopyButton = true,
   className = "",
 }: CodeViewProps) {
   const [editValue, setEditValue]     = useState(code);
@@ -202,7 +203,7 @@ export function CodeView({
             style={{ ...style, tabSize, position: "relative", fontFamily: "ui-monospace, 'Cascadia Code', Menlo, monospace", fontVariantLigatures: "none", fontKerning: "none" }}
           >
             {/* 복사 버튼 */}
-            <button
+            {showCopyButton && <button
               onClick={handleCopy}
               aria-label="코드 복사"
               style={{
@@ -224,10 +225,10 @@ export function CodeView({
               }}
             >
               {copyState === "copied" ? "✓ 복사됨" : "복사"}
-            </button>
+            </button>}
 
             <pre style={{ overflow: "visible", margin: 0, padding: 0, whiteSpace: wordWrap ? "pre-wrap" : "pre", wordBreak: wordWrap ? "break-all" : "normal" }}>
-              <code>
+              <code style={{ display: "block" }}>
                 {tokens.map((line, lineIndex) => {
                   const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
                   const isOdd        = lineIndex % 2 !== 0;

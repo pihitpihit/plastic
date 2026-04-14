@@ -31,5 +31,7 @@ export interface CodeViewProps {
   gutterWidth?: string;
   /** 라인번호와 코드 내용 사이 간격 (기본값: "1rem") */
   gutterGap?: string;
+  /** 복사 버튼 표시 여부 (기본값: true) */
+  showCopyButton?: boolean;
   className?: string;
 }

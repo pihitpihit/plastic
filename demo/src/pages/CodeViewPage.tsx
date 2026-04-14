@@ -278,6 +278,7 @@ function EditableDemo({ theme }: { theme: import("plastic").CodeViewTheme }) {
 const PLAYGROUND_LANGUAGES: CodeViewLanguage[] = [
   "typescript", "javascript", "tsx", "jsx",
   "python", "json", "css", "bash", "markup",
+  "markdown", "text",
 ];
 
 const PLAYGROUND_INITIAL = `interface User {

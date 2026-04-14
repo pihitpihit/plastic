@@ -38,7 +38,7 @@ const MNEMONIC_CATEGORY: Readonly<Record<string, ChipCategory>> = {
   // device control
   DC1: "device", DC2: "device", DC3: "device", DC4: "device",
   // format / whitespace effectors
-  BEL: "format", BSP: "format", LFD: "format", VTB: "format",
+  BEL: "format", BSP: "format", VTB: "format",
   FFD: "format", CRT: "format", SFO: "format", SFI: "format", EOM: "format",
   // information separators + delete
   FSP: "separator", GSP: "separator", RSP: "separator", USP: "separator", DEL: "separator",
@@ -99,7 +99,7 @@ const MNEMONICS: Readonly<Record<string, string>> = {
   "\u0007": "BEL", // Bell
   "\u0008": "BSP", // Backspace
   // U+0009 HT — handled as → (tab arrow), not here
-  "\u000A": "LFD", // Line Feed
+  // U+000A LF — 줄바꿈으로 실제 처리되므로 칩 표현 제외
   "\u000B": "VTB", // Vertical Tab
   "\u000C": "FFD", // Form Feed
   "\u000D": "CRT", // Carriage Return
