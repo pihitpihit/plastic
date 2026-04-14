@@ -146,30 +146,20 @@ const MNEMONICS: Readonly<Record<string, string>> = {
   "\uFEFF": "BOM", // Zero-width no-break space / BOM
 };
 
-// 칩 외곽 컨테이너: 레이아웃상 정확히 1ch를 차지 (textarea와 동일)
-const CHIP_OUTER_STYLE = {
+// 니모닉 칩: 자연 폭의 단일 inline-block span.
+// 1ch 에 라벨을 우겨넣으려 시도하지 않고 가독성을 우선하여 이웃 문자와의
+// 시각적 겹침을 원천 차단한다 (VSCode/Monaco 와 동일한 절충).
+// `data-char` + contentEditable=false 로 커서/복사 관점에서는 여전히 1 문자 단위.
+const CHIP_STYLE = {
   display: "inline-block" as const,
-  width: "1ch",
-  height: "1em",
-  position: "relative" as const,
   verticalAlign: "middle" as const,
-  overflow: "visible" as const,
-};
-
-// 칩 본체: absolute로 1ch 컨테이너 중앙에 위치, 시각적으로만 오버플로우
-const CHIP_BASE_STYLE = {
-  position: "absolute" as const,
-  top: "50%",
-  left: "50%",
-  transform: "translate(-50%, -50%)",
-  display: "inline-flex" as const,
-  alignItems: "center" as const,
   whiteSpace: "nowrap" as const,
+  padding: "0 3px",
+  margin: "0 1px",
+  borderRadius: "3px",
   fontSize: "0.6em",
   fontWeight: 700 as const,
   lineHeight: 1 as const,
-  padding: "2px 3px",
-  borderRadius: "3px",
   letterSpacing: "0.03em",
 };
 
@@ -255,18 +245,13 @@ export function renderWithInvisibles(
           aria-label={mnemonic}
           data-char={char}
           {...atomicProps}
-          style={CHIP_OUTER_STYLE}
+          style={{
+            ...CHIP_STYLE,
+            background: chipColors.background,
+            color: chipColors.color,
+          }}
         >
-          <span
-            aria-hidden="true"
-            style={{
-              ...CHIP_BASE_STYLE,
-              background: chipColors.background,
-              color: chipColors.color,
-            }}
-          >
-            {mnemonic}
-          </span>
+          {mnemonic}
         </span>
       );
     } else {
