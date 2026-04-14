@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef, Fragment } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 import type { CodeViewProps } from "./CodeView.types";
 import { renderWithInvisibles } from "./CodeView.invisibles";
@@ -168,17 +168,35 @@ function offsetToDomPos(
 
 /**
  * <pre contenteditable> DOM에서 실제 코드 문자열을 추출한다.
- * 일반 텍스트 노드의 텍스트 + 칩의 data-char 값을 순서대로 결합한다.
- * (pre.innerText는 칩의 니모닉 텍스트 "NUL" 등을 반환하므로 사용 불가)
+ *
+ * 라인 경계는 `<div data-line-row>` 블록 단위로 판정한다. 각 row 내부의
+ * effective node(일반 텍스트 + 칩 data-char) 를 이어붙이고, row 간은 '\n' 으로
+ * 조인한다. 빈 data-line-row 도 빈 라인으로 보존된다.
+ *
+ * row 내부에 브라우저가 집어넣은 `\n` 텍스트(Enter 직후 transient)는 그대로
+ * 유지되며, row-join 과 합쳐져 올바른 선형 문자열을 만든다.
+ *
+ * data-line-row 가 전혀 없는 상태(초기 렌더 전, 혹은 외부 조작으로 인한
+ * 비정상 구조) 에서는 기존 walker 평탄화 방식으로 fallback 한다.
  */
 function extractCodeFromPre(pre: HTMLPreElement): string {
-  let result = "";
-  for (const item of walkEffectiveNodes(pre)) {
-    if (item.type === "text") {
-      result += item.node.data;
-    } else {
-      result += item.element.getAttribute("data-char") ?? "";
+  const collectFrom = (root: Element): string => {
+    let out = "";
+    for (const item of walkEffectiveNodes(root)) {
+      if (item.type === "text") out += item.node.data;
+      else out += item.element.getAttribute("data-char") ?? "";
     }
+    return out;
+  };
+
+  const rows = pre.querySelectorAll(":scope > [data-line-row]");
+  let result: string;
+  if (rows.length === 0) {
+    result = collectFrom(pre);
+  } else {
+    const lines: string[] = [];
+    for (const row of Array.from(rows)) lines.push(collectFrom(row));
+    result = lines.join("\n");
   }
   return result.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
 }
@@ -204,7 +222,6 @@ export function CodeView({
 }: CodeViewProps) {
   const [editValue, setEditValue] = useState(code);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
-  const [lineHeightPx, setLineHeightPx] = useState(0);
 
   const prevCodeRef    = useRef(code);
   const preRef         = useRef<HTMLPreElement>(null);
@@ -213,19 +230,6 @@ export function CodeView({
   const savedCursorRef  = useRef<{ start: number; end: number } | null>(null);
   // IME 조합(한글 등) 중에는 React 재렌더를 막아 조합이 깨지지 않도록 함
   const isComposingRef  = useRef(false);
-
-  // 편집 모드 라인 높이 측정 (alternatingRows / highlightLines 오버레이용)
-  useLayoutEffect(() => {
-    if (!editable || !preRef.current) return;
-    const measure = () => {
-      const lh = parseFloat(getComputedStyle(preRef.current!).lineHeight);
-      if (lh > 0) setLineHeightPx(lh);
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(preRef.current);
-    return () => ro.disconnect();
-  }, [editable]);
 
   // code prop 변경 시 내부 상태 동기화
   useEffect(() => {
@@ -425,202 +429,117 @@ export function CodeView({
           </button>
         ) : null;
 
-        // ── 편집 모드: <pre contenteditable> ─────────────────────────────────
-        if (editable) {
-          return (
-            <div
-              ref={containerRef}
-              className={baseContainerClass}
-              style={{ ...baseStyle, display: "flex", tabSize }}
-            >
-              {copyBtn}
+        // ── 통합 렌더: read/edit 모드 동일 DOM 구조 ─────────────────────────
+        // 구조:
+        //   <div flex onCopy={...}>
+        //     [copyBtn]
+        //     [<div data-gutter>...</div>]   ← showLineNumbers
+        //     <pre (편집 모드만 contentEditable + 이벤트)>
+        //       {tokens.map => <div data-line-row style={{bg}}>{tokens}</div>}
+        //     </pre>
+        //   </div>
+        const editableProps = editable
+          ? ({
+              contentEditable: true as const,
+              suppressContentEditableWarning: true,
+              spellCheck: false,
+              onCompositionStart: () => { isComposingRef.current = true; },
+              onCompositionEnd: () => {
+                isComposingRef.current = false;
+                handleInput();
+              },
+              onInput: handleInput,
+              onKeyDown: handleKeyDown,
+              onPaste: handlePaste,
+            })
+          : {};
 
-              {/* 라인 번호 컬럼 */}
-              {showLineNumbers && (
-                <div
-                  aria-hidden="true"
-                  style={{
-                    flexShrink:      0,
-                    width:           resolvedGutterWidth,
-                    paddingRight:    resolvedGutterGap,
-                    boxSizing:       "content-box" as const,
-                    textAlign:       "right" as const,
-                    color:           lineNumberColor[theme],
-                    fontSize:        "0.85em",
-                    lineHeight:      "inherit",
-                    userSelect:      "none" as const,
-                    pointerEvents:   "none" as const,
-                    // 수평 스크롤 시 번호 컬럼이 가려지지 않도록 sticky
-                    position:        "sticky" as const,
-                    left:            0,
-                    zIndex:          1,
-                    backgroundColor: style.backgroundColor as string,
-                  }}
-                >
-                  {tokens.map((_, i) => (
-                    <div key={i}>{i + 1}</div>
-                  ))}
-                </div>
-              )}
-
-              {/* 라인 배경 오버레이 (alternatingRows / highlightLines) */}
-              {lineHeightPx > 0 && (showAlternatingRows || (highlightLines && highlightLines.length > 0)) && (
-                <div
-                  aria-hidden="true"
-                  style={{
-                    position:      "absolute",
-                    // gutter 너비만큼 오른쪽부터 시작
-                    left:          showLineNumbers ? `calc(${resolvedGutterWidth} + ${resolvedGutterGap} + ${resolvedGutterGap})` : 0,
-                    right:         0,
-                    top:           0,
-                    pointerEvents: "none",
-                    zIndex:        0,
-                  }}
-                >
-                  {tokens.map((_, i) => {
-                    const isOdd         = i % 2 !== 0;
-                    const isHighlighted = highlightLines?.includes(i + 1) ?? false;
-                    const bg = isHighlighted
-                      ? highlightRowColor[theme]
-                      : showAlternatingRows && isOdd
-                        ? alternatingRowColor[theme]
-                        : undefined;
-                    return bg ? (
-                      <div
-                        key={i}
-                        style={{
-                          position: "absolute",
-                          top:      i * lineHeightPx,
-                          left:     0,
-                          right:    0,
-                          height:   lineHeightPx,
-                          backgroundColor: bg,
-                        }}
-                      />
-                    ) : null;
-                  })}
-                </div>
-              )}
-
-              {/* 편집 가능한 코드 영역 */}
-              <pre
-                ref={preRef}
-                contentEditable
-                suppressContentEditableWarning
-                spellCheck={false}
-                onCompositionStart={() => { isComposingRef.current = true; }}
-                onCompositionEnd={() => {
-                  isComposingRef.current = false;
-                  // 조합 완료 후 확정된 텍스트를 state에 반영
-                  handleInput();
-                }}
-                onInput={handleInput}
-                onKeyDown={handleKeyDown}
-                onPaste={handlePaste}
-                style={{
-                  flex:       1,
-                  margin:     0,
-                  padding:    0,
-                  outline:    "none",
-                  whiteSpace: wordWrap ? "pre-wrap" : "pre",
-                  wordBreak:  wordWrap ? "break-all" : "normal",
-                  background: "transparent",
-                  color:      "inherit",
-                  fontFamily: "inherit",
-                  fontSize:   "inherit",
-                  lineHeight: "inherit",
-                  tabSize,
-                  // Prism theme의 overflow 설정을 무력화
-                  overflow:   "visible",
-                }}
-              >
-                {tokens.map((line, li) => (
-                  <Fragment key={li}>
-                    {li > 0 && "\n"}
-                    {line.map((token, ti) => {
-                      const { className: tc, style: ts } = getTokenProps({ token });
-                      return (
-                        <span key={ti} className={tc} style={ts}>
-                          {showInvisibles
-                            ? renderWithInvisibles(token.content, theme, tabSize, true)
-                            : token.content}
-                        </span>
-                      );
-                    })}
-                  </Fragment>
-                ))}
-              </pre>
-            </div>
-          );
-        }
-
-        // ── 읽기 모드: 현재 구조 유지 ────────────────────────────────────────
         return (
           <div
             ref={containerRef}
             className={baseContainerClass}
-            style={{ ...baseStyle, tabSize }}
+            style={{ ...baseStyle, display: "flex", tabSize }}
           >
             {copyBtn}
 
-            <pre style={{
-              overflow:   "visible",
-              margin:     0,
-              padding:    0,
-              whiteSpace: wordWrap ? "pre-wrap" : "pre",
-              wordBreak:  wordWrap ? "break-all" : "normal",
-            }}>
-              <code style={{ display: "block" }}>
-                {tokens.map((line, lineIndex) => {
-                  const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
-                  const isOdd         = lineIndex % 2 !== 0;
-                  const isHighlighted = highlightLines?.includes(lineIndex + 1) ?? false;
-                  const rowBg = isHighlighted
-                    ? highlightRowColor[theme]
-                    : showAlternatingRows && isOdd
-                      ? alternatingRowColor[theme]
-                      : undefined;
+            {showLineNumbers && (
+              <div
+                data-gutter="true"
+                aria-hidden="true"
+                style={{
+                  flexShrink:    0,
+                  minWidth:      resolvedGutterWidth,
+                  paddingRight:  resolvedGutterGap,
+                  boxSizing:     "content-box" as const,
+                  textAlign:     "right" as const,
+                  color:         lineNumberColor[theme],
+                  fontSize:      "0.85em",
+                  lineHeight:    "inherit",
+                  userSelect:    "none" as const,
+                  pointerEvents: "none" as const,
+                }}
+              >
+                {tokens.map((_, i) => (
+                  <div key={i}>{i + 1}</div>
+                ))}
+              </div>
+            )}
 
-                  return (
-                    <div
-                      key={lineIndex}
-                      className={["flex", lineClassName].filter(Boolean).join(" ")}
-                      style={{ ...lineStyle }}
-                      {...lineRest}
-                    >
-                      {showLineNumbers && (
-                        <span
-                          aria-hidden="true"
-                          style={{
-                            minWidth:     resolvedGutterWidth,
-                            paddingRight: resolvedGutterGap,
-                            boxSizing:    "content-box" as const,
-                            textAlign:    "right" as const,
-                            userSelect:   "none" as const,
-                            color:        lineNumberColor[theme],
-                            flexShrink:   0,
-                            fontSize:     "0.85em",
-                          }}
-                        >
-                          {lineIndex + 1}
+            <pre
+              ref={preRef}
+              {...editableProps}
+              style={{
+                flex:       1,
+                minWidth:   0,
+                margin:     0,
+                padding:    0,
+                outline:    editable ? "none" : undefined,
+                whiteSpace: wordWrap ? "pre-wrap" : "pre",
+                wordBreak:  wordWrap ? "break-all" : "normal",
+                background: "transparent",
+                color:      "inherit",
+                fontFamily: "inherit",
+                fontSize:   "inherit",
+                lineHeight: "inherit",
+                tabSize,
+                // Prism theme의 overflow 설정을 무력화
+                overflow:   "visible",
+              }}
+            >
+              {tokens.map((line, li) => {
+                const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
+                const isOdd         = li % 2 !== 0;
+                const isHighlighted = highlightLines?.includes(li + 1) ?? false;
+                const rowBg = isHighlighted
+                  ? highlightRowColor[theme]
+                  : showAlternatingRows && isOdd
+                    ? alternatingRowColor[theme]
+                    : undefined;
+
+                return (
+                  <div
+                    key={li}
+                    data-line-row="true"
+                    className={lineClassName}
+                    style={{
+                      ...lineStyle,
+                      ...(rowBg ? { backgroundColor: rowBg } : {}),
+                    }}
+                    {...lineRest}
+                  >
+                    {line.map((token, ti) => {
+                      const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
+                      return (
+                        <span key={ti} {...tokenSpanProps}>
+                          {showInvisibles
+                            ? renderWithInvisibles(token.content, theme, tabSize, editable)
+                            : (editable ? token.content : tokenContent)}
                         </span>
-                      )}
-                      <span style={{ flex: 1, ...(rowBg ? { backgroundColor: rowBg } : {}) }}>
-                        {line.map((token, tokenIndex) => {
-                          const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
-                          return (
-                            <span key={tokenIndex} {...tokenSpanProps}>
-                              {showInvisibles
-                                ? renderWithInvisibles(token.content, theme, tabSize)
-                                : tokenContent}
-                            </span>
-                          );
-                        })}
-                      </span>
-                    </div>
-                  );
-                })}
-              </code>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </pre>
           </div>
         );
