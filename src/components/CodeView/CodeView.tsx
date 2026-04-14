@@ -103,12 +103,28 @@ export function CodeView({
 }: CodeViewProps) {
   const [editValue, setEditValue] = useState(code);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [lineHeightPx, setLineHeightPx] = useState(0);
 
   const prevCodeRef    = useRef(code);
   const preRef         = useRef<HTMLPreElement>(null);
   const containerRef   = useRef<HTMLDivElement>(null);
   // 렌더 후 커서를 복원할 때 사용하는 선형 오프셋 저장소
-  const savedCursorRef = useRef<{ start: number; end: number } | null>(null);
+  const savedCursorRef  = useRef<{ start: number; end: number } | null>(null);
+  // IME 조합(한글 등) 중에는 React 재렌더를 막아 조합이 깨지지 않도록 함
+  const isComposingRef  = useRef(false);
+
+  // 편집 모드 라인 높이 측정 (alternatingRows / highlightLines 오버레이용)
+  useLayoutEffect(() => {
+    if (!editable || !preRef.current) return;
+    const measure = () => {
+      const lh = parseFloat(getComputedStyle(preRef.current!).lineHeight);
+      if (lh > 0) setLineHeightPx(lh);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(preRef.current);
+    return () => ro.disconnect();
+  }, [editable]);
 
   // code prop 변경 시 내부 상태 동기화
   useEffect(() => {
@@ -158,6 +174,9 @@ export function CodeView({
   function handleInput() {
     const pre = preRef.current;
     if (!pre) return;
+    // IME 조합 중(isComposing)에는 중간 문자를 state에 반영하지 않는다.
+    // compositionend 이후 최종 문자가 확정되면 정상 처리된다.
+    if (isComposingRef.current) return;
 
     // 상태 업데이트 전에 커서 오프셋을 저장 (브라우저가 수정한 DOM 기준)
     const sel = window.getSelection();
@@ -342,12 +361,57 @@ export function CodeView({
                 </div>
               )}
 
+              {/* 라인 배경 오버레이 (alternatingRows / highlightLines) */}
+              {lineHeightPx > 0 && (showAlternatingRows || (highlightLines && highlightLines.length > 0)) && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position:      "absolute",
+                    // gutter 너비만큼 오른쪽부터 시작
+                    left:          showLineNumbers ? `calc(${resolvedGutterWidth} + ${resolvedGutterGap} + ${resolvedGutterGap})` : 0,
+                    right:         0,
+                    top:           0,
+                    pointerEvents: "none",
+                    zIndex:        0,
+                  }}
+                >
+                  {tokens.map((_, i) => {
+                    const isOdd         = i % 2 !== 0;
+                    const isHighlighted = highlightLines?.includes(i + 1) ?? false;
+                    const bg = isHighlighted
+                      ? highlightRowColor[theme]
+                      : showAlternatingRows && isOdd
+                        ? alternatingRowColor[theme]
+                        : undefined;
+                    return bg ? (
+                      <div
+                        key={i}
+                        style={{
+                          position: "absolute",
+                          top:      i * lineHeightPx,
+                          left:     0,
+                          right:    0,
+                          height:   lineHeightPx,
+                          backgroundColor: bg,
+                        }}
+                      />
+                    ) : null;
+                  })}
+                </div>
+              )}
+
               {/* 편집 가능한 코드 영역 */}
               <pre
                 ref={preRef}
                 contentEditable
                 suppressContentEditableWarning
                 spellCheck={false}
+                onCompositionStart={() => { isComposingRef.current = true; }}
+                onCompositionEnd={() => {
+                  isComposingRef.current = false;
+                  // 조합 완료 후 확정된 텍스트를 state에 반영
+                  handleInput();
+                }}
                 onInput={handleInput}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
