@@ -461,7 +461,7 @@ export function CodeView({
                 return (
                   <span key={ti} {...tokenSpanProps}>
                     {showInvisibles
-                      ? renderWithInvisibles(token.content, theme, tabSize, editable !== "disable")
+                      ? renderWithInvisibles(token.content, theme, tabSize, isEditingActive)
                       : tokenContent}
                   </span>
                 );

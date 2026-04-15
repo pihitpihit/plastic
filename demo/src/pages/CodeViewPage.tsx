@@ -296,7 +296,6 @@ async function fetchUser(id: number): Promise<User> {
 // 칩 Atomicity (드래그·커서·복사) 를 테스트할 때 사용한다.
 const CONTROL_CHARS_SAMPLE = [
   "// 제어 문자 샘플 (showInvisibles=true 로 보세요)",
-  "const nul = \"\u0000\"; // NUL",
   "const esc = \"\u001B[31mred\u001B[0m\"; // ESC",
   "const bel = \"\u0007\"; // BEL",
   "const crt = \"line1\\r\"; // CRT (CR)",
@@ -304,7 +303,7 @@ const CONTROL_CHARS_SAMPLE = [
   "const nbs = \"word\u00A0word\"; // NBS",
   "const zws = \"join\u200Bword\"; // ZWS",
   "const bom = \"\uFEFFhello\"; // BOM",
-  "const mix = \"A\u0000B\u001BC\u200BD\";",
+  "const mix = \"A\u001BB\u200BC\";",
 ].join("\n");
 
 const PLAYGROUND_PRESETS: Array<{ label: string; value: string }> = [

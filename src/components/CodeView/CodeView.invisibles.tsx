@@ -44,7 +44,6 @@ const INVISIBLE_COLOR: Record<CodeViewTheme, string> = {
 // ── 니모닉 칩 카테고리 ────────────────────────────────────────────────────────
 
 type ChipCategory =
-  | "null"           // NUL
   | "escape"         // ESC, SUB, CAN
   | "communication"  // 전송 제어 (SOH~ETB, DLE)
   | "device"         // DC1~DC4
@@ -54,7 +53,6 @@ type ChipCategory =
 
 /** 니모닉 문자열 → 카테고리 매핑 */
 const MNEMONIC_CATEGORY: Readonly<Record<string, ChipCategory>> = {
-  NUL: "null",
   // escape / special
   ESC: "escape", SUB: "escape", CAN: "escape",
   // transmission control
@@ -77,10 +75,6 @@ const MNEMONIC_CATEGORY: Readonly<Record<string, ChipCategory>> = {
 
 /** 카테고리별 칩 색상 */
 const CHIP_CATEGORY_COLORS: Record<ChipCategory, Record<CodeViewTheme, { background: string; color: string }>> = {
-  null: {
-    light: { background: "rgba(100,100,100,0.12)", color: "rgba(70,70,70,0.85)"    },
-    dark:  { background: "rgba(150,150,150,0.20)", color: "rgba(190,190,190,0.85)" },
-  },
   escape: {
     light: { background: "rgba(220,60,20,0.13)",   color: "rgba(180,40,10,0.90)"   },
     dark:  { background: "rgba(255,110,60,0.20)",  color: "rgba(255,150,100,0.90)" },
@@ -114,8 +108,8 @@ const CHIP_CATEGORY_COLORS: Record<ChipCategory, Record<CodeViewTheme, { backgro
  * and must NOT be added here.
  */
 const MNEMONICS: Readonly<Record<string, string>> = {
-  // ── ASCII control characters U+0000–U+001F ──────────────────────────────
-  "\u0000": "NUL", // Null
+  // ── ASCII control characters U+0001–U+001F ──────────────────────────────
+  // U+0000 NUL — 표기 제외 (실무에서 파싱 오류 원인이 되므로 칩 렌더 안 함)
   "\u0001": "SOH", // Start of Heading
   "\u0002": "STX", // Start of Text
   "\u0003": "ETX", // End of Text
@@ -208,7 +202,7 @@ const CHIP_STYLE = {
  * 오프셋과 pre chip 위치가 1:1 로 정렬된다.
  */
 const PICTO: Readonly<Record<string, string>> = {
-  "\u0000": "\u2400", "\u0001": "\u2401", "\u0002": "\u2402", "\u0003": "\u2403",
+  "\u0001": "\u2401", "\u0002": "\u2402", "\u0003": "\u2403",
   "\u0004": "\u2404", "\u0005": "\u2405", "\u0006": "\u2406", "\u0007": "\u2407",
   "\u0008": "\u2408",                     "\u000B": "\u240B", "\u000C": "\u240C",
   "\u000D": "\u240D", "\u000E": "\u240E", "\u000F": "\u240F",
@@ -288,7 +282,7 @@ export function renderWithInvisibles(
       flush();
       const mnemonic = MNEMONICS[char]!;
       const hex = char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0");
-      const category = MNEMONIC_CATEGORY[mnemonic] ?? "null";
+      const category = MNEMONIC_CATEGORY[mnemonic] ?? "format";
       const chipColors = CHIP_CATEGORY_COLORS[category][theme];
 
       if (compact) {
