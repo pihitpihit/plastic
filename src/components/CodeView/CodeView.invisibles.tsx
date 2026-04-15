@@ -7,8 +7,35 @@
  *   - ASCII control chars   → 3-char uppercase mnemonic chip
  *   - Unicode invisible     → 3-char uppercase mnemonic chip
  */
-import type { ReactNode } from "react";
+import type { ReactNode, CSSProperties } from "react";
 import type { CodeViewTheme } from "./CodeView.types";
+import { C0_TO_PUA } from "./assets/plastic-mono.pua-map";
+
+// tab chip 스타일 주입 (모듈 초기화 1 회).
+// 실제 \t 문자를 span 안에 그대로 두어 브라우저의 tab-size CSS 가 자연스럽게
+// tab stop 폭을 결정하도록 하고, 화살표는 ::before 로 오버레이한다.
+// (width: tabSize*ch 로 고정폭을 강제하면 라인 중간의 tab 에서 textarea 의
+// 실제 \t 렌더 폭과 pre 의 chip 폭이 어긋난다.)
+const TAB_STYLE_ID = "plastic-cv-tab-style";
+if (typeof document !== "undefined" && !document.getElementById(TAB_STYLE_ID)) {
+  const s = document.createElement("style");
+  s.id = TAB_STYLE_ID;
+  s.textContent = `
+    .plastic-cv-tab {
+      position: relative;
+      color: transparent;
+    }
+    .plastic-cv-tab::before {
+      content: "\\2192";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--plastic-cv-inv, rgba(0,0,0,0.22));
+      pointer-events: none;
+    }
+  `;
+  document.head.appendChild(s);
+}
 
 const INVISIBLE_COLOR: Record<CodeViewTheme, string> = {
   light: "rgba(0,0,0,0.22)",
@@ -18,7 +45,6 @@ const INVISIBLE_COLOR: Record<CodeViewTheme, string> = {
 // ── 니모닉 칩 카테고리 ────────────────────────────────────────────────────────
 
 type ChipCategory =
-  | "null"           // NUL
   | "escape"         // ESC, SUB, CAN
   | "communication"  // 전송 제어 (SOH~ETB, DLE)
   | "device"         // DC1~DC4
@@ -28,7 +54,6 @@ type ChipCategory =
 
 /** 니모닉 문자열 → 카테고리 매핑 */
 const MNEMONIC_CATEGORY: Readonly<Record<string, ChipCategory>> = {
-  NUL: "null",
   // escape / special
   ESC: "escape", SUB: "escape", CAN: "escape",
   // transmission control
@@ -51,10 +76,6 @@ const MNEMONIC_CATEGORY: Readonly<Record<string, ChipCategory>> = {
 
 /** 카테고리별 칩 색상 */
 const CHIP_CATEGORY_COLORS: Record<ChipCategory, Record<CodeViewTheme, { background: string; color: string }>> = {
-  null: {
-    light: { background: "rgba(100,100,100,0.12)", color: "rgba(70,70,70,0.85)"    },
-    dark:  { background: "rgba(150,150,150,0.20)", color: "rgba(190,190,190,0.85)" },
-  },
   escape: {
     light: { background: "rgba(220,60,20,0.13)",   color: "rgba(180,40,10,0.90)"   },
     dark:  { background: "rgba(255,110,60,0.20)",  color: "rgba(255,150,100,0.90)" },
@@ -88,8 +109,8 @@ const CHIP_CATEGORY_COLORS: Record<ChipCategory, Record<CodeViewTheme, { backgro
  * and must NOT be added here.
  */
 const MNEMONICS: Readonly<Record<string, string>> = {
-  // ── ASCII control characters U+0000–U+001F ──────────────────────────────
-  "\u0000": "NUL", // Null
+  // ── ASCII control characters U+0001–U+001F ──────────────────────────────
+  // U+0000 NUL — 표기 제외 (실무에서 파싱 오류 원인이 되므로 칩 렌더 안 함)
   "\u0001": "SOH", // Start of Heading
   "\u0002": "STX", // Start of Text
   "\u0003": "ETX", // End of Text
@@ -154,13 +175,17 @@ const CHIP_STYLE = {
   display: "inline-block" as const,
   verticalAlign: "middle" as const,
   whiteSpace: "nowrap" as const,
-  padding: "0 3px",
+  padding: "1px 4px",
   margin: "0 1px",
-  borderRadius: "3px",
-  fontSize: "0.6em",
+  borderRadius: "4px",
+  fontSize: "0.78em",
   fontWeight: 700 as const,
   lineHeight: 1 as const,
   letterSpacing: "0.03em",
+  // 읽기/편집 모두: 드래그 시 칩이 하나의 단위로 선택되도록 강제한다.
+  // (읽기 모드에서는 contentEditable=false 가 없어 내부 "ZWS" 같은 3글자가
+  //  문자 단위로 선택되던 문제를 해소.)
+  userSelect: "all" as const,
 };
 
 /**
@@ -172,11 +197,19 @@ const CHIP_STYLE = {
  *                브라우저가 칩 전체를 하나의 커서 단위로 처리하게 하고,
  *                커스텀 DOM 워커가 실제 문자를 추출할 수 있게 한다.
  */
+/**
+ * @param compact  true = 편집 모드용. 레이아웃 폭은 1ch 로 고정하여 textarea
+ *                 caret 과 정렬을 보장하고, mnemonic 라벨은 absolute 오버레이로
+ *                 얹어 읽기 모드와 동일한 가독성을 제공한다. 라벨이 이웃 열로
+ *                 시각적 overflow 되는 것은 감수.
+ *                 false = 읽기 모드용 자연 폭 3자 니모닉 칩.
+ */
 export function renderWithInvisibles(
   content: string,
   theme: CodeViewTheme,
   tabSize: number,
-  atomic = false,
+  compact = false,
+  bundledFont = false,
 ): ReactNode[] {
   const result: ReactNode[] = [];
   let buffer = "";
@@ -189,29 +222,22 @@ export function renderWithInvisibles(
     }
   };
 
-  // atomic 모드에서 공통으로 쓰이는 contentEditable props
-  const atomicProps = atomic
-    ? ({ contentEditable: "false" as const, suppressContentEditableWarning: true })
-    : {};
-
   for (const char of content) {
     if (char === "\t") {
       flush();
+      // 실제 \t 문자를 content 로 유지. 브라우저의 tab-size CSS 가 현재 열
+      // 위치에서 다음 tab stop 까지 자연 폭을 계산하므로 textarea 와 일치.
+      // 화살표는 ::before 오버레이.
       result.push(
         <span
           key={key++}
+          className="plastic-cv-tab"
           role="presentation"
           aria-label="tab"
           data-char={"\t"}
-          {...atomicProps}
-          style={{
-            display: "inline-block",
-            width: `${tabSize}ch`,
-            color: INVISIBLE_COLOR[theme],
-            overflow: "hidden",
-          }}
+          style={{ ["--plastic-cv-inv" as unknown as keyof CSSProperties]: INVISIBLE_COLOR[theme] } as CSSProperties}
         >
-          →
+          {"\t"}
         </span>
       );
     } else if (char === " ") {
@@ -222,7 +248,6 @@ export function renderWithInvisibles(
           role="presentation"
           aria-label="space"
           data-char={" "}
-          {...atomicProps}
           style={{
             color: INVISIBLE_COLOR[theme],
           }}
@@ -234,24 +259,89 @@ export function renderWithInvisibles(
       flush();
       const mnemonic = MNEMONICS[char]!;
       const hex = char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, "0");
-      const category = MNEMONIC_CATEGORY[mnemonic] ?? "null";
+      const category = MNEMONIC_CATEGORY[mnemonic] ?? "format";
       const chipColors = CHIP_CATEGORY_COLORS[category][theme];
-      result.push(
-        <span
-          key={key++}
-          title={`U+${hex} ${mnemonic}`}
-          aria-label={mnemonic}
-          data-char={char}
-          {...atomicProps}
-          style={{
-            ...CHIP_STYLE,
-            background: chipColors.background,
-            color: chipColors.color,
-          }}
-        >
-          {mnemonic}
-        </span>
-      );
+
+      if (bundledFont) {
+        // 브라우저는 C0 제어 문자(U+0001–U+001F) 를 폰트 cmap 조회 없이 렌더
+        // 스킵 한다. 이를 우회하려고 동일 glyph 에 PUA alias 를 부여해 둔 뒤,
+        // 여기서는 원문자 대신 PUA 치환 문자를 DOM 에 넣는다. 이제 브라우저가
+        // 정상 문자로 인식해 폰트 glyph("ESC" 3ch) 를 그린다.
+        // `data-char` 는 계속 원문자이므로 선택·복사 로직 영향 없음.
+        const pua = C0_TO_PUA[char] ?? char;
+        result.push(
+          <span
+            key={key++}
+            title={`U+${hex} ${mnemonic}`}
+            aria-label={mnemonic}
+            data-char={char}
+            style={{
+              background: chipColors.background,
+              color: chipColors.color,
+              borderRadius: "3px",
+            }}
+          >
+            {pua}
+          </span>
+        );
+      } else if (compact) {
+        // 편집 모드: 레이아웃 폭은 1ch 로 유지(textarea caret 과 정렬) 하되,
+        // mnemonic 라벨을 absolute 오버레이로 얹어 가독성을 읽기 모드와 동일하게 확보.
+        // 라벨이 이웃 열로 overflow 되는 것은 감수 (제어 문자는 드물게 등장).
+        result.push(
+          <span
+            key={key++}
+            title={`U+${hex} ${mnemonic}`}
+            aria-label={mnemonic}
+            data-char={char}
+            style={{
+              display: "inline-block",
+              position: "relative",
+              width: "1ch",
+              verticalAlign: "baseline",
+            }}
+          >
+            <span style={{ visibility: "hidden" }}>{"\u00B7"}</span>
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                padding: "1px 4px",
+                borderRadius: "4px",
+                fontSize: "0.72em",
+                fontWeight: 700,
+                lineHeight: 1,
+                letterSpacing: "0.02em",
+                whiteSpace: "nowrap",
+                background: chipColors.background,
+                color: chipColors.color,
+                pointerEvents: "none",
+              }}
+            >
+              {mnemonic}
+            </span>
+          </span>
+        );
+      } else {
+        result.push(
+          <span
+            key={key++}
+            title={`U+${hex} ${mnemonic}`}
+            aria-label={mnemonic}
+            data-char={char}
+            style={{
+              ...CHIP_STYLE,
+              background: chipColors.background,
+              color: chipColors.color,
+            }}
+          >
+            {mnemonic}
+          </span>
+        );
+      }
     } else {
       buffer += char;
     }

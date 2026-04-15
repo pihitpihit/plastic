@@ -1,7 +1,13 @@
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 import type { CodeViewProps } from "./CodeView.types";
 import { renderWithInvisibles } from "./CodeView.invisibles";
+import {
+  ensurePlasticMono,
+  PLASTIC_MONO_STACK,
+  toPuaDisplay,
+  fromPuaDisplay,
+} from "./CodeView.invisibleFont";
 
 // Internal — not exported
 const internalThemes = {
@@ -19,6 +25,11 @@ const alternatingRowColor = {
   dark: "rgba(255,255,255,0.04)",
 } as const;
 
+const alternatingRowEditColor = {
+  light: "rgba(59,130,246,0.10)",
+  dark:  "rgba(96,165,250,0.12)",
+} as const;
+
 const highlightRowColor = {
   light: "rgba(253,224,71,0.35)",
   dark: "rgba(253,224,71,0.15)",
@@ -29,7 +40,6 @@ const copyButtonColor = {
   dark:  { bg: "rgba(255,255,255,0.08)", text: "rgba(255,255,255,0.45)" },
 } as const;
 
-/** 라인 수에 따라 gutter(라인번호 컬럼) 너비를 동적 계산 */
 function getGutterWidth(lineCount: number): string {
   if (lineCount < 10)   return "1.5rem";
   if (lineCount < 100)  return "2rem";
@@ -37,17 +47,11 @@ function getGutterWidth(lineCount: number): string {
   return "3.5rem";
 }
 
-// ── contenteditable 커서 헬퍼 ─────────────────────────────────────────────────
-
-/**
- * "유효 콘텐츠 노드" 목록을 반환한다.
- *
- * - text  : <pre> 아래의 일반 텍스트 노드 (칩 내부 텍스트는 제외)
- * - chip  : data-char 속성이 있는 요소 (탭·공백·니모닉 칩).
- *           브라우저는 contentEditable=false 칩을 1개의 커서 단위로 처리하고,
- *           칩 내부 텍스트를 커서/선택 계산에 포함하지 않는다.
- *           parent + indexInParent 를 함께 저장하여 element-based 커서 위치를 처리한다.
- */
+// ── read 모드 copy 로직 헬퍼 ────────────────────────────────────────────────
+//
+// 읽기 모드는 syntax-highlighted DOM 에서 사용자 선택 영역을 원본 코드 문자로
+// 역변환해야 한다 (chip 내부 "NUL" 문자가 아닌 실제 제어 문자 복사).
+// 편집 모드는 textarea 가 네이티브 clipboard 를 처리하므로 이 경로를 쓰지 않는다.
 type EffectiveNode =
   | { type: "text"; node: Text; lineRow: Element | null }
   | {
@@ -58,16 +62,8 @@ type EffectiveNode =
       lineRow: Element | null;
     };
 
-/**
- * Walker 불변식:
- *   - `[data-gutter]` 서브트리는 진입하지 않고 전부 skip (라인 번호 컬럼 등).
- *   - `[data-char]` 요소(칩)는 1 문자 단위의 chip 항목으로 push 하고 내부 순회 중단.
- *   - 각 항목에 가장 가까운 `[data-line-row]` 조상을 `lineRow` 로 동봉한다.
- *     `lineRow` 전환점은 copy 로직에서 라인 경계('\n') 삽입을 판정하는 데 쓰인다.
- */
 function walkEffectiveNodes(root: Element): EffectiveNode[] {
   const result: EffectiveNode[] = [];
-
   function walk(node: Node, parent: Element, lineRow: Element | null): void {
     if (node.nodeType === Node.TEXT_NODE) {
       result.push({ type: "text", node: node as Text, lineRow });
@@ -76,7 +72,6 @@ function walkEffectiveNodes(root: Element): EffectiveNode[] {
     const el = node as Element;
     if (el.hasAttribute("data-gutter")) return;
     if (el.hasAttribute("data-char")) {
-      // 칩 요소: 1 문자로 계산하고 내부 텍스트는 순회하지 않는다
       const siblings = Array.from(parent.childNodes);
       result.push({
         type: "chip",
@@ -90,144 +85,24 @@ function walkEffectiveNodes(root: Element): EffectiveNode[] {
     const nextLineRow = el.hasAttribute("data-line-row") ? el : lineRow;
     for (const child of Array.from(el.childNodes)) walk(child, el, nextLineRow);
   }
-
   for (const child of Array.from(root.childNodes)) walk(child, root, null);
   return result;
 }
 
-/**
- * (container, offset) → editValue 내 선형 문자 오프셋.
- *
- * container가 텍스트 노드인 경우: 일반 텍스트 오프셋.
- * container가 요소인 경우: 칩 인접 위치 (contentEditable=false 처리).
- */
-function domPosToOffset(
-  root: Element,
-  container: Node,
-  offset: number,
-): number {
-  // Safari 보정: selection endpoint 가 contentEditable=false 칩(`[data-char]`)
-  // 내부 텍스트 노드나 칩 요소 자체로 떨어지는 경우가 있다. 이런 endpoint 를
-  // 칩 바로 앞/뒤 경계로 클램프하여 일관된 오프셋 계산을 보장한다.
-  {
-    let node: Node | null = container;
-    while (node && node !== root) {
-      if (
-        node.nodeType === Node.ELEMENT_NODE &&
-        (node as Element).hasAttribute("data-char")
-      ) {
-        const chip = node as Element;
-        const chipParent = chip.parentNode;
-        if (chipParent && chipParent.nodeType === Node.ELEMENT_NODE) {
-          const idx = Array.from(chipParent.childNodes).indexOf(chip as ChildNode);
-          // container === chip && offset > 0 이면 "칩 뒤", 그 외(칩 내부 깊숙이
-          // 떨어진 경우 포함)는 안전하게 "칩 앞"으로 클램프한다.
-          const afterChip = node === container && offset > 0;
-          container = chipParent as Element;
-          offset = afterChip ? idx + 1 : idx;
-        }
-        break;
-      }
-      node = node.parentNode;
-    }
-  }
-
-  const nodes = walkEffectiveNodes(root);
-  let count = 0;
-
-  for (const item of nodes) {
-    if (item.type === "text") {
-      if (item.node === container) return count + offset;
-      count += item.node.length;
-    } else {
-      // 커서가 칩의 부모 요소 안에서 child index 로 표현된 경우
-      if (
-        container.nodeType === Node.ELEMENT_NODE &&
-        (container as Element) === item.parent
-      ) {
-        if (offset === item.indexInParent)     return count;      // 칩 바로 앞
-        if (offset === item.indexInParent + 1) return count + 1;  // 칩 바로 뒤
-      }
-      count += 1;
-    }
-  }
-  return count;
-}
-
-/**
- * editValue 내 선형 문자 오프셋 → (node, offset) DOM 위치.
- *
- * 칩 앞/뒤는 parent 요소의 child index 로 표현한다.
- */
-function offsetToDomPos(
-  root: Element,
-  charOffset: number,
-): { node: Node; offset: number } | null {
-  const nodes = walkEffectiveNodes(root);
-  let remaining = charOffset;
-
-  for (const item of nodes) {
-    if (item.type === "text") {
-      if (remaining <= item.node.length) return { node: item.node, offset: remaining };
-      remaining -= item.node.length;
-    } else {
-      if (remaining === 0) {
-        // 칩 바로 앞: parent 요소에서 칩의 child index
-        return { node: item.parent, offset: item.indexInParent };
-      }
-      remaining -= 1;
-      // remaining이 0이 되면 다음 반복에서 "다음 노드의 앞" 위치로 자연스럽게 처리됨
-    }
-  }
-
-  // 범위 초과: 마지막 유효 노드 끝
-  for (let i = nodes.length - 1; i >= 0; i--) {
-    const last = nodes[i];
-    if (!last) continue;
-    if (last.type === "text")
-      return { node: last.node, offset: last.node.length };
-    if (last.type === "chip")
-      return { node: last.parent, offset: last.indexInParent + 1 };
-  }
-  return null;
-}
-
-/**
- * <pre contenteditable> DOM에서 실제 코드 문자열을 추출한다.
- *
- * 라인 경계는 `<div data-line-row>` 블록 단위로 판정한다. 각 row 내부의
- * effective node(일반 텍스트 + 칩 data-char) 를 이어붙이고, row 간은 '\n' 으로
- * 조인한다. 빈 data-line-row 도 빈 라인으로 보존된다.
- *
- * row 내부에 브라우저가 집어넣은 `\n` 텍스트(Enter 직후 transient)는 그대로
- * 유지되며, row-join 과 합쳐져 올바른 선형 문자열을 만든다.
- *
- * data-line-row 가 전혀 없는 상태(초기 렌더 전, 혹은 외부 조작으로 인한
- * 비정상 구조) 에서는 기존 walker 평탄화 방식으로 fallback 한다.
- */
-function extractCodeFromPre(pre: HTMLPreElement): string {
-  const collectFrom = (root: Element): string => {
-    let out = "";
-    for (const item of walkEffectiveNodes(root)) {
-      if (item.type === "text") out += item.node.data;
-      else out += item.element.getAttribute("data-char") ?? "";
-    }
-    return out;
-  };
-
-  const rows = pre.querySelectorAll(":scope > [data-line-row]");
-  let result: string;
-  if (rows.length === 0) {
-    result = collectFrom(pre);
-  } else {
-    const lines: string[] = [];
-    for (const row of Array.from(rows)) lines.push(collectFrom(row));
-    result = lines.join("\n");
-  }
-  return result.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
-}
-
 // ── 컴포넌트 ──────────────────────────────────────────────────────────────────
+//
+// 편집 모드 아키텍처 (textarea overlay):
+//   <grid cell>
+//     ├── <pre>  syntax-highlighted 시각 레이어 (pointer-events: none)
+//     └── <textarea>  투명 입력 레이어 (네이티브 caret / 선택 / IME / undo)
+//
+// textarea 가 편집의 single source of truth. React 는 value={editValue} 로
+// controlled 로 관리하고, onChange 로만 editValue 를 갱신한다. 브라우저가
+// DOM 을 변형해도 React VDOM 과 drift 가 발생하지 않는다.
+//
+// pre 와 textarea 는 CSS grid 의 동일 셀에 배치되어 자동으로 동일 크기를
+// 가진다. 글꼴/line-height/tab-size/white-space 가 모두 inherit 이므로
+// 시각 정렬이 유지된다.
 
 export function CodeView({
   code,
@@ -236,28 +111,43 @@ export function CodeView({
   showAlternatingRows = true,
   showInvisibles = false,
   tabSize = 2,
+  indentUnit = "space",
   theme = "light",
-  editable = false,
+  editable = "disable",
   onValueChange,
   highlightLines,
   wordWrap = false,
   gutterWidth: gutterWidthProp,
   gutterGap: gutterGapProp,
   showCopyButton = true,
+  invisibleFontStrategy = "overlay",
   className = "",
 }: CodeViewProps) {
   const [editValue, setEditValue] = useState(code);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [isFocused, setIsFocused] = useState(false);
+  // IME 조합(한글/중/일 등) 중에는 pre 를 숨기고 textarea 텍스트를 보이게
+  // 전환하여 OS/브라우저가 그리는 composition underline 이 노출되도록 한다.
+  const [isComposing, setIsComposing] = useState(false);
+  // "click" 모드: 편집 활성 여부. "enable" 은 항상 true, "disable" 은 항상 false.
+  const [isEditingClick, setIsEditingClick] = useState(false);
+  // click 진입 시 클릭 좌표에서 계산된 caret 오프셋을 잠시 보관했다가
+  // textarea 가 렌더/포커스된 직후 useEffect 에서 setSelectionRange 로 반영.
+  const pendingClickCaretRef = useRef<number | null>(null);
+  // bundled 폰트 로드 완료 여부. overlay 전략이거나 showInvisibles=false 면 영향 없음.
+  const [bundledFontReady, setBundledFontReady] = useState(false);
+  useEffect(() => {
+    if (invisibleFontStrategy !== "bundled") return;
+    let alive = true;
+    ensurePlasticMono().then(() => { if (alive) setBundledFontReady(true); });
+    return () => { alive = false; };
+  }, [invisibleFontStrategy]);
+  const useBundledFont = invisibleFontStrategy === "bundled" && bundledFontReady;
+  const prevCodeRef  = useRef(code);
+  const preRef       = useRef<HTMLPreElement>(null);
+  const textareaRef  = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  const prevCodeRef    = useRef(code);
-  const preRef         = useRef<HTMLPreElement>(null);
-  const containerRef   = useRef<HTMLDivElement>(null);
-  // 렌더 후 커서를 복원할 때 사용하는 선형 오프셋 저장소
-  const savedCursorRef  = useRef<{ start: number; end: number } | null>(null);
-  // IME 조합(한글 등) 중에는 React 재렌더를 막아 조합이 깨지지 않도록 함
-  const isComposingRef  = useRef(false);
-
-  // code prop 변경 시 내부 상태 동기화
   useEffect(() => {
     if (code !== prevCodeRef.current) {
       prevCodeRef.current = code;
@@ -265,135 +155,192 @@ export function CodeView({
     }
   }, [code]);
 
-  const displayCode = editable ? editValue : code;
+  // editable prop 이 "click" 이 아니게 바뀌면 click-edit 상태 초기화.
+  useEffect(() => {
+    if (editable !== "click") setIsEditingClick(false);
+  }, [editable]);
 
-  // ── 렌더 후 커서 복원 ─────────────────────────────────────────────────────
-  // React가 Prism 토큰을 업데이트하면 DOM이 바뀌고 selection이 무효화된다.
-  // useLayoutEffect(브라우저 페인트 전)에서 저장된 오프셋으로 selection을 복원한다.
-  useLayoutEffect(() => {
-    const saved = savedCursorRef.current;
-    if (!saved || !preRef.current) return;
-    savedCursorRef.current = null;
+  // 편집 UI 활성 여부 (textarea 렌더/이벤트).
+  const isEditingActive =
+    editable === "enable" || (editable === "click" && isEditingClick);
 
-    const pre = preRef.current;
-    const sel = window.getSelection();
-    if (!sel) return;
-
-    const startPos = offsetToDomPos(pre, saved.start);
-    const endPos   = saved.end !== saved.start
-      ? offsetToDomPos(pre, saved.end)
-      : startPos;
-
-    if (!startPos) return;
-    try {
-      const range = document.createRange();
-      range.setStart(startPos.node, startPos.offset);
-      if (endPos && saved.end !== saved.start) {
-        range.setEnd(endPos.node, endPos.offset);
-      } else {
-        range.collapse(true);
+  // click 모드에서 편집 진입 직후 textarea 에 포커스 + 클릭 위치로 caret 이동
+  useEffect(() => {
+    if (editable === "click" && isEditingClick) {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.focus();
+      const off = pendingClickCaretRef.current;
+      if (off !== null) {
+        const clamped = Math.max(0, Math.min(off, ta.value.length));
+        ta.setSelectionRange(clamped, clamped);
+        pendingClickCaretRef.current = null;
       }
-      sel.removeAllRanges();
-      sel.addRange(range);
-    } catch {
-      // 빠른 편집 중 range가 잠시 무효화될 수 있음 — 무시
     }
-  });
+  }, [editable, isEditingClick]);
 
-  // ── 편집 이벤트 ──────────────────────────────────────────────────────────────
-
-  function handleInput() {
+  // (clientX, clientY) → editValue 내 선형 문자 오프셋.
+  // caretRangeFromPoint (Chromium/Safari) 또는 caretPositionFromPoint (Firefox)
+  // 로 Range 를 얻은 뒤 walkEffectiveNodes 로 pre 내 선형 offset 을 누적한다.
+  function pointToEditOffset(clientX: number, clientY: number): number {
     const pre = preRef.current;
-    if (!pre) return;
-    // IME 조합 중(isComposing)에는 중간 문자를 state에 반영하지 않는다.
-    // compositionend 이후 최종 문자가 확정되면 정상 처리된다.
-    if (isComposingRef.current) return;
+    if (!pre) return 0;
 
-    // 상태 업데이트 전에 커서 오프셋을 저장 (브라우저가 수정한 DOM 기준)
-    const sel = window.getSelection();
-    if (sel?.rangeCount) {
-      const range = sel.getRangeAt(0);
-      const start = domPosToOffset(pre, range.startContainer, range.startOffset);
-      const end   = sel.isCollapsed
-        ? start
-        : domPosToOffset(pre, range.endContainer, range.endOffset);
-      savedCursorRef.current = { start, end };
+    type CaretFromPoint = (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    const d = document as Document & {
+      caretRangeFromPoint?: (x: number, y: number) => Range | null;
+      caretPositionFromPoint?: CaretFromPoint;
+    };
+    let target: Node | null = null;
+    let targetOffset = 0;
+    if (d.caretRangeFromPoint) {
+      const r = d.caretRangeFromPoint(clientX, clientY);
+      if (r) { target = r.startContainer; targetOffset = r.startOffset; }
+    } else if (d.caretPositionFromPoint) {
+      const p = d.caretPositionFromPoint(clientX, clientY);
+      if (p) { target = p.offsetNode; targetOffset = p.offset; }
     }
+    if (!target) return editValue.length;
+    // 클릭이 pre 밖으로 떨어진 경우 안전하게 끝으로
+    if (!pre.contains(target) && target !== pre) return editValue.length;
 
-    // extractCodeFromPre: 일반 텍스트 + 칩의 data-char 를 결합하여 실제 코드 추출
-    // (pre.innerText 는 칩의 니모닉 텍스트 "NUL" 등을 포함하므로 사용 불가)
-    const newValue = extractCodeFromPre(pre);
-    setEditValue(newValue);
-    onValueChange?.(newValue);
+    const items = walkEffectiveNodes(pre);
+    let count = 0;
+    for (const item of items) {
+      if (item.type === "text") {
+        if (item.node === target) return count + targetOffset;
+        count += item.node.length;
+      } else {
+        // chip 내부(혹은 chip 자체)를 가리키는 경우: 오프셋 부호로 앞/뒤 결정
+        if (target === item.element || item.element.contains(target)) {
+          return count + (targetOffset > 0 ? 1 : 0);
+        }
+        if (target === item.parent && target.nodeType === Node.ELEMENT_NODE) {
+          if (targetOffset === item.indexInParent)     return count;
+          if (targetOffset === item.indexInParent + 1) return count + 1;
+        }
+        count += 1;
+      }
+    }
+    return count;
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLPreElement>) {
-    const pre = preRef.current!;
-    const indent = " ".repeat(tabSize);
+  const displayCode = editable === "disable" ? code : editValue;
+
+  // ── 편집 이벤트 (textarea) ─────────────────────────────────────────────────
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    // bundled 모드에서는 textarea.value 가 PUA 치환 문자열이므로 원문자 복원.
+    // overlay 모드에서는 fromPuaDisplay 가 no-op (치환 대상 없음).
+    const next = useBundledFont ? fromPuaDisplay(e.target.value) : e.target.value;
+    setEditValue(next);
+    onValueChange?.(next);
+  }
+
+  function updateValueAndCursor(next: string, caretStart: number, caretEnd = caretStart) {
+    setEditValue(next);
+    onValueChange?.(next);
+    // React controlled textarea: value 가 다음 paint 에 반영되므로 caret 은
+    // layout effect 타이밍에 다시 설정해야 한다. setTimeout 0 로 충분.
+    queueMicrotask(() => {
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.selectionStart = caretStart;
+      ta.selectionEnd   = caretEnd;
+    });
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // IME 조합 중 발생하는 keydown 은 전부 네이티브에 위임한다.
+    // (한글 입력 후 Enter 로 조합 종료 시 우리 Enter 핸들러가 개입하면
+    //  마지막 글자가 중복되고 개행이 추가 삽입되는 문제가 생긴다.)
+    // React 의 SyntheticKeyboardEvent 는 nativeEvent.isComposing 을 제공.
+    // 구형 경로로 keyCode === 229 도 함께 체크.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+
+    const ta = e.currentTarget;
+    const indent = indentUnit === "tab" ? "\t" : " ".repeat(tabSize);
+    // bundled 모드에서는 ta.value 가 PUA 치환 문자열이므로 raw editValue 를
+    // 진실 소스로 사용. selection index 는 1:1 substitution 덕에 그대로 유효.
+    const value = useBundledFont ? editValue : ta.value;
+    const s  = ta.selectionStart;
+    const en = ta.selectionEnd;
+
+    // 라인의 선두에서 한 단위 outdent 를 수행했을 때의 strip 길이를 반환.
+    // 탭 1 개가 있으면 탭 1 개 제거, 아니면 선두 공백을 최대 tabSize 개까지 제거.
+    const outdentStripLen = (line: string): number => {
+      if (line.startsWith("\t")) return 1;
+      const m = line.match(/^ +/);
+      return m ? Math.min(m[0].length, tabSize) : 0;
+    };
 
     if (e.key === "Tab") {
       e.preventDefault();
-      const sel = window.getSelection();
-      if (!sel?.rangeCount) return;
 
-      if (sel.isCollapsed) {
-        // 단일 커서: 공백 삽입
-        document.execCommand("insertText", false, indent);
+      if (s === en) {
+        // 단일 커서
+        if (e.shiftKey) {
+          // 현재 라인 outdent: 선두 \t 1 개 또는 선두 공백 최대 tabSize 개 제거
+          const lineStart = value.lastIndexOf("\n", Math.max(0, s - 1)) + 1;
+          const line      = value.slice(lineStart, value.indexOf("\n", s) === -1 ? value.length : value.indexOf("\n", s));
+          const strip     = outdentStripLen(line);
+          if (strip === 0) return;
+          const next      = value.slice(0, lineStart) + line.slice(strip) + value.slice(lineStart + line.length);
+          const posInLine = s - lineStart;
+          const newCaret  = lineStart + Math.max(0, posInLine - strip);
+          updateValueAndCursor(next, newCaret);
+        } else {
+          const next = value.slice(0, s) + indent + value.slice(en);
+          updateValueAndCursor(next, s + indent.length);
+        }
       } else {
-        // 다중 라인 선택: 들여쓰기 / 내어쓰기
-        const range      = sel.getRangeAt(0);
-        const start      = domPosToOffset(pre, range.startContainer, range.startOffset);
-        const end        = domPosToOffset(pre, range.endContainer, range.endOffset);
-        const lines      = editValue.split("\n");
-        const startLine  = editValue.slice(0, start).split("\n").length - 1;
-        const endLine    = editValue.slice(0, end).split("\n").length - 1;
-
+        // 다중 라인 들여쓰기 / 내어쓰기
+        const startLineStart = value.lastIndexOf("\n", Math.max(0, s - 1)) + 1;
+        const selected       = value.slice(startLineStart, en);
+        const lines          = selected.split("\n");
         let startDelta = 0;
         let totalDelta = 0;
-        const newLines = lines.map((line, i) => {
-          if (i < startLine || i > endLine) return line;
+        const modified = lines.map((l, i) => {
           if (e.shiftKey) {
-            const modified = line.startsWith(indent)
-              ? line.slice(tabSize)
-              : line.replace(/^( +)/, (m) => m.slice(Math.min(m.length, tabSize)));
-            const delta = modified.length - line.length;
-            if (i === startLine) startDelta = delta;
-            totalDelta += delta;
-            return modified;
+            const strip    = outdentStripLen(l);
+            const stripped = l.slice(strip);
+            const d = stripped.length - l.length;
+            if (i === 0) startDelta = d;
+            totalDelta += d;
+            return stripped;
           } else {
-            if (i === startLine) startDelta = tabSize;
-            totalDelta += tabSize;
-            return indent + line;
+            if (i === 0) startDelta = indent.length;
+            totalDelta += indent.length;
+            return indent + l;
           }
-        });
-        const next = newLines.join("\n");
-        savedCursorRef.current = {
-          start: Math.max(0, start + startDelta),
-          end:   Math.max(0, end + totalDelta),
-        };
-        setEditValue(next);
-        onValueChange?.(next);
+        }).join("\n");
+        const next = value.slice(0, startLineStart) + modified + value.slice(en);
+        updateValueAndCursor(next, s + startDelta, en + totalDelta);
       }
-    } else if (e.key === "Enter") {
+      return;
+    }
+
+    if (e.key === "Enter") {
+      // "click" 모드: Enter 는 편집 종료(blur), Shift+Enter 는 줄바꿈.
+      if (editable === "click" && !e.shiftKey) {
+        e.preventDefault();
+        setIsEditingClick(false);
+        textareaRef.current?.blur();
+        return;
+      }
+      // 이전 라인의 앞쪽 공백만큼 자동 들여쓰기
       e.preventDefault();
-      const sel = window.getSelection();
-      if (!sel?.rangeCount) return;
-      const range  = sel.getRangeAt(0);
-      const cursor = domPosToOffset(pre, range.startContainer, range.startOffset);
-      const before = editValue.slice(0, cursor);
+      const before     = value.slice(0, s);
       const lineIndent = (before.split("\n").pop() ?? "").match(/^(\s*)/)?.[1] ?? "";
-      document.execCommand("insertText", false, "\n" + lineIndent);
+      const insert     = "\n" + lineIndent;
+      const next       = value.slice(0, s) + insert + value.slice(en);
+      updateValueAndCursor(next, s + insert.length);
+      return;
     }
   }
 
-  function handlePaste(e: React.ClipboardEvent<HTMLPreElement>) {
-    e.preventDefault();
-    const text = e.clipboardData.getData("text/plain");
-    if (text) document.execCommand("insertText", false, text);
-  }
-
   // ── 복사 ────────────────────────────────────────────────────────────────────
-  // "복사" 버튼 클릭: 전체 displayCode 를 클립보드에 쓰고 상태 배지를 업데이트한다.
+
   function handleCopyAll() {
     navigator.clipboard.writeText(displayCode).then(() => {
       setCopyState("copied");
@@ -401,26 +348,16 @@ export function CodeView({
     });
   }
 
-  // 선택 영역 Cmd+C / Ctrl+C 처리.
-  //
-  // 브라우저 기본 로직은 칩 내부에 표시된 니모닉 텍스트("NUL", "ESC", "→", "·") 를
-  // 그대로 직렬화해 원본 문자를 잃는다. 이 핸들러는 walker 를 이용해 effective
-  // content(텍스트 + 칩의 `data-char`) 를 재조립하고, `data-line-row` 경계에서
-  // `\n` 을 삽입해 라인 경계를 복원한다.
-  //
-  // 범위 계산:
-  //   - 텍스트 노드: 선택 Range 와의 교집합을 slice.
-  //   - 칩 요소: Range 와 "완전히 겹치는" 경우에만 data-char 한 글자로 포함
-  //     (contentEditable=false 로 원자 단위이므로 부분 선택은 의도된 적이 없다).
-  //
-  // gutter 서브트리는 walker 단에서 skip 되므로 라인 번호가 포함되지 않는다.
+  // 읽기 모드 전용. 선택 영역의 chip 내부 mnemonic 텍스트("NUL", "·", "→") 를
+  // 원본 문자로 역변환해 클립보드에 기록한다. 편집 모드는 textarea 가 처리.
   function handleCopyEvent(e: React.ClipboardEvent<HTMLDivElement>) {
+    // textarea 가 네이티브 복사를 처리하는 경우(=현재 편집 UI 활성) 만 skip.
+    if (isEditingActive) return;
     const pre = preRef.current;
     if (!pre) return;
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
     const range = sel.getRangeAt(0);
-    // 선택이 pre 밖(예: 복사 버튼) 이면 기본 동작에 위임
     if (!range.intersectsNode(pre)) return;
 
     const items = walkEffectiveNodes(pre);
@@ -429,33 +366,23 @@ export function CodeView({
 
     for (const item of items) {
       let contribution = "";
-
       if (item.type === "text") {
         const node = item.node;
-        // node 전체가 range 범위 밖이면 skip
         const startCmp = range.comparePoint(node, 0);
         const endCmp   = range.comparePoint(node, node.length);
         if (endCmp < 0 || startCmp > 0) continue;
-
         const sliceStart = range.startContainer === node ? range.startOffset : 0;
         const sliceEnd   = range.endContainer   === node ? range.endOffset   : node.length;
         if (sliceEnd <= sliceStart) continue;
         contribution = node.data.slice(sliceStart, sliceEnd);
       } else {
-        // 칩: parent 내 [indexInParent, indexInParent+1] 구간이 range 에
-        // 완전히 포함될 때만 1 글자로 포함
         const startCmp = range.comparePoint(item.parent, item.indexInParent);
         const endCmp   = range.comparePoint(item.parent, item.indexInParent + 1);
         if (startCmp < 0 || endCmp > 0) continue;
         contribution = item.element.getAttribute("data-char") ?? "";
       }
-
       if (!contribution) continue;
-
-      // 이전에 기여한 항목과 라인이 달라졌으면 경계 '\n' 삽입
-      if (prevLineRow !== undefined && item.lineRow !== prevLineRow) {
-        output += "\n";
-      }
+      if (prevLineRow !== undefined && item.lineRow !== prevLineRow) output += "\n";
       prevLineRow = item.lineRow;
       output += contribution;
     }
@@ -469,8 +396,8 @@ export function CodeView({
   return (
     <Highlight
       theme={internalThemes[theme]}
-      // 편집 모드: trimEnd 하지 않아 실제 줄 수 유지 / 읽기 모드: 후행 공백 제거
-      code={editable ? displayCode : displayCode.trimEnd()}
+      // 편집 모드: 후행 공백 유지 (textarea value 와 pre 라인 수가 일치해야 함)
+      code={editable !== "disable" ? displayCode : displayCode.trimEnd()}
       language={language}
     >
       {({ className: hlClassName, style, tokens, getLineProps, getTokenProps }) => {
@@ -489,7 +416,9 @@ export function CodeView({
         const baseStyle = {
           ...style,
           position:             "relative" as const,
-          fontFamily:           "ui-monospace, 'Cascadia Code', Menlo, monospace",
+          fontFamily:           useBundledFont
+            ? PLASTIC_MONO_STACK
+            : "ui-monospace, 'Cascadia Code', Menlo, monospace",
           fontVariantLigatures: "none" as const,
           fontKerning:          "none" as const,
         };
@@ -520,30 +449,50 @@ export function CodeView({
           </button>
         ) : null;
 
-        // ── 통합 렌더: read/edit 모드 동일 DOM 구조 ─────────────────────────
-        // 구조:
-        //   <div flex onCopy={...}>
-        //     [copyBtn]
-        //     [<div data-gutter>...</div>]   ← showLineNumbers
-        //     <pre (편집 모드만 contentEditable + 이벤트)>
-        //       {tokens.map => <div data-line-row style={{bg}}>{tokens}</div>}
-        //     </pre>
-        //   </div>
-        const editableProps = editable
-          ? ({
-              contentEditable: true as const,
-              suppressContentEditableWarning: true,
-              spellCheck: false,
-              onCompositionStart: () => { isComposingRef.current = true; },
-              onCompositionEnd: () => {
-                isComposingRef.current = false;
-                handleInput();
-              },
-              onInput: handleInput,
-              onKeyDown: handleKeyDown,
-              onPaste: handlePaste,
-            })
-          : {};
+        const rowBgFor = (li: number): string | undefined => {
+          const isHighlighted = highlightLines?.includes(li + 1) ?? false;
+          if (isHighlighted) return highlightRowColor[theme];
+          // 편집 모드는 stripe 를 상위 wrapper 의 backgroundImage 로 처리한다
+          // (pre 가 IME 조합 중 opacity 0 이 되어도 stripe 가 유지되도록).
+          if (editable !== "disable") return undefined;
+          if (!showAlternatingRows) return undefined;
+          if (li % 2 === 0) return undefined;
+          return alternatingRowColor[theme];
+        };
+
+        const wrapperStripeColor = isEditingActive && isFocused
+          ? alternatingRowEditColor[theme]
+          : alternatingRowColor[theme];
+
+        // pre 콘텐츠는 읽기/편집 모드 공통. 편집 모드에서 invisibles 칩을 그리면
+        // 실제 1 문자와 폭이 달라 textarea caret 과 시각 정렬이 어긋나므로 raw 로.
+        const preContent = tokens.map((line, li) => {
+          const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
+          const rowBg = rowBgFor(li);
+          return (
+            <div
+              key={li}
+              data-line-row="true"
+              className={lineClassName}
+              style={{
+                ...lineStyle,
+                ...(rowBg ? { backgroundColor: rowBg } : {}),
+              }}
+              {...lineRest}
+            >
+              {line.map((token, ti) => {
+                const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
+                return (
+                  <span key={ti} {...tokenSpanProps}>
+                    {showInvisibles
+                      ? renderWithInvisibles(token.content, theme, tabSize, isEditingActive, useBundledFont)
+                      : tokenContent}
+                  </span>
+                );
+              })}
+            </div>
+          );
+        });
 
         return (
           <div
@@ -577,62 +526,134 @@ export function CodeView({
               </div>
             )}
 
-            <pre
-              ref={preRef}
-              {...editableProps}
+            <div
               style={{
-                flex:       1,
-                minWidth:   0,
-                margin:     0,
-                padding:    0,
-                outline:    editable ? "none" : undefined,
-                whiteSpace: wordWrap ? "pre-wrap" : "pre",
-                wordBreak:  wordWrap ? "break-all" : "normal",
-                background: "transparent",
-                color:      "inherit",
-                fontFamily: "inherit",
-                fontSize:   "inherit",
-                lineHeight: "inherit",
-                tabSize,
-                // Prism theme의 overflow 설정을 무력화
-                overflow:   "visible",
+                flex:     1,
+                minWidth: 0,
+                display:  "grid",
+                // pre/textarea 가 동일 셀에 스택. 셀 크기는 pre 의 intrinsic 에
+                // 맞춰지고 textarea 는 그 크기에 stretch.
+                //
+                // 편집 모드의 stripe 는 이 wrapper 의 backgroundImage 로 렌더.
+                // 2lh 주기 linear-gradient 로 짝수 라인 상단은 transparent,
+                // 하단은 stripe 색. pre 의 opacity 와 무관하게 유지된다.
+                ...(editable !== "disable" && showAlternatingRows
+                  ? {
+                      backgroundImage: `linear-gradient(to bottom, transparent 50%, ${wrapperStripeColor} 50%)`,
+                      backgroundSize: "100% 2lh",
+                      backgroundRepeat: "repeat-y",
+                    }
+                  : {}),
               }}
             >
-              {tokens.map((line, li) => {
-                const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
-                const isOdd         = li % 2 !== 0;
-                const isHighlighted = highlightLines?.includes(li + 1) ?? false;
-                const rowBg = isHighlighted
-                  ? highlightRowColor[theme]
-                  : showAlternatingRows && isOdd
-                    ? alternatingRowColor[theme]
-                    : undefined;
+              <pre
+                ref={preRef}
+                aria-hidden={isEditingActive ? true : undefined}
+                onClick={
+                  editable === "click" && !isEditingClick
+                    ? (e) => {
+                        pendingClickCaretRef.current = pointToEditOffset(e.clientX, e.clientY);
+                        setIsEditingClick(true);
+                      }
+                    : undefined
+                }
+                style={{
+                  gridArea:   "1 / 1",
+                  margin:     0,
+                  padding:    0,
+                  whiteSpace: wordWrap ? "pre-wrap" : "pre",
+                  wordBreak:  wordWrap ? "break-all" : "normal",
+                  color:      "inherit",
+                  fontFamily: "inherit",
+                  fontSize:   "inherit",
+                  lineHeight: "inherit",
+                  tabSize,
+                  overflow:   "visible",
+                  background: "transparent",
+                  // textarea 가 렌더되고 있을 때만 pre 가 이벤트를 막는다.
+                  // "click" 모드에서 편집 비활성 상태에서는 pre 가 onClick 을
+                  // 받아야 편집 진입이 가능.
+                  pointerEvents: isEditingActive ? "none" : undefined,
+                  cursor: editable === "click" && !isEditingClick ? "text" : undefined,
+                  // IME 조합 중에는 pre 를 숨겨 textarea 의 composition
+                  // underline 이 가려지지 않게 한다.
+                  opacity: isEditingActive && isComposing ? 0 : 1,
+                }}
+              >
+                {preContent}
+              </pre>
 
-                return (
-                  <div
-                    key={li}
-                    data-line-row="true"
-                    className={lineClassName}
-                    style={{
-                      ...lineStyle,
-                      ...(rowBg ? { backgroundColor: rowBg } : {}),
-                    }}
-                    {...lineRest}
-                  >
-                    {line.map((token, ti) => {
-                      const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
-                      return (
-                        <span key={ti} {...tokenSpanProps}>
-                          {showInvisibles
-                            ? renderWithInvisibles(token.content, theme, tabSize, editable)
-                            : (editable ? token.content : tokenContent)}
-                        </span>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </pre>
+              {isEditingActive && (
+                <textarea
+                  ref={textareaRef}
+                  // bundled 모드: PUA 치환 문자열을 textarea 에 보여 폰트가
+                  // 3ch glyph 로 렌더하게 한다. 1:1 substitution 이므로
+                  // selectionStart/End 는 raw 인덱스와 동일.
+                  value={useBundledFont ? toPuaDisplay(editValue) : editValue}
+                  onChange={handleChange}
+                  onCopy={(e) => {
+                    if (!useBundledFont) return;
+                    const ta = e.currentTarget;
+                    const slice = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+                    if (!slice) return;
+                    e.preventDefault();
+                    e.clipboardData.setData("text/plain", fromPuaDisplay(slice));
+                  }}
+                  onCut={(e) => {
+                    if (!useBundledFont) return;
+                    const ta = e.currentTarget;
+                    const s = ta.selectionStart, en = ta.selectionEnd;
+                    if (s === en) return;
+                    const slice = ta.value.slice(s, en);
+                    e.preventDefault();
+                    e.clipboardData.setData("text/plain", fromPuaDisplay(slice));
+                    const next = editValue.slice(0, s) + editValue.slice(en);
+                    updateValueAndCursor(next, s);
+                  }}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => {
+                    setIsFocused(false);
+                    // "click" 모드: blur 되면 편집 종료
+                    if (editable === "click") setIsEditingClick(false);
+                  }}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
+                  spellCheck={false}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  autoComplete="off"
+                  wrap={wordWrap ? "soft" : "off"}
+                  aria-label="code editor"
+                  style={{
+                    gridArea:   "1 / 1",
+                    width:      "100%",
+                    height:     "100%",
+                    margin:     0,
+                    padding:    0,
+                    border:     "none",
+                    outline:    "none",
+                    resize:     "none",
+                    // 외부 container 의 overflow-x-auto 가 가로 스크롤 담당
+                    overflow:   "hidden",
+                    background: "transparent",
+                    // 평소에는 텍스트 투명 (pre 가 시각 담당). 조합 중엔 가시화.
+                    color:              isComposing ? "inherit" : "transparent",
+                    WebkitTextFillColor: isComposing ? "inherit" : "transparent",
+                    // caret-color 는 테마에 맞춘 실색상. currentColor 로 두면
+                    // color: transparent 일 때 caret 도 투명해져 깜빡임이 보이지 않는다.
+                    caretColor:         theme === "dark" ? "#fff" : "#000",
+                    // pre 와 동일 메트릭 (inherit)
+                    font:          "inherit",
+                    letterSpacing: "inherit",
+                    lineHeight:    "inherit",
+                    tabSize,
+                    whiteSpace: wordWrap ? "pre-wrap" : "pre",
+                    wordBreak:  wordWrap ? "break-all" : "normal",
+                  }}
+                />
+              )}
+            </div>
           </div>
         );
       }}

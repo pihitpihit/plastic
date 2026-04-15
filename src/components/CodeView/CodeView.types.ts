@@ -17,11 +17,23 @@ export interface CodeViewProps {
   showInvisibles?: boolean;
   /** 탭 너비 — tab-size CSS 및 showInvisibles 탭 렌더링에 적용 (기본값: 2) */
   tabSize?: number;
+  /**
+   * editable=true 에서 Tab 키가 삽입할 문자 단위.
+   *   - "space": tabSize 만큼의 공백 삽입 (기본값)
+   *   - "tab":   \t 문자 하나 삽입 (CSS tab-size 에 따라 시각 폭 결정)
+   */
+  indentUnit?: "space" | "tab";
   /** 라이트 / 다크 테마 (기본값: "light") */
   theme?: CodeViewTheme;
-  /** 편집 가능 여부. true 시 textarea 오버레이로 인라인 편집 활성화 (기본값: false) */
-  editable?: boolean;
-  /** editable=true 시 코드 변경 콜백 */
+  /**
+   * 편집 모드 (기본값: "disable").
+   *   - "disable": 읽기 전용.
+   *   - "enable":  상시 편집 가능.
+   *   - "click":   클릭 시 편집 모드 진입. Enter 로 편집 종료 (blur),
+   *                Shift+Enter 로 줄바꿈. blur 시에도 자동 종료.
+   */
+  editable?: "disable" | "enable" | "click";
+  /** editable !== "disable" 시 코드 변경 콜백 */
   onValueChange?: (value: string) => void;
   /** 강조할 라인 번호 배열 (1-indexed) */
   highlightLines?: number[];
@@ -33,5 +45,14 @@ export interface CodeViewProps {
   gutterGap?: string;
   /** 복사 버튼 표시 여부 (기본값: true) */
   showCopyButton?: boolean;
+  /**
+   * 제어 문자 / 불가시 유니코드 시각화 전략 (기본 "overlay").
+   *   - "overlay": 1ch 슬롯 + absolute 라벨. 사용자 폰트 유지.
+   *   - "bundled": 번들된 PlasticMono (JetBrains Mono NL 기반) 폰트 사용.
+   *                폰트가 직접 3ch advance glyph 로 mnemonic 을 렌더하므로
+   *                pre 와 textarea 의 캐럿·선택 영역이 완전 정합.
+   *                CodeView 전체가 PlasticMono 로 렌더된다.
+   */
+  invisibleFontStrategy?: "bundled" | "overlay";
   className?: string;
 }

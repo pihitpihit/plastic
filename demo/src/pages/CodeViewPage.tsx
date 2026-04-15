@@ -200,8 +200,9 @@ export function CodeViewPage() {
                 ["showLineNumbers", "boolean", "true", "라인 번호 표시"],
                 ["showAlternatingRows", "boolean", "true", "홀짝 배경 구분"],
                 ["highlightLines", "number[]", "—", "강조할 라인 번호 배열 (1-indexed)"],
-                ["editable", "boolean", "false", "인라인 편집 활성화"],
+                ["editable", "\"disable\" | \"enable\" | \"click\"", "\"disable\"", "편집 모드 (click: 클릭 진입, Enter 종료, Shift+Enter 줄바꿈)"],
                 ["onValueChange", "(value: string) => void", "—", "편집 시 호출되는 콜백"],
+                ["invisibleFontStrategy", "\"overlay\" | \"bundled\"", "\"overlay\"", "bundled: 번들 폰트(PlasticMono)로 chip 을 glyph 수준에서 정렬"],
               ].map(([prop, type, def, desc]) => (
                 <tr key={prop}>
                   <td className="px-4 py-2.5 font-mono text-xs text-blue-700">{prop}</td>
@@ -263,7 +264,7 @@ function EditableDemo({ theme }: { theme: import("plastic").CodeViewTheme }) {
         code={code}
         language="typescript"
         theme={theme}
-        editable
+        editable="enable"
         onValueChange={setCode}
       />
       <p className="text-xs text-gray-400">
@@ -291,6 +292,26 @@ async function fetchUser(id: number): Promise<User> {
   return res.json() as Promise<User>;
 }`;
 
+// 제어 문자 / Unicode invisibles 를 한 줄씩 포함한 샘플.
+// showInvisibles=true 에서 각종 칩 렌더를 확인하고, editable 모드에서
+// 칩 Atomicity (드래그·커서·복사) 를 테스트할 때 사용한다.
+const CONTROL_CHARS_SAMPLE = [
+  "// 제어 문자 샘플 (showInvisibles=true 로 보세요)",
+  "const esc = \"\u001B[31mred\u001B[0m\"; // ESC",
+  "const bel = \"\u0007\"; // BEL",
+  "const crt = \"line1\\r\"; // CRT (CR)",
+  "const tab = \"a\\tb\\tc\"; // HT arrows",
+  "const nbs = \"word\u00A0word\"; // NBS",
+  "const zws = \"join\u200Bword\"; // ZWS",
+  "const bom = \"\uFEFFhello\"; // BOM",
+  "const mix = \"A\u001BB\u200BC\";",
+].join("\n");
+
+const PLAYGROUND_PRESETS: Array<{ label: string; value: string }> = [
+  { label: "default",       value: PLAYGROUND_INITIAL },
+  { label: "control chars", value: CONTROL_CHARS_SAMPLE },
+];
+
 function PlaygroundSection() {
   const [code, setCode]                       = useState(PLAYGROUND_INITIAL);
   const [language, setLanguage]               = useState<CodeViewLanguage>("typescript");
@@ -299,7 +320,9 @@ function PlaygroundSection() {
   const [showAlternatingRows, setShowAlternatingRows] = useState(true);
   const [showInvisibles, setShowInvisibles]   = useState(false);
   const [tabSize, setTabSize]                 = useState(2);
-  const [editable, setEditable]               = useState(false);
+  const [indentUnit, setIndentUnit]           = useState<"space" | "tab">("space");
+  const [editable, setEditable]               = useState<"disable" | "enable" | "click">("disable");
+  const [invisibleFontStrategy, setInvisibleFontStrategy] = useState<"overlay" | "bundled">("overlay");
   const [wordWrap, setWordWrap]               = useState(false);
   const [hlInput, setHlInput]                 = useState("");
   const [gutterWidth, setGutterWidth]         = useState("");
@@ -315,7 +338,6 @@ function PlaygroundSection() {
     { label: "showAlternatingRows",value: showAlternatingRows,set: setShowAlternatingRows },
     { label: "showInvisibles",     value: showInvisibles,     set: setShowInvisibles },
     { label: "wordWrap",           value: wordWrap,           set: setWordWrap },
-    { label: "editable",           value: editable,           set: setEditable },
   ] as const;
 
   return (
@@ -368,6 +390,63 @@ function PlaygroundSection() {
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">indentUnit</span>
+            <div className="flex rounded border border-gray-200 overflow-hidden">
+              {(["space", "tab"] as const).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => setIndentUnit(u)}
+                  className={`px-3 py-1 text-xs transition-colors ${
+                    indentUnit === u
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">editable</span>
+            <div className="flex rounded border border-gray-200 overflow-hidden">
+              {(["disable", "enable", "click"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setEditable(m)}
+                  className={`px-3 py-1 text-xs transition-colors ${
+                    editable === m
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-24">invisibleFont</span>
+            <div className="flex rounded border border-gray-200 overflow-hidden">
+              {(["overlay", "bundled"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setInvisibleFontStrategy(s)}
+                  className={`px-3 py-1 text-xs transition-colors ${
+                    invisibleFontStrategy === s
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -424,7 +503,22 @@ function PlaygroundSection() {
 
       {/* ── Code input ── */}
       <div>
-        <p className="text-xs text-gray-400 mb-1.5 font-medium">code</p>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-xs text-gray-400 font-medium">code</p>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400">load</span>
+            {PLAYGROUND_PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => setCode(p.value)}
+                className="text-xs px-2 py-0.5 rounded border border-gray-200 bg-white hover:bg-gray-100 font-mono"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <textarea
           value={code}
           onChange={(e) => setCode(e.target.value)}
@@ -445,9 +539,11 @@ function PlaygroundSection() {
           showAlternatingRows={showAlternatingRows}
           showInvisibles={showInvisibles}
           tabSize={tabSize}
+          indentUnit={indentUnit}
           wordWrap={wordWrap}
+          invisibleFontStrategy={invisibleFontStrategy}
           editable={editable}
-          onValueChange={editable ? setCode : undefined}
+          onValueChange={editable !== "disable" ? setCode : undefined}
           highlightLines={highlightLines.length > 0 ? highlightLines : undefined}
           gutterWidth={gutterWidth || undefined}
           gutterGap={gutterGap || undefined}

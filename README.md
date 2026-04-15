@@ -208,7 +208,7 @@ const sample = `function greet(name: string) {\n\tconst msg = "Hello, " + name;\
 |---|---|---|
 | `\t` (U+0009) | `→` | 탭 — `tabSize` ch 너비 inline-block |
 | ` ` (U+0020) | `·` | 공백 |
-| U+0000–U+001F, U+007F | `ESC` `NUL` `BEL` … | ASCII 제어 문자 32종 — 니모닉 칩 |
+| U+0001–U+001F, U+007F | `ESC` `BEL` `DEL` … | ASCII 제어 문자 — 니모닉 칩 (U+0000 NUL 은 제외) |
 | U+00A0, U+200B … | `ZWS` `NBS` `BOM` … | Unicode 불가시 문자 20종 — 니모닉 칩 |
 
 모든 칩은 hover 시 `U+001B ESC` 형식의 툴팁을 표시합니다.

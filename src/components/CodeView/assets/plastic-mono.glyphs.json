@@ -1,0 +1,306 @@
+{
+  "glyphs": [
+    {
+      "codepoint": "U+0001",
+      "pua": "U+E100",
+      "mnemonic": "SOH",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0002",
+      "pua": "U+E101",
+      "mnemonic": "STX",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0003",
+      "pua": "U+E102",
+      "mnemonic": "ETX",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0004",
+      "pua": "U+E103",
+      "mnemonic": "EOT",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0005",
+      "pua": "U+E104",
+      "mnemonic": "ENQ",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0006",
+      "pua": "U+E105",
+      "mnemonic": "ACK",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0007",
+      "pua": "U+E106",
+      "mnemonic": "BEL",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0008",
+      "pua": "U+E107",
+      "mnemonic": "BSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000B",
+      "pua": "U+E108",
+      "mnemonic": "VTB",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000C",
+      "pua": "U+E109",
+      "mnemonic": "FFD",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000D",
+      "pua": "U+E10A",
+      "mnemonic": "CRT",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000E",
+      "pua": "U+E10B",
+      "mnemonic": "SFO",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000F",
+      "pua": "U+E10C",
+      "mnemonic": "SFI",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0010",
+      "pua": "U+E10D",
+      "mnemonic": "DLE",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0011",
+      "pua": "U+E10E",
+      "mnemonic": "DC1",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0012",
+      "pua": "U+E10F",
+      "mnemonic": "DC2",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0013",
+      "pua": "U+E110",
+      "mnemonic": "DC3",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0014",
+      "pua": "U+E111",
+      "mnemonic": "DC4",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0015",
+      "pua": "U+E112",
+      "mnemonic": "NAK",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0016",
+      "pua": "U+E113",
+      "mnemonic": "SYN",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0017",
+      "pua": "U+E114",
+      "mnemonic": "ETB",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0018",
+      "pua": "U+E115",
+      "mnemonic": "CAN",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0019",
+      "pua": "U+E116",
+      "mnemonic": "EOM",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001A",
+      "pua": "U+E117",
+      "mnemonic": "SUB",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001B",
+      "pua": "U+E118",
+      "mnemonic": "ESC",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001C",
+      "pua": "U+E119",
+      "mnemonic": "FSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001D",
+      "pua": "U+E11A",
+      "mnemonic": "GSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001E",
+      "pua": "U+E11B",
+      "mnemonic": "RSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001F",
+      "pua": "U+E11C",
+      "mnemonic": "USP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+007F",
+      "pua": "U+E11D",
+      "mnemonic": "DEL",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+00A0",
+      "pua": "U+E11E",
+      "mnemonic": "NBS",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+00AD",
+      "pua": "U+E11F",
+      "mnemonic": "SHY",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+034F",
+      "pua": "U+E120",
+      "mnemonic": "CGJ",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+180E",
+      "pua": "U+E121",
+      "mnemonic": "MVS",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200B",
+      "pua": "U+E122",
+      "mnemonic": "ZWS",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200C",
+      "pua": "U+E123",
+      "mnemonic": "ZWN",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200D",
+      "pua": "U+E124",
+      "mnemonic": "ZWJ",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200E",
+      "pua": "U+E125",
+      "mnemonic": "LRM",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200F",
+      "pua": "U+E126",
+      "mnemonic": "RLM",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202A",
+      "pua": "U+E127",
+      "mnemonic": "LRE",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202B",
+      "pua": "U+E128",
+      "mnemonic": "RLE",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202C",
+      "pua": "U+E129",
+      "mnemonic": "PDF",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202D",
+      "pua": "U+E12A",
+      "mnemonic": "LRO",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202E",
+      "pua": "U+E12B",
+      "mnemonic": "RLO",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2060",
+      "pua": "U+E12C",
+      "mnemonic": "WJR",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2061",
+      "pua": "U+E12D",
+      "mnemonic": "FAP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2062",
+      "pua": "U+E12E",
+      "mnemonic": "ITP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2063",
+      "pua": "U+E12F",
+      "mnemonic": "ISP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2064",
+      "pua": "U+E130",
+      "mnemonic": "IPL",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+FEFF",
+      "pua": "U+E131",
+      "mnemonic": "BOM",
+      "advance": 1800
+    }
+  ],
+  "zeroAdvance": 600,
+  "slotWidth": 1800
+}
