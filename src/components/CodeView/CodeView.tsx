@@ -393,11 +393,76 @@ export function CodeView({
   }
 
   // ── 복사 ────────────────────────────────────────────────────────────────────
-  function handleCopy() {
+  // "복사" 버튼 클릭: 전체 displayCode 를 클립보드에 쓰고 상태 배지를 업데이트한다.
+  function handleCopyAll() {
     navigator.clipboard.writeText(displayCode).then(() => {
       setCopyState("copied");
       setTimeout(() => setCopyState("idle"), 2000);
     });
+  }
+
+  // 선택 영역 Cmd+C / Ctrl+C 처리.
+  //
+  // 브라우저 기본 로직은 칩 내부에 표시된 니모닉 텍스트("NUL", "ESC", "→", "·") 를
+  // 그대로 직렬화해 원본 문자를 잃는다. 이 핸들러는 walker 를 이용해 effective
+  // content(텍스트 + 칩의 `data-char`) 를 재조립하고, `data-line-row` 경계에서
+  // `\n` 을 삽입해 라인 경계를 복원한다.
+  //
+  // 범위 계산:
+  //   - 텍스트 노드: 선택 Range 와의 교집합을 slice.
+  //   - 칩 요소: Range 와 "완전히 겹치는" 경우에만 data-char 한 글자로 포함
+  //     (contentEditable=false 로 원자 단위이므로 부분 선택은 의도된 적이 없다).
+  //
+  // gutter 서브트리는 walker 단에서 skip 되므로 라인 번호가 포함되지 않는다.
+  function handleCopyEvent(e: React.ClipboardEvent<HTMLDivElement>) {
+    const pre = preRef.current;
+    if (!pre) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    // 선택이 pre 밖(예: 복사 버튼) 이면 기본 동작에 위임
+    if (!range.intersectsNode(pre)) return;
+
+    const items = walkEffectiveNodes(pre);
+    let output = "";
+    let prevLineRow: Element | null | undefined = undefined;
+
+    for (const item of items) {
+      let contribution = "";
+
+      if (item.type === "text") {
+        const node = item.node;
+        // node 전체가 range 범위 밖이면 skip
+        const startCmp = range.comparePoint(node, 0);
+        const endCmp   = range.comparePoint(node, node.length);
+        if (endCmp < 0 || startCmp > 0) continue;
+
+        const sliceStart = range.startContainer === node ? range.startOffset : 0;
+        const sliceEnd   = range.endContainer   === node ? range.endOffset   : node.length;
+        if (sliceEnd <= sliceStart) continue;
+        contribution = node.data.slice(sliceStart, sliceEnd);
+      } else {
+        // 칩: parent 내 [indexInParent, indexInParent+1] 구간이 range 에
+        // 완전히 포함될 때만 1 글자로 포함
+        const startCmp = range.comparePoint(item.parent, item.indexInParent);
+        const endCmp   = range.comparePoint(item.parent, item.indexInParent + 1);
+        if (startCmp < 0 || endCmp > 0) continue;
+        contribution = item.element.getAttribute("data-char") ?? "";
+      }
+
+      if (!contribution) continue;
+
+      // 이전에 기여한 항목과 라인이 달라졌으면 경계 '\n' 삽입
+      if (prevLineRow !== undefined && item.lineRow !== prevLineRow) {
+        output += "\n";
+      }
+      prevLineRow = item.lineRow;
+      output += contribution;
+    }
+
+    if (!output) return;
+    e.preventDefault();
+    e.clipboardData.setData("text/plain", output);
   }
 
   // ── 렌더 ─────────────────────────────────────────────────────────────────────
@@ -431,7 +496,7 @@ export function CodeView({
 
         const copyBtn = showCopyButton ? (
           <button
-            onClick={handleCopy}
+            onClick={handleCopyAll}
             aria-label="코드 복사"
             style={{
               position:     "absolute",
@@ -484,6 +549,7 @@ export function CodeView({
           <div
             ref={containerRef}
             className={baseContainerClass}
+            onCopy={handleCopyEvent}
             style={{ ...baseStyle, display: "flex", tabSize }}
           >
             {copyBtn}
