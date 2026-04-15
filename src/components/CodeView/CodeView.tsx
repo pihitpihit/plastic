@@ -317,12 +317,17 @@ export function CodeView({
         const rowBgFor = (li: number): string | undefined => {
           const isHighlighted = highlightLines?.includes(li + 1) ?? false;
           if (isHighlighted) return highlightRowColor[theme];
+          // 편집 모드는 stripe 를 상위 wrapper 의 backgroundImage 로 처리한다
+          // (pre 가 IME 조합 중 opacity 0 이 되어도 stripe 가 유지되도록).
+          if (editable) return undefined;
           if (!showAlternatingRows) return undefined;
           if (li % 2 === 0) return undefined;
-          return editable && isFocused
-            ? alternatingRowEditColor[theme]
-            : alternatingRowColor[theme];
+          return alternatingRowColor[theme];
         };
+
+        const wrapperStripeColor = editable && isFocused
+          ? alternatingRowEditColor[theme]
+          : alternatingRowColor[theme];
 
         // pre 콘텐츠는 읽기/편집 모드 공통. 편집 모드에서 invisibles 칩을 그리면
         // 실제 1 문자와 폭이 달라 textarea caret 과 시각 정렬이 어긋나므로 raw 로.
@@ -393,6 +398,17 @@ export function CodeView({
                 display:  "grid",
                 // pre/textarea 가 동일 셀에 스택. 셀 크기는 pre 의 intrinsic 에
                 // 맞춰지고 textarea 는 그 크기에 stretch.
+                //
+                // 편집 모드의 stripe 는 이 wrapper 의 backgroundImage 로 렌더.
+                // 2lh 주기 linear-gradient 로 짝수 라인 상단은 transparent,
+                // 하단은 stripe 색. pre 의 opacity 와 무관하게 유지된다.
+                ...(editable && showAlternatingRows
+                  ? {
+                      backgroundImage: `linear-gradient(to bottom, transparent 50%, ${wrapperStripeColor} 50%)`,
+                      backgroundSize: "100% 2lh",
+                      backgroundRepeat: "repeat-y",
+                    }
+                  : {}),
               }}
             >
               <pre
