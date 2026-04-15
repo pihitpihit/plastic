@@ -375,14 +375,29 @@ export function CodeView({
         onValueChange?.(next);
       }
     } else if (e.key === "Enter") {
+      // execCommand("insertText", "\n") 은 Chrome/Safari 의 <pre contentEditable>
+      // 내부에서 종종 추가적인 블록 브레이크를 생성하여 1 회 Enter 에 2 개 이상의
+      // 빈 라인이 삽입되는 현상을 유발한다. 대신 editValue(문자열) 을 직접 편집
+      // 하고 커서 오프셋을 저장해 재렌더 후 복원한다 — Tab 처리와 같은 패턴.
       e.preventDefault();
       const sel = window.getSelection();
       if (!sel?.rangeCount) return;
-      const range  = sel.getRangeAt(0);
-      const cursor = domPosToOffset(pre, range.startContainer, range.startOffset);
-      const before = editValue.slice(0, cursor);
+      const range = sel.getRangeAt(0);
+      const start = domPosToOffset(pre, range.startContainer, range.startOffset);
+      const end   = sel.isCollapsed
+        ? start
+        : domPosToOffset(pre, range.endContainer, range.endOffset);
+      const lo = Math.min(start, end);
+      const hi = Math.max(start, end);
+      const before     = editValue.slice(0, lo);
+      const after      = editValue.slice(hi);
       const lineIndent = (before.split("\n").pop() ?? "").match(/^(\s*)/)?.[1] ?? "";
-      document.execCommand("insertText", false, "\n" + lineIndent);
+      const insert     = "\n" + lineIndent;
+      const next       = before + insert + after;
+      const newCursor  = lo + insert.length;
+      savedCursorRef.current = { start: newCursor, end: newCursor };
+      setEditValue(next);
+      onValueChange?.(next);
     }
   }
 
