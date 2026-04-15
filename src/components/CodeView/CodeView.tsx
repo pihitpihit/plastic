@@ -325,6 +325,38 @@ export function CodeView({
 
   // ── 편집 이벤트 ──────────────────────────────────────────────────────────────
 
+  // 일반 문자 입력을 state-edit 패턴으로 전환하여 React VDOM 과
+  // contentEditable DOM 의 drift 를 원천 차단한다. 브라우저 기본 동작이
+  // <pre contentEditable> 내부에 text node 를 분할/삽입하면 React 재렌더 시
+  // 누적 newline 등 비정상 DOM 이 만들어지기 때문.
+  //
+  // `insertText` 만 가로챈다. 붙여넣기/삭제/조합 등은 별도 핸들러가 처리.
+  function handleBeforeInput(e: React.FormEvent<HTMLPreElement>) {
+    const pre = preRef.current;
+    if (!pre) return;
+    if (isComposingRef.current) return;
+    const ne = e.nativeEvent as InputEvent;
+    if (ne.inputType !== "insertText") return;
+    const data = ne.data;
+    if (!data) return;
+
+    e.preventDefault();
+    const sel = window.getSelection();
+    if (!sel?.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    const start = domPosToOffset(pre, range.startContainer, range.startOffset);
+    const end   = sel.isCollapsed
+      ? start
+      : domPosToOffset(pre, range.endContainer, range.endOffset);
+    const lo = Math.min(start, end);
+    const hi = Math.max(start, end);
+    const next = editValue.slice(0, lo) + data + editValue.slice(hi);
+    const newCursor = lo + data.length;
+    savedCursorRef.current = { start: newCursor, end: newCursor };
+    setEditValue(next);
+    onValueChange?.(next);
+  }
+
   function handleInput() {
     const pre = preRef.current;
     if (!pre) return;
@@ -608,6 +640,7 @@ export function CodeView({
                 isComposingRef.current = false;
                 handleInput();
               },
+              onBeforeInput: handleBeforeInput,
               onInput: handleInput,
               onKeyDown: handleKeyDown,
               onPaste: handlePaste,
