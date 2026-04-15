@@ -452,7 +452,9 @@ export function CodeView({
                     // 평소에는 텍스트 투명 (pre 가 시각 담당). 조합 중엔 가시화.
                     color:              isComposing ? "inherit" : "transparent",
                     WebkitTextFillColor: isComposing ? "inherit" : "transparent",
-                    caretColor:         "currentColor",
+                    // caret-color 는 테마에 맞춘 실색상. currentColor 로 두면
+                    // color: transparent 일 때 caret 도 투명해져 깜빡임이 보이지 않는다.
+                    caretColor:         theme === "dark" ? "#fff" : "#000",
                     // pre 와 동일 메트릭 (inherit)
                     font:          "inherit",
                     letterSpacing: "inherit",
