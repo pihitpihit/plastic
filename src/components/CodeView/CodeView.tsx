@@ -124,6 +124,9 @@ export function CodeView({
   const [isComposing, setIsComposing] = useState(false);
   // "click" 모드: 편집 활성 여부. "enable" 은 항상 true, "disable" 은 항상 false.
   const [isEditingClick, setIsEditingClick] = useState(false);
+  // click 진입 시 클릭 좌표에서 계산된 caret 오프셋을 잠시 보관했다가
+  // textarea 가 렌더/포커스된 직후 useEffect 에서 setSelectionRange 로 반영.
+  const pendingClickCaretRef = useRef<number | null>(null);
   const prevCodeRef  = useRef(code);
   const preRef       = useRef<HTMLPreElement>(null);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
@@ -145,12 +148,66 @@ export function CodeView({
   const isEditingActive =
     editable === "enable" || (editable === "click" && isEditingClick);
 
-  // click 모드에서 편집 진입 직후 textarea 에 포커스
+  // click 모드에서 편집 진입 직후 textarea 에 포커스 + 클릭 위치로 caret 이동
   useEffect(() => {
     if (editable === "click" && isEditingClick) {
-      textareaRef.current?.focus();
+      const ta = textareaRef.current;
+      if (!ta) return;
+      ta.focus();
+      const off = pendingClickCaretRef.current;
+      if (off !== null) {
+        const clamped = Math.max(0, Math.min(off, ta.value.length));
+        ta.setSelectionRange(clamped, clamped);
+        pendingClickCaretRef.current = null;
+      }
     }
   }, [editable, isEditingClick]);
+
+  // (clientX, clientY) → editValue 내 선형 문자 오프셋.
+  // caretRangeFromPoint (Chromium/Safari) 또는 caretPositionFromPoint (Firefox)
+  // 로 Range 를 얻은 뒤 walkEffectiveNodes 로 pre 내 선형 offset 을 누적한다.
+  function pointToEditOffset(clientX: number, clientY: number): number {
+    const pre = preRef.current;
+    if (!pre) return 0;
+
+    type CaretFromPoint = (x: number, y: number) => { offsetNode: Node; offset: number } | null;
+    const d = document as Document & {
+      caretRangeFromPoint?: (x: number, y: number) => Range | null;
+      caretPositionFromPoint?: CaretFromPoint;
+    };
+    let target: Node | null = null;
+    let targetOffset = 0;
+    if (d.caretRangeFromPoint) {
+      const r = d.caretRangeFromPoint(clientX, clientY);
+      if (r) { target = r.startContainer; targetOffset = r.startOffset; }
+    } else if (d.caretPositionFromPoint) {
+      const p = d.caretPositionFromPoint(clientX, clientY);
+      if (p) { target = p.offsetNode; targetOffset = p.offset; }
+    }
+    if (!target) return editValue.length;
+    // 클릭이 pre 밖으로 떨어진 경우 안전하게 끝으로
+    if (!pre.contains(target) && target !== pre) return editValue.length;
+
+    const items = walkEffectiveNodes(pre);
+    let count = 0;
+    for (const item of items) {
+      if (item.type === "text") {
+        if (item.node === target) return count + targetOffset;
+        count += item.node.length;
+      } else {
+        // chip 내부(혹은 chip 자체)를 가리키는 경우: 오프셋 부호로 앞/뒤 결정
+        if (target === item.element || item.element.contains(target)) {
+          return count + (targetOffset > 0 ? 1 : 0);
+        }
+        if (target === item.parent && target.nodeType === Node.ELEMENT_NODE) {
+          if (targetOffset === item.indexInParent)     return count;
+          if (targetOffset === item.indexInParent + 1) return count + 1;
+        }
+        count += 1;
+      }
+    }
+    return count;
+  }
 
   const displayCode = editable === "disable" ? code : editValue;
 
@@ -470,7 +527,10 @@ export function CodeView({
                 aria-hidden={isEditingActive ? true : undefined}
                 onClick={
                   editable === "click" && !isEditingClick
-                    ? () => setIsEditingClick(true)
+                    ? (e) => {
+                        pendingClickCaretRef.current = pointToEditOffset(e.clientX, e.clientY);
+                        setIsEditingClick(true);
+                      }
                     : undefined
                 }
                 style={{
