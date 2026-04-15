@@ -200,7 +200,7 @@ export function CodeViewPage() {
                 ["showLineNumbers", "boolean", "true", "라인 번호 표시"],
                 ["showAlternatingRows", "boolean", "true", "홀짝 배경 구분"],
                 ["highlightLines", "number[]", "—", "강조할 라인 번호 배열 (1-indexed)"],
-                ["editable", "boolean", "false", "인라인 편집 활성화"],
+                ["editable", "\"disable\" | \"enable\" | \"click\"", "\"disable\"", "편집 모드 (click: 클릭 진입, Enter 종료, Shift+Enter 줄바꿈)"],
                 ["onValueChange", "(value: string) => void", "—", "편집 시 호출되는 콜백"],
               ].map(([prop, type, def, desc]) => (
                 <tr key={prop}>
@@ -263,7 +263,7 @@ function EditableDemo({ theme }: { theme: import("plastic").CodeViewTheme }) {
         code={code}
         language="typescript"
         theme={theme}
-        editable
+        editable="enable"
         onValueChange={setCode}
       />
       <p className="text-xs text-gray-400">
@@ -321,7 +321,7 @@ function PlaygroundSection() {
   const [showInvisibles, setShowInvisibles]   = useState(false);
   const [tabSize, setTabSize]                 = useState(2);
   const [indentUnit, setIndentUnit]           = useState<"space" | "tab">("space");
-  const [editable, setEditable]               = useState(false);
+  const [editable, setEditable]               = useState<"disable" | "enable" | "click">("disable");
   const [wordWrap, setWordWrap]               = useState(false);
   const [hlInput, setHlInput]                 = useState("");
   const [gutterWidth, setGutterWidth]         = useState("");
@@ -337,7 +337,6 @@ function PlaygroundSection() {
     { label: "showAlternatingRows",value: showAlternatingRows,set: setShowAlternatingRows },
     { label: "showInvisibles",     value: showInvisibles,     set: setShowInvisibles },
     { label: "wordWrap",           value: wordWrap,           set: setWordWrap },
-    { label: "editable",           value: editable,           set: setEditable },
   ] as const;
 
   return (
@@ -406,6 +405,25 @@ function PlaygroundSection() {
                   }`}
                 >
                   {u}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">editable</span>
+            <div className="flex rounded border border-gray-200 overflow-hidden">
+              {(["disable", "enable", "click"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setEditable(m)}
+                  className={`px-3 py-1 text-xs transition-colors ${
+                    editable === m
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {m}
                 </button>
               ))}
             </div>
@@ -504,7 +522,7 @@ function PlaygroundSection() {
           indentUnit={indentUnit}
           wordWrap={wordWrap}
           editable={editable}
-          onValueChange={editable ? setCode : undefined}
+          onValueChange={editable !== "disable" ? setCode : undefined}
           highlightLines={highlightLines.length > 0 ? highlightLines : undefined}
           gutterWidth={gutterWidth || undefined}
           gutterGap={gutterGap || undefined}

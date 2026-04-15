@@ -107,7 +107,7 @@ export function CodeView({
   tabSize = 2,
   indentUnit = "space",
   theme = "light",
-  editable = false,
+  editable = "disable",
   onValueChange,
   highlightLines,
   wordWrap = false,
@@ -122,6 +122,8 @@ export function CodeView({
   // IME 조합(한글/중/일 등) 중에는 pre 를 숨기고 textarea 텍스트를 보이게
   // 전환하여 OS/브라우저가 그리는 composition underline 이 노출되도록 한다.
   const [isComposing, setIsComposing] = useState(false);
+  // "click" 모드: 편집 활성 여부. "enable" 은 항상 true, "disable" 은 항상 false.
+  const [isEditingClick, setIsEditingClick] = useState(false);
   const prevCodeRef  = useRef(code);
   const preRef       = useRef<HTMLPreElement>(null);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
@@ -134,7 +136,23 @@ export function CodeView({
     }
   }, [code]);
 
-  const displayCode = editable ? editValue : code;
+  // editable prop 이 "click" 이 아니게 바뀌면 click-edit 상태 초기화.
+  useEffect(() => {
+    if (editable !== "click") setIsEditingClick(false);
+  }, [editable]);
+
+  // 편집 UI 활성 여부 (textarea 렌더/이벤트).
+  const isEditingActive =
+    editable === "enable" || (editable === "click" && isEditingClick);
+
+  // click 모드에서 편집 진입 직후 textarea 에 포커스
+  useEffect(() => {
+    if (editable === "click" && isEditingClick) {
+      textareaRef.current?.focus();
+    }
+  }, [editable, isEditingClick]);
+
+  const displayCode = editable === "disable" ? code : editValue;
 
   // ── 편집 이벤트 (textarea) ─────────────────────────────────────────────────
 
@@ -224,6 +242,13 @@ export function CodeView({
     }
 
     if (e.key === "Enter") {
+      // "click" 모드: Enter 는 편집 종료(blur), Shift+Enter 는 줄바꿈.
+      if (editable === "click" && !e.shiftKey) {
+        e.preventDefault();
+        setIsEditingClick(false);
+        textareaRef.current?.blur();
+        return;
+      }
       // 이전 라인의 앞쪽 공백만큼 자동 들여쓰기
       e.preventDefault();
       const before     = value.slice(0, s);
@@ -247,7 +272,8 @@ export function CodeView({
   // 읽기 모드 전용. 선택 영역의 chip 내부 mnemonic 텍스트("NUL", "·", "→") 를
   // 원본 문자로 역변환해 클립보드에 기록한다. 편집 모드는 textarea 가 처리.
   function handleCopyEvent(e: React.ClipboardEvent<HTMLDivElement>) {
-    if (editable) return;
+    // textarea 가 네이티브 복사를 처리하는 경우(=현재 편집 UI 활성) 만 skip.
+    if (isEditingActive) return;
     const pre = preRef.current;
     if (!pre) return;
     const sel = window.getSelection();
@@ -292,7 +318,7 @@ export function CodeView({
     <Highlight
       theme={internalThemes[theme]}
       // 편집 모드: 후행 공백 유지 (textarea value 와 pre 라인 수가 일치해야 함)
-      code={editable ? displayCode : displayCode.trimEnd()}
+      code={editable !== "disable" ? displayCode : displayCode.trimEnd()}
       language={language}
     >
       {({ className: hlClassName, style, tokens, getLineProps, getTokenProps }) => {
@@ -347,13 +373,13 @@ export function CodeView({
           if (isHighlighted) return highlightRowColor[theme];
           // 편집 모드는 stripe 를 상위 wrapper 의 backgroundImage 로 처리한다
           // (pre 가 IME 조합 중 opacity 0 이 되어도 stripe 가 유지되도록).
-          if (editable) return undefined;
+          if (editable !== "disable") return undefined;
           if (!showAlternatingRows) return undefined;
           if (li % 2 === 0) return undefined;
           return alternatingRowColor[theme];
         };
 
-        const wrapperStripeColor = editable && isFocused
+        const wrapperStripeColor = isEditingActive && isFocused
           ? alternatingRowEditColor[theme]
           : alternatingRowColor[theme];
 
@@ -378,7 +404,7 @@ export function CodeView({
                 return (
                   <span key={ti} {...tokenSpanProps}>
                     {showInvisibles
-                      ? renderWithInvisibles(token.content, theme, tabSize, editable)
+                      ? renderWithInvisibles(token.content, theme, tabSize, editable !== "disable")
                       : tokenContent}
                   </span>
                 );
@@ -430,7 +456,7 @@ export function CodeView({
                 // 편집 모드의 stripe 는 이 wrapper 의 backgroundImage 로 렌더.
                 // 2lh 주기 linear-gradient 로 짝수 라인 상단은 transparent,
                 // 하단은 stripe 색. pre 의 opacity 와 무관하게 유지된다.
-                ...(editable && showAlternatingRows
+                ...(editable !== "disable" && showAlternatingRows
                   ? {
                       backgroundImage: `linear-gradient(to bottom, transparent 50%, ${wrapperStripeColor} 50%)`,
                       backgroundSize: "100% 2lh",
@@ -441,7 +467,12 @@ export function CodeView({
             >
               <pre
                 ref={preRef}
-                aria-hidden={editable ? true : undefined}
+                aria-hidden={isEditingActive ? true : undefined}
+                onClick={
+                  editable === "click" && !isEditingClick
+                    ? () => setIsEditingClick(true)
+                    : undefined
+                }
                 style={{
                   gridArea:   "1 / 1",
                   margin:     0,
@@ -455,24 +486,31 @@ export function CodeView({
                   tabSize,
                   overflow:   "visible",
                   background: "transparent",
-                  // 편집 모드: 입력은 textarea 가 받도록 pre 는 이벤트 비활성화
-                  pointerEvents: editable ? "none" : undefined,
+                  // textarea 가 렌더되고 있을 때만 pre 가 이벤트를 막는다.
+                  // "click" 모드에서 편집 비활성 상태에서는 pre 가 onClick 을
+                  // 받아야 편집 진입이 가능.
+                  pointerEvents: isEditingActive ? "none" : undefined,
+                  cursor: editable === "click" && !isEditingClick ? "text" : undefined,
                   // IME 조합 중에는 pre 를 숨겨 textarea 의 composition
                   // underline 이 가려지지 않게 한다.
-                  opacity: editable && isComposing ? 0 : 1,
+                  opacity: isEditingActive && isComposing ? 0 : 1,
                 }}
               >
                 {preContent}
               </pre>
 
-              {editable && (
+              {isEditingActive && (
                 <textarea
                   ref={textareaRef}
                   value={editValue}
                   onChange={handleChange}
                   onKeyDown={handleKeyDown}
                   onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
+                  onBlur={() => {
+                    setIsFocused(false);
+                    // "click" 모드: blur 되면 편집 종료
+                    if (editable === "click") setIsEditingClick(false);
+                  }}
                   onCompositionStart={() => setIsComposing(true)}
                   onCompositionEnd={() => setIsComposing(false)}
                   spellCheck={false}

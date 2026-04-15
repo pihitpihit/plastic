@@ -25,9 +25,15 @@ export interface CodeViewProps {
   indentUnit?: "space" | "tab";
   /** 라이트 / 다크 테마 (기본값: "light") */
   theme?: CodeViewTheme;
-  /** 편집 가능 여부. true 시 textarea 오버레이로 인라인 편집 활성화 (기본값: false) */
-  editable?: boolean;
-  /** editable=true 시 코드 변경 콜백 */
+  /**
+   * 편집 모드 (기본값: "disable").
+   *   - "disable": 읽기 전용.
+   *   - "enable":  상시 편집 가능.
+   *   - "click":   클릭 시 편집 모드 진입. Enter 로 편집 종료 (blur),
+   *                Shift+Enter 로 줄바꿈. blur 시에도 자동 종료.
+   */
+  editable?: "disable" | "enable" | "click";
+  /** editable !== "disable" 시 코드 변경 콜백 */
   onValueChange?: (value: string) => void;
   /** 강조할 라인 번호 배열 (1-indexed) */
   highlightLines?: number[];
