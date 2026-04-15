@@ -157,6 +157,13 @@ export function CodeView({
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    // IME 조합 중 발생하는 keydown 은 전부 네이티브에 위임한다.
+    // (한글 입력 후 Enter 로 조합 종료 시 우리 Enter 핸들러가 개입하면
+    //  마지막 글자가 중복되고 개행이 추가 삽입되는 문제가 생긴다.)
+    // React 의 SyntheticKeyboardEvent 는 nativeEvent.isComposing 을 제공.
+    // 구형 경로로 keyCode === 229 도 함께 체크.
+    if (e.nativeEvent.isComposing || e.keyCode === 229) return;
+
     const ta = e.currentTarget;
     const indent = " ".repeat(tabSize);
     const { selectionStart: s, selectionEnd: en, value } = ta;
