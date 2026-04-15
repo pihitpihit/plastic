@@ -7,8 +7,34 @@
  *   - ASCII control chars   → 3-char uppercase mnemonic chip
  *   - Unicode invisible     → 3-char uppercase mnemonic chip
  */
-import type { ReactNode } from "react";
+import type { ReactNode, CSSProperties } from "react";
 import type { CodeViewTheme } from "./CodeView.types";
+
+// tab chip 스타일 주입 (모듈 초기화 1 회).
+// 실제 \t 문자를 span 안에 그대로 두어 브라우저의 tab-size CSS 가 자연스럽게
+// tab stop 폭을 결정하도록 하고, 화살표는 ::before 로 오버레이한다.
+// (width: tabSize*ch 로 고정폭을 강제하면 라인 중간의 tab 에서 textarea 의
+// 실제 \t 렌더 폭과 pre 의 chip 폭이 어긋난다.)
+const TAB_STYLE_ID = "plastic-cv-tab-style";
+if (typeof document !== "undefined" && !document.getElementById(TAB_STYLE_ID)) {
+  const s = document.createElement("style");
+  s.id = TAB_STYLE_ID;
+  s.textContent = `
+    .plastic-cv-tab {
+      position: relative;
+      color: transparent;
+    }
+    .plastic-cv-tab::before {
+      content: "\\2192";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--plastic-cv-inv, rgba(0,0,0,0.22));
+      pointer-events: none;
+    }
+  `;
+  document.head.appendChild(s);
+}
 
 const INVISIBLE_COLOR: Record<CodeViewTheme, string> = {
   light: "rgba(0,0,0,0.22)",
@@ -228,20 +254,19 @@ export function renderWithInvisibles(
   for (const char of content) {
     if (char === "\t") {
       flush();
+      // 실제 \t 문자를 content 로 유지. 브라우저의 tab-size CSS 가 현재 열
+      // 위치에서 다음 tab stop 까지 자연 폭을 계산하므로 textarea 와 일치.
+      // 화살표는 ::before 오버레이.
       result.push(
         <span
           key={key++}
+          className="plastic-cv-tab"
           role="presentation"
           aria-label="tab"
           data-char={"\t"}
-          style={{
-            display: "inline-block",
-            width: `${tabSize}ch`,
-            color: INVISIBLE_COLOR[theme],
-            overflow: "hidden",
-          }}
+          style={{ ["--plastic-cv-inv" as unknown as keyof CSSProperties]: INVISIBLE_COLOR[theme] } as CSSProperties}
         >
-          →
+          {"\t"}
         </span>
       );
     } else if (char === " ") {
