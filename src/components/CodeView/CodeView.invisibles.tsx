@@ -9,6 +9,7 @@
  */
 import type { ReactNode, CSSProperties } from "react";
 import type { CodeViewTheme } from "./CodeView.types";
+import { C0_TO_PUA } from "./assets/plastic-mono.pua-map";
 
 // tab chip 스타일 주입 (모듈 초기화 1 회).
 // 실제 \t 문자를 span 안에 그대로 두어 브라우저의 tab-size CSS 가 자연스럽게
@@ -262,9 +263,12 @@ export function renderWithInvisibles(
       const chipColors = CHIP_CATEGORY_COLORS[category][theme];
 
       if (bundledFont) {
-        // PlasticMono 폰트 자체가 제어 문자를 3ch advance glyph 로 렌더하므로
-        // 라벨 오버레이가 필요 없다. 배경 칩 색만 얇은 span 으로 입힌다.
-        // data-char 는 기존과 동일하게 원문자로 부여 (copy/selection 계산용).
+        // 브라우저는 C0 제어 문자(U+0001–U+001F) 를 폰트 cmap 조회 없이 렌더
+        // 스킵 한다. 이를 우회하려고 동일 glyph 에 PUA alias 를 부여해 둔 뒤,
+        // 여기서는 원문자 대신 PUA 치환 문자를 DOM 에 넣는다. 이제 브라우저가
+        // 정상 문자로 인식해 폰트 glyph("ESC" 3ch) 를 그린다.
+        // `data-char` 는 계속 원문자이므로 선택·복사 로직 영향 없음.
+        const pua = C0_TO_PUA[char] ?? char;
         result.push(
           <span
             key={key++}
@@ -277,7 +281,7 @@ export function renderWithInvisibles(
               borderRadius: "3px",
             }}
           >
-            {char}
+            {pua}
           </span>
         );
       } else if (compact) {

@@ -2,7 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 import type { CodeViewProps } from "./CodeView.types";
 import { renderWithInvisibles } from "./CodeView.invisibles";
-import { ensurePlasticMono, PLASTIC_MONO_STACK } from "./CodeView.invisibleFont";
+import {
+  ensurePlasticMono,
+  PLASTIC_MONO_STACK,
+  toPuaDisplay,
+  fromPuaDisplay,
+} from "./CodeView.invisibleFont";
 
 // Internal — not exported
 const internalThemes = {
@@ -225,7 +230,9 @@ export function CodeView({
   // ── 편집 이벤트 (textarea) ─────────────────────────────────────────────────
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const next = e.target.value;
+    // bundled 모드에서는 textarea.value 가 PUA 치환 문자열이므로 원문자 복원.
+    // overlay 모드에서는 fromPuaDisplay 가 no-op (치환 대상 없음).
+    const next = useBundledFont ? fromPuaDisplay(e.target.value) : e.target.value;
     setEditValue(next);
     onValueChange?.(next);
   }
@@ -253,7 +260,11 @@ export function CodeView({
 
     const ta = e.currentTarget;
     const indent = indentUnit === "tab" ? "\t" : " ".repeat(tabSize);
-    const { selectionStart: s, selectionEnd: en, value } = ta;
+    // bundled 모드에서는 ta.value 가 PUA 치환 문자열이므로 raw editValue 를
+    // 진실 소스로 사용. selection index 는 1:1 substitution 덕에 그대로 유효.
+    const value = useBundledFont ? editValue : ta.value;
+    const s  = ta.selectionStart;
+    const en = ta.selectionEnd;
 
     // 라인의 선두에서 한 단위 outdent 를 수행했을 때의 strip 길이를 반환.
     // 탭 1 개가 있으면 탭 1 개 제거, 아니면 선두 공백을 최대 tabSize 개까지 제거.
@@ -575,8 +586,30 @@ export function CodeView({
               {isEditingActive && (
                 <textarea
                   ref={textareaRef}
-                  value={editValue}
+                  // bundled 모드: PUA 치환 문자열을 textarea 에 보여 폰트가
+                  // 3ch glyph 로 렌더하게 한다. 1:1 substitution 이므로
+                  // selectionStart/End 는 raw 인덱스와 동일.
+                  value={useBundledFont ? toPuaDisplay(editValue) : editValue}
                   onChange={handleChange}
+                  onCopy={(e) => {
+                    if (!useBundledFont) return;
+                    const ta = e.currentTarget;
+                    const slice = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+                    if (!slice) return;
+                    e.preventDefault();
+                    e.clipboardData.setData("text/plain", fromPuaDisplay(slice));
+                  }}
+                  onCut={(e) => {
+                    if (!useBundledFont) return;
+                    const ta = e.currentTarget;
+                    const s = ta.selectionStart, en = ta.selectionEnd;
+                    if (s === en) return;
+                    const slice = ta.value.slice(s, en);
+                    e.preventDefault();
+                    e.clipboardData.setData("text/plain", fromPuaDisplay(slice));
+                    const next = editValue.slice(0, s) + editValue.slice(en);
+                    updateValueAndCursor(next, s);
+                  }}
                   onKeyDown={handleKeyDown}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => {
