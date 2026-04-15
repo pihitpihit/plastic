@@ -118,6 +118,9 @@ export function CodeView({
   const [editValue, setEditValue] = useState(code);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const [isFocused, setIsFocused] = useState(false);
+  // IME 조합(한글/중/일 등) 중에는 pre 를 숨기고 textarea 텍스트를 보이게
+  // 전환하여 OS/브라우저가 그리는 composition underline 이 노출되도록 한다.
+  const [isComposing, setIsComposing] = useState(false);
   const prevCodeRef  = useRef(code);
   const preRef       = useRef<HTMLPreElement>(null);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
@@ -341,8 +344,8 @@ export function CodeView({
                 const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
                 return (
                   <span key={ti} {...tokenSpanProps}>
-                    {showInvisibles && !editable
-                      ? renderWithInvisibles(token.content, theme, tabSize)
+                    {showInvisibles
+                      ? renderWithInvisibles(token.content, theme, tabSize, editable)
                       : tokenContent}
                   </span>
                 );
@@ -410,6 +413,9 @@ export function CodeView({
                   background: "transparent",
                   // 편집 모드: 입력은 textarea 가 받도록 pre 는 이벤트 비활성화
                   pointerEvents: editable ? "none" : undefined,
+                  // IME 조합 중에는 pre 를 숨겨 textarea 의 composition
+                  // underline 이 가려지지 않게 한다.
+                  opacity: editable && isComposing ? 0 : 1,
                 }}
               >
                 {preContent}
@@ -423,6 +429,8 @@ export function CodeView({
                   onKeyDown={handleKeyDown}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={() => setIsComposing(false)}
                   spellCheck={false}
                   autoCapitalize="off"
                   autoCorrect="off"
@@ -441,9 +449,9 @@ export function CodeView({
                     // 외부 container 의 overflow-x-auto 가 가로 스크롤 담당
                     overflow:   "hidden",
                     background: "transparent",
-                    // 텍스트 자체는 투명. caret 만 보인다. pre 가 시각 담당.
-                    color:              "transparent",
-                    WebkitTextFillColor: "transparent",
+                    // 평소에는 텍스트 투명 (pre 가 시각 담당). 조합 중엔 가시화.
+                    color:              isComposing ? "inherit" : "transparent",
+                    WebkitTextFillColor: isComposing ? "inherit" : "transparent",
                     caretColor:         "currentColor",
                     // pre 와 동일 메트릭 (inherit)
                     font:          "inherit",
