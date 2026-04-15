@@ -320,6 +320,7 @@ function PlaygroundSection() {
   const [showAlternatingRows, setShowAlternatingRows] = useState(true);
   const [showInvisibles, setShowInvisibles]   = useState(false);
   const [tabSize, setTabSize]                 = useState(2);
+  const [indentUnit, setIndentUnit]           = useState<"space" | "tab">("space");
   const [editable, setEditable]               = useState(false);
   const [wordWrap, setWordWrap]               = useState(false);
   const [hlInput, setHlInput]                 = useState("");
@@ -389,6 +390,25 @@ function PlaygroundSection() {
                 <option key={n} value={n}>{n}</option>
               ))}
             </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-14">indentUnit</span>
+            <div className="flex rounded border border-gray-200 overflow-hidden">
+              {(["space", "tab"] as const).map((u) => (
+                <button
+                  key={u}
+                  onClick={() => setIndentUnit(u)}
+                  className={`px-3 py-1 text-xs transition-colors ${
+                    indentUnit === u
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {u}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -481,6 +501,7 @@ function PlaygroundSection() {
           showAlternatingRows={showAlternatingRows}
           showInvisibles={showInvisibles}
           tabSize={tabSize}
+          indentUnit={indentUnit}
           wordWrap={wordWrap}
           editable={editable}
           onValueChange={editable ? setCode : undefined}

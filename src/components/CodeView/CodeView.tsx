@@ -105,6 +105,7 @@ export function CodeView({
   showAlternatingRows = true,
   showInvisibles = false,
   tabSize = 2,
+  indentUnit = "space",
   theme = "light",
   editable = false,
   onValueChange,
@@ -165,27 +166,47 @@ export function CodeView({
     if (e.nativeEvent.isComposing || e.keyCode === 229) return;
 
     const ta = e.currentTarget;
-    const indent = " ".repeat(tabSize);
+    const indent = indentUnit === "tab" ? "\t" : " ".repeat(tabSize);
     const { selectionStart: s, selectionEnd: en, value } = ta;
+
+    // 라인의 선두에서 한 단위 outdent 를 수행했을 때의 strip 길이를 반환.
+    // 탭 1 개가 있으면 탭 1 개 제거, 아니면 선두 공백을 최대 tabSize 개까지 제거.
+    const outdentStripLen = (line: string): number => {
+      if (line.startsWith("\t")) return 1;
+      const m = line.match(/^ +/);
+      return m ? Math.min(m[0].length, tabSize) : 0;
+    };
 
     if (e.key === "Tab") {
       e.preventDefault();
+
       if (s === en) {
-        const next = value.slice(0, s) + indent + value.slice(en);
-        updateValueAndCursor(next, s + indent.length);
+        // 단일 커서
+        if (e.shiftKey) {
+          // 현재 라인 outdent: 선두 \t 1 개 또는 선두 공백 최대 tabSize 개 제거
+          const lineStart = value.lastIndexOf("\n", Math.max(0, s - 1)) + 1;
+          const line      = value.slice(lineStart, value.indexOf("\n", s) === -1 ? value.length : value.indexOf("\n", s));
+          const strip     = outdentStripLen(line);
+          if (strip === 0) return;
+          const next      = value.slice(0, lineStart) + line.slice(strip) + value.slice(lineStart + line.length);
+          const posInLine = s - lineStart;
+          const newCaret  = lineStart + Math.max(0, posInLine - strip);
+          updateValueAndCursor(next, newCaret);
+        } else {
+          const next = value.slice(0, s) + indent + value.slice(en);
+          updateValueAndCursor(next, s + indent.length);
+        }
       } else {
         // 다중 라인 들여쓰기 / 내어쓰기
-        const before        = value.slice(0, s);
-        const startLineStart = before.lastIndexOf("\n") + 1;
-        const selected      = value.slice(startLineStart, en);
-        const lines         = selected.split("\n");
+        const startLineStart = value.lastIndexOf("\n", Math.max(0, s - 1)) + 1;
+        const selected       = value.slice(startLineStart, en);
+        const lines          = selected.split("\n");
         let startDelta = 0;
         let totalDelta = 0;
         const modified = lines.map((l, i) => {
           if (e.shiftKey) {
-            const stripped = l.startsWith(indent)
-              ? l.slice(indent.length)
-              : l.replace(/^( +)/, (m) => m.slice(Math.min(m.length, tabSize)));
+            const strip    = outdentStripLen(l);
+            const stripped = l.slice(strip);
             const d = stripped.length - l.length;
             if (i === 0) startDelta = d;
             totalDelta += d;

@@ -17,6 +17,12 @@ export interface CodeViewProps {
   showInvisibles?: boolean;
   /** 탭 너비 — tab-size CSS 및 showInvisibles 탭 렌더링에 적용 (기본값: 2) */
   tabSize?: number;
+  /**
+   * editable=true 에서 Tab 키가 삽입할 문자 단위.
+   *   - "space": tabSize 만큼의 공백 삽입 (기본값)
+   *   - "tab":   \t 문자 하나 삽입 (CSS tab-size 에 따라 시각 폭 결정)
+   */
+  indentUnit?: "space" | "tab";
   /** 라이트 / 다크 테마 (기본값: "light") */
   theme?: CodeViewTheme;
   /** 편집 가능 여부. true 시 textarea 오버레이로 인라인 편집 활성화 (기본값: false) */
