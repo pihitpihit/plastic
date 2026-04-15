@@ -90,6 +90,32 @@ function domPosToOffset(
   container: Node,
   offset: number,
 ): number {
+  // Safari 보정: selection endpoint 가 contentEditable=false 칩(`[data-char]`)
+  // 내부 텍스트 노드나 칩 요소 자체로 떨어지는 경우가 있다. 이런 endpoint 를
+  // 칩 바로 앞/뒤 경계로 클램프하여 일관된 오프셋 계산을 보장한다.
+  {
+    let node: Node | null = container;
+    while (node && node !== root) {
+      if (
+        node.nodeType === Node.ELEMENT_NODE &&
+        (node as Element).hasAttribute("data-char")
+      ) {
+        const chip = node as Element;
+        const chipParent = chip.parentNode;
+        if (chipParent && chipParent.nodeType === Node.ELEMENT_NODE) {
+          const idx = Array.from(chipParent.childNodes).indexOf(chip as ChildNode);
+          // container === chip && offset > 0 이면 "칩 뒤", 그 외(칩 내부 깊숙이
+          // 떨어진 경우 포함)는 안전하게 "칩 앞"으로 클램프한다.
+          const afterChip = node === container && offset > 0;
+          container = chipParent as Element;
+          offset = afterChip ? idx + 1 : idx;
+        }
+        break;
+      }
+      node = node.parentNode;
+    }
+  }
+
   const nodes = walkEffectiveNodes(root);
   let count = 0;
 
