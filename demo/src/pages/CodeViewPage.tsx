@@ -202,6 +202,7 @@ export function CodeViewPage() {
                 ["highlightLines", "number[]", "—", "강조할 라인 번호 배열 (1-indexed)"],
                 ["editable", "\"disable\" | \"enable\" | \"click\"", "\"disable\"", "편집 모드 (click: 클릭 진입, Enter 종료, Shift+Enter 줄바꿈)"],
                 ["onValueChange", "(value: string) => void", "—", "편집 시 호출되는 콜백"],
+                ["invisibleFontStrategy", "\"overlay\" | \"bundled\"", "\"overlay\"", "bundled: 번들 폰트(PlasticMono)로 chip 을 glyph 수준에서 정렬"],
               ].map(([prop, type, def, desc]) => (
                 <tr key={prop}>
                   <td className="px-4 py-2.5 font-mono text-xs text-blue-700">{prop}</td>
@@ -321,6 +322,7 @@ function PlaygroundSection() {
   const [tabSize, setTabSize]                 = useState(2);
   const [indentUnit, setIndentUnit]           = useState<"space" | "tab">("space");
   const [editable, setEditable]               = useState<"disable" | "enable" | "click">("disable");
+  const [invisibleFontStrategy, setInvisibleFontStrategy] = useState<"overlay" | "bundled">("overlay");
   const [wordWrap, setWordWrap]               = useState(false);
   const [hlInput, setHlInput]                 = useState("");
   const [gutterWidth, setGutterWidth]         = useState("");
@@ -427,6 +429,25 @@ function PlaygroundSection() {
               ))}
             </div>
           </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 w-24">invisibleFont</span>
+            <div className="flex rounded border border-gray-200 overflow-hidden">
+              {(["overlay", "bundled"] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setInvisibleFontStrategy(s)}
+                  className={`px-3 py-1 text-xs transition-colors ${
+                    invisibleFontStrategy === s
+                      ? "bg-blue-500 text-white"
+                      : "bg-white text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* boolean props */}
@@ -520,6 +541,7 @@ function PlaygroundSection() {
           tabSize={tabSize}
           indentUnit={indentUnit}
           wordWrap={wordWrap}
+          invisibleFontStrategy={invisibleFontStrategy}
           editable={editable}
           onValueChange={editable !== "disable" ? setCode : undefined}
           highlightLines={highlightLines.length > 0 ? highlightLines : undefined}

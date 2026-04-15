@@ -45,5 +45,14 @@ export interface CodeViewProps {
   gutterGap?: string;
   /** 복사 버튼 표시 여부 (기본값: true) */
   showCopyButton?: boolean;
+  /**
+   * 제어 문자 / 불가시 유니코드 시각화 전략 (기본 "overlay").
+   *   - "overlay": 1ch 슬롯 + absolute 라벨. 사용자 폰트 유지.
+   *   - "bundled": 번들된 PlasticMono (JetBrains Mono NL 기반) 폰트 사용.
+   *                폰트가 직접 3ch advance glyph 로 mnemonic 을 렌더하므로
+   *                pre 와 textarea 의 캐럿·선택 영역이 완전 정합.
+   *                CodeView 전체가 PlasticMono 로 렌더된다.
+   */
+  invisibleFontStrategy?: "bundled" | "overlay";
   className?: string;
 }

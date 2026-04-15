@@ -208,6 +208,7 @@ export function renderWithInvisibles(
   theme: CodeViewTheme,
   tabSize: number,
   compact = false,
+  bundledFont = false,
 ): ReactNode[] {
   const result: ReactNode[] = [];
   let buffer = "";
@@ -260,7 +261,26 @@ export function renderWithInvisibles(
       const category = MNEMONIC_CATEGORY[mnemonic] ?? "format";
       const chipColors = CHIP_CATEGORY_COLORS[category][theme];
 
-      if (compact) {
+      if (bundledFont) {
+        // PlasticMono 폰트 자체가 제어 문자를 3ch advance glyph 로 렌더하므로
+        // 라벨 오버레이가 필요 없다. 배경 칩 색만 얇은 span 으로 입힌다.
+        // data-char 는 기존과 동일하게 원문자로 부여 (copy/selection 계산용).
+        result.push(
+          <span
+            key={key++}
+            title={`U+${hex} ${mnemonic}`}
+            aria-label={mnemonic}
+            data-char={char}
+            style={{
+              background: chipColors.background,
+              color: chipColors.color,
+              borderRadius: "3px",
+            }}
+          >
+            {char}
+          </span>
+        );
+      } else if (compact) {
         // 편집 모드: 레이아웃 폭은 1ch 로 유지(textarea caret 과 정렬) 하되,
         // mnemonic 라벨을 absolute 오버레이로 얹어 가독성을 읽기 모드와 동일하게 확보.
         // 라벨이 이웃 열로 overflow 되는 것은 감수 (제어 문자는 드물게 등장).

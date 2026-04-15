@@ -1,0 +1,256 @@
+{
+  "glyphs": [
+    {
+      "codepoint": "U+0001",
+      "mnemonic": "SOH",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0002",
+      "mnemonic": "STX",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0003",
+      "mnemonic": "ETX",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0004",
+      "mnemonic": "EOT",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0005",
+      "mnemonic": "ENQ",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0006",
+      "mnemonic": "ACK",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0007",
+      "mnemonic": "BEL",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0008",
+      "mnemonic": "BSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000B",
+      "mnemonic": "VTB",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000C",
+      "mnemonic": "FFD",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000D",
+      "mnemonic": "CRT",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000E",
+      "mnemonic": "SFO",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+000F",
+      "mnemonic": "SFI",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0010",
+      "mnemonic": "DLE",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0011",
+      "mnemonic": "DC1",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0012",
+      "mnemonic": "DC2",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0013",
+      "mnemonic": "DC3",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0014",
+      "mnemonic": "DC4",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0015",
+      "mnemonic": "NAK",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0016",
+      "mnemonic": "SYN",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0017",
+      "mnemonic": "ETB",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0018",
+      "mnemonic": "CAN",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+0019",
+      "mnemonic": "EOM",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001A",
+      "mnemonic": "SUB",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001B",
+      "mnemonic": "ESC",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001C",
+      "mnemonic": "FSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001D",
+      "mnemonic": "GSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001E",
+      "mnemonic": "RSP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+001F",
+      "mnemonic": "USP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+007F",
+      "mnemonic": "DEL",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+00A0",
+      "mnemonic": "NBS",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+00AD",
+      "mnemonic": "SHY",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+034F",
+      "mnemonic": "CGJ",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+180E",
+      "mnemonic": "MVS",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200B",
+      "mnemonic": "ZWS",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200C",
+      "mnemonic": "ZWN",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200D",
+      "mnemonic": "ZWJ",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200E",
+      "mnemonic": "LRM",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+200F",
+      "mnemonic": "RLM",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202A",
+      "mnemonic": "LRE",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202B",
+      "mnemonic": "RLE",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202C",
+      "mnemonic": "PDF",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202D",
+      "mnemonic": "LRO",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+202E",
+      "mnemonic": "RLO",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2060",
+      "mnemonic": "WJR",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2061",
+      "mnemonic": "FAP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2062",
+      "mnemonic": "ITP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2063",
+      "mnemonic": "ISP",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+2064",
+      "mnemonic": "IPL",
+      "advance": 1800
+    },
+    {
+      "codepoint": "U+FEFF",
+      "mnemonic": "BOM",
+      "advance": 1800
+    }
+  ],
+  "zeroAdvance": 600,
+  "slotWidth": 1800
+}

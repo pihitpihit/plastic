@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 import type { CodeViewProps } from "./CodeView.types";
 import { renderWithInvisibles } from "./CodeView.invisibles";
+import { ensurePlasticMono, PLASTIC_MONO_STACK } from "./CodeView.invisibleFont";
 
 // Internal — not exported
 const internalThemes = {
@@ -114,6 +115,7 @@ export function CodeView({
   gutterWidth: gutterWidthProp,
   gutterGap: gutterGapProp,
   showCopyButton = true,
+  invisibleFontStrategy = "overlay",
   className = "",
 }: CodeViewProps) {
   const [editValue, setEditValue] = useState(code);
@@ -127,6 +129,15 @@ export function CodeView({
   // click 진입 시 클릭 좌표에서 계산된 caret 오프셋을 잠시 보관했다가
   // textarea 가 렌더/포커스된 직후 useEffect 에서 setSelectionRange 로 반영.
   const pendingClickCaretRef = useRef<number | null>(null);
+  // bundled 폰트 로드 완료 여부. overlay 전략이거나 showInvisibles=false 면 영향 없음.
+  const [bundledFontReady, setBundledFontReady] = useState(false);
+  useEffect(() => {
+    if (invisibleFontStrategy !== "bundled") return;
+    let alive = true;
+    ensurePlasticMono().then(() => { if (alive) setBundledFontReady(true); });
+    return () => { alive = false; };
+  }, [invisibleFontStrategy]);
+  const useBundledFont = invisibleFontStrategy === "bundled" && bundledFontReady;
   const prevCodeRef  = useRef(code);
   const preRef       = useRef<HTMLPreElement>(null);
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
@@ -394,7 +405,9 @@ export function CodeView({
         const baseStyle = {
           ...style,
           position:             "relative" as const,
-          fontFamily:           "ui-monospace, 'Cascadia Code', Menlo, monospace",
+          fontFamily:           useBundledFont
+            ? PLASTIC_MONO_STACK
+            : "ui-monospace, 'Cascadia Code', Menlo, monospace",
           fontVariantLigatures: "none" as const,
           fontKerning:          "none" as const,
         };
@@ -461,7 +474,7 @@ export function CodeView({
                 return (
                   <span key={ti} {...tokenSpanProps}>
                     {showInvisibles
-                      ? renderWithInvisibles(token.content, theme, tabSize, isEditingActive)
+                      ? renderWithInvisibles(token.content, theme, tabSize, isEditingActive, useBundledFont)
                       : tokenContent}
                   </span>
                 );
