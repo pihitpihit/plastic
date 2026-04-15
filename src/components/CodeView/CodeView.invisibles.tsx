@@ -154,13 +154,17 @@ const CHIP_STYLE = {
   display: "inline-block" as const,
   verticalAlign: "middle" as const,
   whiteSpace: "nowrap" as const,
-  padding: "0 3px",
+  padding: "1px 4px",
   margin: "0 1px",
-  borderRadius: "3px",
-  fontSize: "0.6em",
+  borderRadius: "4px",
+  fontSize: "0.78em",
   fontWeight: 700 as const,
   lineHeight: 1 as const,
   letterSpacing: "0.03em",
+  // 읽기/편집 모두: 드래그 시 칩이 하나의 단위로 선택되도록 강제한다.
+  // (읽기 모드에서는 contentEditable=false 가 없어 내부 "ZWS" 같은 3글자가
+  //  문자 단위로 선택되던 문제를 해소.)
+  userSelect: "all" as const,
 };
 
 /**

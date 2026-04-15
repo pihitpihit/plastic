@@ -1,4 +1,4 @@
-import { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, Fragment } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 import type { CodeViewProps } from "./CodeView.types";
 import { renderWithInvisibles } from "./CodeView.invisibles";
@@ -598,40 +598,64 @@ export function CodeView({
                 overflow:   "visible",
               }}
             >
-              {tokens.map((line, li) => {
-                const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
-                const isOdd         = li % 2 !== 0;
-                const isHighlighted = highlightLines?.includes(li + 1) ?? false;
-                const rowBg = isHighlighted
-                  ? highlightRowColor[theme]
-                  : showAlternatingRows && isOdd
-                    ? alternatingRowColor[theme]
-                    : undefined;
+              {editable
+                ? // 편집 모드: flat 구조 (`<Fragment>` + `"\n"` 텍스트 노드).
+                  // <pre contenteditable> 내부에 block 자식(data-line-row div) 을
+                  // 두면 브라우저가 공격적으로 DOM 을 정규화하여 (빈 div 의 <br>
+                  // 주입, Enter 시 naked <div> 생성 등) IME/Tab/Enter/Backspace
+                  // 동작을 깨뜨린다. 편집 모드에서는 text-node 기반 flat 구조로
+                  // 돌아가고, alternating/highlight 배경은 미지원.
+                  tokens.map((line, li) => (
+                    <Fragment key={li}>
+                      {li > 0 && "\n"}
+                      {line.map((token, ti) => {
+                        const { className: tc, style: ts } = getTokenProps({ token });
+                        return (
+                          <span key={ti} className={tc} style={ts}>
+                            {showInvisibles
+                              ? renderWithInvisibles(token.content, theme, tabSize, true)
+                              : token.content}
+                          </span>
+                        );
+                      })}
+                    </Fragment>
+                  ))
+                : // 읽기 모드: per-line `<div data-line-row>` 로 background 및
+                  //          onCopy 의 라인 경계 판정을 지원.
+                  tokens.map((line, li) => {
+                    const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
+                    const isOdd         = li % 2 !== 0;
+                    const isHighlighted = highlightLines?.includes(li + 1) ?? false;
+                    const rowBg = isHighlighted
+                      ? highlightRowColor[theme]
+                      : showAlternatingRows && isOdd
+                        ? alternatingRowColor[theme]
+                        : undefined;
 
-                return (
-                  <div
-                    key={li}
-                    data-line-row="true"
-                    className={lineClassName}
-                    style={{
-                      ...lineStyle,
-                      ...(rowBg ? { backgroundColor: rowBg } : {}),
-                    }}
-                    {...lineRest}
-                  >
-                    {line.map((token, ti) => {
-                      const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
-                      return (
-                        <span key={ti} {...tokenSpanProps}>
-                          {showInvisibles
-                            ? renderWithInvisibles(token.content, theme, tabSize, editable)
-                            : (editable ? token.content : tokenContent)}
-                        </span>
-                      );
-                    })}
-                  </div>
-                );
-              })}
+                    return (
+                      <div
+                        key={li}
+                        data-line-row="true"
+                        className={lineClassName}
+                        style={{
+                          ...lineStyle,
+                          ...(rowBg ? { backgroundColor: rowBg } : {}),
+                        }}
+                        {...lineRest}
+                      >
+                        {line.map((token, ti) => {
+                          const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
+                          return (
+                            <span key={ti} {...tokenSpanProps}>
+                              {showInvisibles
+                                ? renderWithInvisibles(token.content, theme, tabSize)
+                                : tokenContent}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
             </pre>
           </div>
         );

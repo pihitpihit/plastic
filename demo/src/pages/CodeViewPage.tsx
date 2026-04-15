@@ -291,6 +291,27 @@ async function fetchUser(id: number): Promise<User> {
   return res.json() as Promise<User>;
 }`;
 
+// 제어 문자 / Unicode invisibles 를 한 줄씩 포함한 샘플.
+// showInvisibles=true 에서 각종 칩 렌더를 확인하고, editable 모드에서
+// 칩 Atomicity (드래그·커서·복사) 를 테스트할 때 사용한다.
+const CONTROL_CHARS_SAMPLE = [
+  "// 제어 문자 샘플 (showInvisibles=true 로 보세요)",
+  "const nul = \"\u0000\"; // NUL",
+  "const esc = \"\u001B[31mred\u001B[0m\"; // ESC",
+  "const bel = \"\u0007\"; // BEL",
+  "const crt = \"line1\\r\"; // CRT (CR)",
+  "const tab = \"a\\tb\\tc\"; // HT arrows",
+  "const nbs = \"word\u00A0word\"; // NBS",
+  "const zws = \"join\u200Bword\"; // ZWS",
+  "const bom = \"\uFEFFhello\"; // BOM",
+  "const mix = \"A\u0000B\u001BC\u200BD\";",
+].join("\n");
+
+const PLAYGROUND_PRESETS: Array<{ label: string; value: string }> = [
+  { label: "default",       value: PLAYGROUND_INITIAL },
+  { label: "control chars", value: CONTROL_CHARS_SAMPLE },
+];
+
 function PlaygroundSection() {
   const [code, setCode]                       = useState(PLAYGROUND_INITIAL);
   const [language, setLanguage]               = useState<CodeViewLanguage>("typescript");
@@ -424,7 +445,22 @@ function PlaygroundSection() {
 
       {/* ── Code input ── */}
       <div>
-        <p className="text-xs text-gray-400 mb-1.5 font-medium">code</p>
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-xs text-gray-400 font-medium">code</p>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-gray-400">load</span>
+            {PLAYGROUND_PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => setCode(p.value)}
+                className="text-xs px-2 py-0.5 rounded border border-gray-200 bg-white hover:bg-gray-100 font-mono"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
         <textarea
           value={code}
           onChange={(e) => setCode(e.target.value)}
