@@ -197,36 +197,11 @@ const CHIP_STYLE = {
  *                커스텀 DOM 워커가 실제 문자를 추출할 수 있게 한다.
  */
 /**
- * ASCII 제어 문자 → 1 char Unicode Control Picture (U+2400–U+2421).
- * 고정폭 폰트에서 정확히 1ch 를 점유하므로 compact 모드에서 textarea caret
- * 오프셋과 pre chip 위치가 1:1 로 정렬된다.
- */
-const PICTO: Readonly<Record<string, string>> = {
-  "\u0001": "\u2401", "\u0002": "\u2402", "\u0003": "\u2403",
-  "\u0004": "\u2404", "\u0005": "\u2405", "\u0006": "\u2406", "\u0007": "\u2407",
-  "\u0008": "\u2408",                     "\u000B": "\u240B", "\u000C": "\u240C",
-  "\u000D": "\u240D", "\u000E": "\u240E", "\u000F": "\u240F",
-  "\u0010": "\u2410", "\u0011": "\u2411", "\u0012": "\u2412", "\u0013": "\u2413",
-  "\u0014": "\u2414", "\u0015": "\u2415", "\u0016": "\u2416", "\u0017": "\u2417",
-  "\u0018": "\u2418", "\u0019": "\u2419", "\u001A": "\u241A", "\u001B": "\u241B",
-  "\u001C": "\u241C", "\u001D": "\u241D", "\u001E": "\u241E", "\u001F": "\u241F",
-  "\u007F": "\u2421",
-  // Unicode invisible: 전용 pictogram 이 없으므로 작은 점으로 통일(1ch)
-  "\u00A0": "\u2423", // NBS → open box ␣
-  "\u00AD": "\u00B7", "\u034F": "\u00B7", "\u180E": "\u00B7",
-  "\u200B": "\u00B7", "\u200C": "\u00B7", "\u200D": "\u00B7",
-  "\u200E": "\u00B7", "\u200F": "\u00B7",
-  "\u202A": "\u00B7", "\u202B": "\u00B7", "\u202C": "\u00B7",
-  "\u202D": "\u00B7", "\u202E": "\u00B7",
-  "\u2060": "\u00B7", "\u2061": "\u00B7", "\u2062": "\u00B7",
-  "\u2063": "\u00B7", "\u2064": "\u00B7",
-  "\uFEFF": "\u00B7",
-};
-
-/**
- * @param compact  true = 편집 모드용. mnemonic 칩 대신 1ch Unicode Control
- *                 Picture 로 렌더하여 textarea caret 과 시각 정렬을 보장.
- *                 false = 읽기 모드용 3자 니모닉 칩 (가독성 우선).
+ * @param compact  true = 편집 모드용. 레이아웃 폭은 1ch 로 고정하여 textarea
+ *                 caret 과 정렬을 보장하고, mnemonic 라벨은 absolute 오버레이로
+ *                 얹어 읽기 모드와 동일한 가독성을 제공한다. 라벨이 이웃 열로
+ *                 시각적 overflow 되는 것은 감수.
+ *                 false = 읽기 모드용 자연 폭 3자 니모닉 칩.
  */
 export function renderWithInvisibles(
   content: string,
@@ -286,8 +261,9 @@ export function renderWithInvisibles(
       const chipColors = CHIP_CATEGORY_COLORS[category][theme];
 
       if (compact) {
-        // 1ch 고정폭 pictogram. 정확히 1 char 을 점유하므로 textarea 와 정렬.
-        const pic = PICTO[char] ?? "\u00B7";
+        // 편집 모드: 레이아웃 폭은 1ch 로 유지(textarea caret 과 정렬) 하되,
+        // mnemonic 라벨을 absolute 오버레이로 얹어 가독성을 읽기 모드와 동일하게 확보.
+        // 라벨이 이웃 열로 overflow 되는 것은 감수 (제어 문자는 드물게 등장).
         result.push(
           <span
             key={key++}
@@ -296,15 +272,33 @@ export function renderWithInvisibles(
             data-char={char}
             style={{
               display: "inline-block",
+              position: "relative",
               width: "1ch",
-              textAlign: "center",
-              color: chipColors.color,
-              background: chipColors.background,
-              borderRadius: "2px",
-              overflow: "hidden",
+              verticalAlign: "baseline",
             }}
           >
-            {pic}
+            <span style={{ visibility: "hidden" }}>{"\u00B7"}</span>
+            <span
+              aria-hidden
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                padding: "1px 4px",
+                borderRadius: "4px",
+                fontSize: "0.72em",
+                fontWeight: 700,
+                lineHeight: 1,
+                letterSpacing: "0.02em",
+                whiteSpace: "nowrap",
+                background: chipColors.background,
+                color: chipColors.color,
+                pointerEvents: "none",
+              }}
+            >
+              {mnemonic}
+            </span>
           </span>
         );
       } else {
