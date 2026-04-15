@@ -569,16 +569,6 @@ export function CodeView({
                   lineHeight:    "inherit",
                   userSelect:    "none" as const,
                   pointerEvents: "none" as const,
-                  // 편집 모드 stripe 와 맞물리도록 gutter 에도 동일 gradient 적용
-                  // (gutter 는 0.85em 이지만 lineHeight:inherit 로 실제 라인 높이는
-                  //  pre 와 같다.)
-                  ...(editable && showAlternatingRows
-                    ? {
-                        backgroundImage: `linear-gradient(to bottom, transparent 50%, ${alternatingRowColor[theme]} 50%)`,
-                        backgroundSize: "100% 2lh",
-                        backgroundRepeat: "repeat-y",
-                      }
-                    : {}),
                 }}
               >
                 {tokens.map((_, i) => (
