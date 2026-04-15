@@ -19,6 +19,12 @@ const alternatingRowColor = {
   dark: "rgba(255,255,255,0.04)",
 } as const;
 
+// 편집 모드 + 포커스 시 stripe 색 (편집 중임을 시각화)
+const alternatingRowEditColor = {
+  light: "rgba(59,130,246,0.10)",
+  dark:  "rgba(96,165,250,0.12)",
+} as const;
+
 const highlightRowColor = {
   light: "rgba(253,224,71,0.35)",
   dark: "rgba(253,224,71,0.15)",
@@ -166,9 +172,20 @@ function offsetToDomPos(
   const nodes = walkEffectiveNodes(root);
   let remaining = charOffset;
 
-  for (const item of nodes) {
+  for (let i = 0; i < nodes.length; i++) {
+    const item = nodes[i]!;
     if (item.type === "text") {
-      if (remaining <= item.node.length) return { node: item.node, offset: remaining };
+      if (remaining < item.node.length) return { node: item.node, offset: remaining };
+      if (remaining === item.node.length) {
+        // '\n' 경계: 직전 텍스트 노드 끝이 아니라 다음 노드 시작으로 전진시켜야
+        // Enter 입력 후 커서가 새 라인 앞에 바르게 위치한다.
+        const next = nodes[i + 1];
+        if (item.node.data.endsWith("\n") && next) {
+          if (next.type === "text") return { node: next.node, offset: 0 };
+          return { node: next.parent, offset: next.indexInParent };
+        }
+        return { node: item.node, offset: remaining };
+      }
       remaining -= item.node.length;
     } else {
       if (remaining === 0) {
@@ -176,7 +193,6 @@ function offsetToDomPos(
         return { node: item.parent, offset: item.indexInParent };
       }
       remaining -= 1;
-      // remaining이 0이 되면 다음 반복에서 "다음 노드의 앞" 위치로 자연스럽게 처리됨
     }
   }
 
@@ -248,6 +264,7 @@ export function CodeView({
 }: CodeViewProps) {
   const [editValue, setEditValue] = useState(code);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [isFocused, setIsFocused] = useState(false);
 
   const prevCodeRef    = useRef(code);
   const preRef         = useRef<HTMLPreElement>(null);
@@ -278,6 +295,12 @@ export function CodeView({
     const pre = preRef.current;
     const sel = window.getSelection();
     if (!sel) return;
+
+    // 편집 모드에서 state-edit 후 재렌더 시 <pre> 가 포커스를 잃을 수 있다.
+    // 포커스가 없으면 caret 이 보이지 않는 문제를 방지하기 위해 재포커스한다.
+    if (editable && document.activeElement !== pre) {
+      try { pre.focus({ preventScroll: true }); } catch { /* noop */ }
+    }
 
     const startPos = offsetToDomPos(pre, saved.start);
     const endPos   = saved.end !== saved.start
@@ -374,6 +397,37 @@ export function CodeView({
         setEditValue(next);
         onValueChange?.(next);
       }
+    } else if (e.key === "Backspace" || e.key === "Delete") {
+      // 브라우저 기본 Backspace/Delete 는 <pre contentEditable> 안에서 종종 칩 atomic
+      // 경계/라인 경계에서 비정상 DOM 을 만들어 extractCodeFromPre 가 잘못된 문자열을
+      // 리턴한다(먼 라인에 newline 삽입 등). editValue 를 직접 slice 한다.
+      e.preventDefault();
+      const sel = window.getSelection();
+      if (!sel?.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      const start = domPosToOffset(pre, range.startContainer, range.startOffset);
+      const end   = sel.isCollapsed
+        ? start
+        : domPosToOffset(pre, range.endContainer, range.endOffset);
+      const lo = Math.min(start, end);
+      const hi = Math.max(start, end);
+      let nextLo = lo;
+      let next: string;
+      if (lo === hi) {
+        if (e.key === "Backspace") {
+          if (lo === 0) return;
+          next   = editValue.slice(0, lo - 1) + editValue.slice(hi);
+          nextLo = lo - 1;
+        } else {
+          if (hi >= editValue.length) return;
+          next = editValue.slice(0, lo) + editValue.slice(hi + 1);
+        }
+      } else {
+        next = editValue.slice(0, lo) + editValue.slice(hi);
+      }
+      savedCursorRef.current = { start: nextLo, end: nextLo };
+      setEditValue(next);
+      onValueChange?.(next);
     } else if (e.key === "Enter") {
       // execCommand("insertText", "\n") 은 Chrome/Safari 의 <pre contentEditable>
       // 내부에서 종종 추가적인 블록 브레이크를 생성하여 1 회 Enter 에 2 개 이상의
@@ -557,6 +611,8 @@ export function CodeView({
               onInput: handleInput,
               onKeyDown: handleKeyDown,
               onPaste: handlePaste,
+              onFocus: () => setIsFocused(true),
+              onBlur: () => setIsFocused(false),
             })
           : {};
 
@@ -616,7 +672,9 @@ export function CodeView({
                 // 현재 line-height 와 정확히 일치하므로 측정/ResizeObserver 불요.
                 ...(editable && showAlternatingRows
                   ? {
-                      backgroundImage: `linear-gradient(to bottom, transparent 50%, ${alternatingRowColor[theme]} 50%)`,
+                      backgroundImage: `linear-gradient(to bottom, transparent 50%, ${
+                        isFocused ? alternatingRowEditColor[theme] : alternatingRowColor[theme]
+                      } 50%)`,
                       backgroundSize: "100% 2lh",
                       backgroundRepeat: "repeat-y",
                     }
