@@ -49,18 +49,32 @@ function getGutterWidth(lineCount: number): string {
  *           parent + indexInParent 를 함께 저장하여 element-based 커서 위치를 처리한다.
  */
 type EffectiveNode =
-  | { type: "text"; node: Text }
-  | { type: "chip"; element: Element; parent: Element; indexInParent: number };
+  | { type: "text"; node: Text; lineRow: Element | null }
+  | {
+      type: "chip";
+      element: Element;
+      parent: Element;
+      indexInParent: number;
+      lineRow: Element | null;
+    };
 
+/**
+ * Walker 불변식:
+ *   - `[data-gutter]` 서브트리는 진입하지 않고 전부 skip (라인 번호 컬럼 등).
+ *   - `[data-char]` 요소(칩)는 1 문자 단위의 chip 항목으로 push 하고 내부 순회 중단.
+ *   - 각 항목에 가장 가까운 `[data-line-row]` 조상을 `lineRow` 로 동봉한다.
+ *     `lineRow` 전환점은 copy 로직에서 라인 경계('\n') 삽입을 판정하는 데 쓰인다.
+ */
 function walkEffectiveNodes(root: Element): EffectiveNode[] {
   const result: EffectiveNode[] = [];
 
-  function walk(node: Node, parent: Element): void {
+  function walk(node: Node, parent: Element, lineRow: Element | null): void {
     if (node.nodeType === Node.TEXT_NODE) {
-      result.push({ type: "text", node: node as Text });
+      result.push({ type: "text", node: node as Text, lineRow });
       return;
     }
     const el = node as Element;
+    if (el.hasAttribute("data-gutter")) return;
     if (el.hasAttribute("data-char")) {
       // 칩 요소: 1 문자로 계산하고 내부 텍스트는 순회하지 않는다
       const siblings = Array.from(parent.childNodes);
@@ -69,13 +83,15 @@ function walkEffectiveNodes(root: Element): EffectiveNode[] {
         element: el,
         parent,
         indexInParent: siblings.indexOf(el as ChildNode),
+        lineRow,
       });
       return;
     }
-    for (const child of Array.from(el.childNodes)) walk(child, el);
+    const nextLineRow = el.hasAttribute("data-line-row") ? el : lineRow;
+    for (const child of Array.from(el.childNodes)) walk(child, el, nextLineRow);
   }
 
-  for (const child of Array.from(root.childNodes)) walk(child, root);
+  for (const child of Array.from(root.childNodes)) walk(child, root, null);
   return result;
 }
 
