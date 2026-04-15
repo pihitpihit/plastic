@@ -173,45 +173,59 @@ async function main() {
   const zeroAdv = base.charToGlyph("0").advanceWidth;
   console.log("  '0' advance =", zeroAdv, "UPM units");
 
-  // Keep the base font's .notdef so the font is valid
-  const glyphs = [base.glyphs.get(0)]; // .notdef
-
-  // Keep the essential ASCII + common invisibles as base glyphs so text
-  // rendered with this font is visually identical to JetBrains Mono NL for
-  // normal chars (same metrics → 1ch math consistent).
-  const keepRanges = [
-    [0x0020, 0x007E], // basic latin printable
-    [0x00A1, 0x017F], // latin-1 supplement + latin extended-A (common accents)
-    [0x2018, 0x201F], // quote marks
-    [0x2026, 0x2026], // …
-    [0x2190, 0x2193], // arrows (tab arrow fallback)
-    [0x00B7, 0x00B7], // middle dot (space visualizer)
-  ];
-  const included = new Set();
-  for (const [lo, hi] of keepRanges) {
-    for (let cp = lo; cp <= hi; cp++) {
-      const g = base.charToGlyph(String.fromCodePoint(cp));
-      if (g && g.index !== 0) {
-        glyphs.push(cloneGlyph(g, {
-          unicode: cp,
-          name: `u${cp.toString(16).padStart(4, "0")}`,
-        }));
-        included.add(cp);
-      }
-    }
-  }
+  // 베이스 폰트의 모든 테이블(OS/2, name, hhea, post 등) 을 그대로 유지해
+  // Chrome OpenType Sanitizer(OTS) 가 검증하는 메타데이터 무결성을 보장한다.
+  // 여기에 synthesized glyph 만 append 한다.
+  // 모든 글리프를 lazy-resolve 해 이후 재직렬화가 올바르게 작동하도록 한다.
+  for (let i = 0; i < base.glyphs.length; i++) base.glyphs.get(i);
 
   const slotWidth = zeroAdv * 3;
   const manifest = [];
-  const puaPairs = []; // [ [originalCp, puaCp, mnemonic], ... ]
+  const puaPairs = [];
   const entries = Object.entries(MNEMONICS)
     .map(([cpStr, mnemonic]) => [Number(cpStr), mnemonic])
     .sort((a, b) => a[0] - b[0]);
+
+  let nextIdx = base.glyphs.length;
+  // 베이스 폰트의 일부 테이블(post 등)은 font.familyName/styleName 에서
+  // 이름을 구성하므로, 우리 커스텀 표식으로 덮는다.
+  if (base.names && base.names.fontFamily) {
+    const newFamily = "PlasticMono";
+    for (const langKey of Object.keys(base.names.fontFamily)) {
+      base.names.fontFamily[langKey] = newFamily;
+    }
+  }
+  if (base.names && base.names.fullName) {
+    for (const langKey of Object.keys(base.names.fullName)) {
+      base.names.fullName[langKey] = "PlasticMono Regular";
+    }
+  }
+  if (base.names && base.names.postScriptName) {
+    for (const langKey of Object.keys(base.names.postScriptName)) {
+      base.names.postScriptName[langKey] = "PlasticMono-Regular";
+    }
+  }
+
   entries.forEach(([cp, mnemonic], idx) => {
     const puaCp = PUA_BASE + idx;
     const g = buildMnemonicGlyph(base, cp, mnemonic, slotWidth);
-    glyphs.push(g);
-    glyphs.push(aliasGlyph(g, puaCp, "pua" + puaCp.toString(16)));
+    // 베이스 폰트에 이미 해당 codepoint 용 glyph 가 있으면(예: U+00A0 NBS,
+    // U+00AD SHY, U+200B ZWS 등) 그 자리를 교체해 cmap 중복 엔트리를 피한다.
+    // C0 제어 문자 대다수는 base 에 없으므로 append 한다.
+    const existing = base.charToGlyph(String.fromCodePoint(cp));
+    if (existing && existing.index && existing.index !== 0) {
+      g.index = existing.index;
+      base.glyphs.glyphs[existing.index] = g;
+    } else {
+      g.index = nextIdx;
+      base.glyphs.glyphs[nextIdx] = g;
+      nextIdx++;
+    }
+    // PUA alias 는 항상 append (PUA U+E100–U+E131 은 base 에 없음).
+    const aliasG = aliasGlyph(g, puaCp, "pua" + puaCp.toString(16));
+    aliasG.index = nextIdx;
+    base.glyphs.glyphs[nextIdx] = aliasG;
+    nextIdx++;
     manifest.push({
       codepoint: "U+" + cp.toString(16).toUpperCase().padStart(4, "0"),
       pua:       "U+" + puaCp.toString(16).toUpperCase().padStart(4, "0"),
@@ -220,18 +234,10 @@ async function main() {
     });
     puaPairs.push([cp, puaCp, mnemonic]);
   });
-
-  const synthesized = new opentype.Font({
-    familyName: "PlasticMono",
-    styleName: "Regular",
-    unitsPerEm: base.unitsPerEm,
-    ascender: base.ascender,
-    descender: base.descender,
-    glyphs,
-  });
+  base.glyphs.length = nextIdx;
 
   // Export ttf then convert to woff2.
-  const ttfBuffer = Buffer.from(synthesized.toArrayBuffer());
+  const ttfBuffer = Buffer.from(base.toArrayBuffer());
   const woff2Buffer = Buffer.from(await wawoff2.compress(ttfBuffer));
   fs.writeFileSync(OUT_WOFF2, woff2Buffer);
   fs.writeFileSync(OUT_MANIFEST, JSON.stringify({ glyphs: manifest, zeroAdvance: zeroAdv, slotWidth }, null, 2));
@@ -279,7 +285,7 @@ async function main() {
   );
 
   console.log("→ wrote", OUT_WOFF2, `(${woff2Buffer.length} bytes)`);
-  console.log("  mnemonic glyphs:", manifest.length, "baseline glyphs kept:", included.size);
+  console.log("  mnemonic glyphs:", manifest.length, "total glyphs:", nextIdx);
 }
 
 main().catch((e) => {
