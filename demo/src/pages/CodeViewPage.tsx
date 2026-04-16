@@ -202,6 +202,13 @@ export function CodeViewPage() {
                 ["highlightLines", "number[]", "—", "강조할 라인 번호 배열 (1-indexed)"],
                 ["editable", "\"disable\" | \"enable\" | \"click\"", "\"disable\"", "편집 모드 (click: 클릭 진입, Enter 종료, Shift+Enter 줄바꿈)"],
                 ["onValueChange", "(value: string) => void", "—", "편집 시 호출되는 콜백"],
+                ["showInvisibles", "boolean", "false", "탭·공백·불가시 유니코드 문자 시각화"],
+                ["tabSize", "number", "2", "탭 너비 (CSS tab-size)"],
+                ["indentUnit", '"space" | "tab"', '"space"', "Tab 키 삽입 문자 단위"],
+                ["wordWrap", "boolean", "false", "긴 줄 자동 줄바꿈"],
+                ["gutterWidth", "string", "auto", "라인번호 컬럼 너비 명시 (예: \"3rem\")"],
+                ["gutterGap", "string", '"1rem"', "라인번호와 코드 내용 사이 간격"],
+                ["showCopyButton", "boolean", "true", "복사 버튼 표시 여부"],
                 ["invisibleFontStrategy", "\"overlay\" | \"bundled\"", "\"overlay\"", "bundled: 번들 폰트(PlasticMono)로 chip 을 glyph 수준에서 정렬"],
               ].map(([prop, type, def, desc]) => (
                 <tr key={prop}>
@@ -324,6 +331,7 @@ function PlaygroundSection() {
   const [editable, setEditable]               = useState<"disable" | "enable" | "click">("disable");
   const [invisibleFontStrategy, setInvisibleFontStrategy] = useState<"overlay" | "bundled">("overlay");
   const [wordWrap, setWordWrap]               = useState(false);
+  const [showCopyButton, setShowCopyButton]   = useState(true);
   const [hlInput, setHlInput]                 = useState("");
   const [gutterWidth, setGutterWidth]         = useState("");
   const [gutterGap, setGutterGap]             = useState("");
@@ -338,6 +346,7 @@ function PlaygroundSection() {
     { label: "showAlternatingRows",value: showAlternatingRows,set: setShowAlternatingRows },
     { label: "showInvisibles",     value: showInvisibles,     set: setShowInvisibles },
     { label: "wordWrap",           value: wordWrap,           set: setWordWrap },
+    { label: "showCopyButton",    value: showCopyButton,     set: setShowCopyButton },
   ] as const;
 
   return (
@@ -543,6 +552,7 @@ function PlaygroundSection() {
           wordWrap={wordWrap}
           invisibleFontStrategy={invisibleFontStrategy}
           editable={editable}
+          showCopyButton={showCopyButton}
           onValueChange={editable !== "disable" ? setCode : undefined}
           highlightLines={highlightLines.length > 0 ? highlightLines : undefined}
           gutterWidth={gutterWidth || undefined}
