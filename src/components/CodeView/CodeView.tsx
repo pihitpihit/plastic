@@ -452,20 +452,35 @@ export function CodeView({
         const rowBgFor = (li: number): string | undefined => {
           const isHighlighted = highlightLines?.includes(li + 1) ?? false;
           if (isHighlighted) return highlightRowColor[theme];
-          // 편집 모드는 stripe 를 상위 wrapper 의 backgroundImage 로 처리한다
-          // (pre 가 IME 조합 중 opacity 0 이 되어도 stripe 가 유지되도록).
-          if (editable !== "disable") return undefined;
           if (!showAlternatingRows) return undefined;
           if (li % 2 === 0) return undefined;
+          if (editable !== "disable") {
+            return isEditingActive && isFocused
+              ? alternatingRowEditColor[theme]
+              : alternatingRowColor[theme];
+          }
           return alternatingRowColor[theme];
         };
 
-        const wrapperStripeColor = isEditingActive && isFocused
-          ? alternatingRowEditColor[theme]
-          : alternatingRowColor[theme];
+        const themeBg = style.backgroundColor ?? (theme === "dark" ? "#1e1e1e" : "#fff");
 
-        // pre 콘텐츠는 읽기/편집 모드 공통. 편집 모드에서 invisibles 칩을 그리면
-        // 실제 1 문자와 폭이 달라 textarea caret 과 시각 정렬이 어긋나므로 raw 로.
+        const gutterStyle: React.CSSProperties = {
+          flexShrink:    0,
+          minWidth:      resolvedGutterWidth,
+          paddingRight:  resolvedGutterGap,
+          boxSizing:     "content-box",
+          textAlign:     "right",
+          color:         lineNumberColor[theme],
+          fontSize:      "0.85em",
+          lineHeight:    "inherit",
+          userSelect:    "none",
+          pointerEvents: "none",
+          position:      "sticky",
+          left:          0,
+          zIndex:        1,
+          backgroundColor: themeBg,
+        };
+
         const preContent = tokens.map((line, li) => {
           const { className: lineClassName, style: lineStyle, ...lineRest } = getLineProps({ line });
           const rowBg = rowBgFor(li);
@@ -476,74 +491,50 @@ export function CodeView({
               className={lineClassName}
               style={{
                 ...lineStyle,
+                display:  "flex",
+                minWidth: "100%",
                 ...(rowBg ? { backgroundColor: rowBg } : {}),
               }}
               {...lineRest}
             >
-              {line.map((token, ti) => {
-                const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
-                return (
-                  <span key={ti} {...tokenSpanProps}>
-                    {showInvisibles
-                      ? renderWithInvisibles(token.content, theme, tabSize, isEditingActive, useBundledFont)
-                      : tokenContent}
-                  </span>
-                );
-              })}
+              {showLineNumbers && (
+                <span data-gutter="true" aria-hidden="true" style={gutterStyle}>
+                  {li + 1}
+                </span>
+              )}
+              <span style={{ flex: 1, minWidth: 0, opacity: isEditingActive && isComposing ? 0 : 1 }}>
+                {line.map((token, ti) => {
+                  const { children: tokenContent, ...tokenSpanProps } = getTokenProps({ token });
+                  return (
+                    <span key={ti} {...tokenSpanProps}>
+                      {showInvisibles
+                        ? renderWithInvisibles(token.content, theme, tabSize, isEditingActive, useBundledFont)
+                        : tokenContent}
+                    </span>
+                  );
+                })}
+              </span>
             </div>
           );
         });
+
+        const gutterTotalWidth = showLineNumbers
+          ? `calc(${resolvedGutterWidth} + ${resolvedGutterGap})`
+          : undefined;
 
         return (
           <div
             ref={containerRef}
             className={baseContainerClass}
             onCopy={handleCopyEvent}
-            style={{ ...baseStyle, display: "flex", tabSize }}
+            style={{ ...baseStyle, tabSize }}
           >
             {copyBtn}
 
-            {showLineNumbers && (
-              <div
-                data-gutter="true"
-                aria-hidden="true"
-                style={{
-                  flexShrink:    0,
-                  minWidth:      resolvedGutterWidth,
-                  paddingRight:  resolvedGutterGap,
-                  boxSizing:     "content-box" as const,
-                  textAlign:     "right" as const,
-                  color:         lineNumberColor[theme],
-                  fontSize:      "0.85em",
-                  lineHeight:    "inherit",
-                  userSelect:    "none" as const,
-                  pointerEvents: "none" as const,
-                }}
-              >
-                {tokens.map((_, i) => (
-                  <div key={i}>{i + 1}</div>
-                ))}
-              </div>
-            )}
-
             <div
               style={{
-                flex:     1,
-                minWidth: 0,
                 display:  "grid",
-                // pre/textarea 가 동일 셀에 스택. 셀 크기는 pre 의 intrinsic 에
-                // 맞춰지고 textarea 는 그 크기에 stretch.
-                //
-                // 편집 모드의 stripe 는 이 wrapper 의 backgroundImage 로 렌더.
-                // 2lh 주기 linear-gradient 로 짝수 라인 상단은 transparent,
-                // 하단은 stripe 색. pre 의 opacity 와 무관하게 유지된다.
-                ...(editable !== "disable" && showAlternatingRows
-                  ? {
-                      backgroundImage: `linear-gradient(to bottom, transparent 50%, ${wrapperStripeColor} 50%)`,
-                      backgroundSize: "100% 2lh",
-                      backgroundRepeat: "repeat-y",
-                    }
-                  : {}),
+                ...(wordWrap ? {} : { width: "max-content", minWidth: "100%" }),
               }}
             >
               <pre
@@ -568,16 +559,15 @@ export function CodeView({
                   fontSize:   "inherit",
                   lineHeight: "inherit",
                   tabSize,
-                  overflow:   "visible",
                   background: "transparent",
                   // textarea 가 렌더되고 있을 때만 pre 가 이벤트를 막는다.
                   // "click" 모드에서 편집 비활성 상태에서는 pre 가 onClick 을
                   // 받아야 편집 진입이 가능.
                   pointerEvents: isEditingActive ? "none" : undefined,
                   cursor: editable === "click" && !isEditingClick ? "text" : undefined,
-                  // IME 조합 중에는 pre 를 숨겨 textarea 의 composition
-                  // underline 이 가려지지 않게 한다.
-                  opacity: isEditingActive && isComposing ? 0 : 1,
+                  // IME 조합 중에는 각 라인의 content span 만 opacity:0 으로
+                  // 숨겨 gutter + stripe 를 유지하면서 textarea 의 composition
+                  // underline 이 노출되게 한다.
                 }}
               >
                 {preContent}
@@ -631,6 +621,7 @@ export function CodeView({
                     height:     "100%",
                     margin:     0,
                     padding:    0,
+                    ...(gutterTotalWidth ? { paddingLeft: gutterTotalWidth } : {}),
                     border:     "none",
                     outline:    "none",
                     resize:     "none",
