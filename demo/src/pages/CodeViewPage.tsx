@@ -80,7 +80,7 @@ export function CodeViewPage() {
         </p>
       </div>
 
-      <section>
+      <section id="typescript">
         <div className="flex items-center justify-between mb-3">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
             TypeScript
@@ -105,21 +105,21 @@ export function CodeViewPage() {
         <CodeView code={TS_SAMPLE} language="typescript" theme={theme} />
       </section>
 
-      <section>
+      <section id="python">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Python
         </p>
         <CodeView code={PYTHON_SAMPLE} language="python" theme={theme} />
       </section>
 
-      <section>
+      <section id="json">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           JSON
         </p>
         <CodeView code={JSON_SAMPLE} language="json" theme={theme} />
       </section>
 
-      <section>
+      <section id="no-line-numbers">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           No Line Numbers
         </p>
@@ -132,7 +132,7 @@ export function CodeViewPage() {
         />
       </section>
 
-      <section>
+      <section id="show-invisibles">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Show Invisibles
         </p>
@@ -150,7 +150,7 @@ export function CodeViewPage() {
         />
       </section>
 
-      <section>
+      <section id="highlight-lines">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Highlight Lines
         </p>
@@ -165,7 +165,7 @@ export function CodeViewPage() {
         />
       </section>
 
-      <section>
+      <section id="editable">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Editable
         </p>
@@ -177,7 +177,7 @@ export function CodeViewPage() {
         <EditableDemo theme={theme} />
       </section>
 
-      <section>
+      <section id="props">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Props
         </p>
@@ -223,14 +223,14 @@ export function CodeViewPage() {
         </div>
       </section>
 
-      <section>
+      <section id="usage">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Usage
         </p>
         <CodeView code={USAGE_CODE} language="tsx" showAlternatingRows={false} />
       </section>
 
-      <section>
+      <section id="playground">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Playground
         </p>

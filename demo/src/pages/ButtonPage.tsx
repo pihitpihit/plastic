@@ -16,9 +16,9 @@ const USAGE_CODE = `import { Button } from "plastic";
 <Button disabled>Disabled</Button>
 <Button loading>Loading...</Button>`;
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
-    <section>
+    <section id={id}>
       <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
         {title}
       </p>
@@ -43,19 +43,19 @@ export function ButtonPage() {
         </p>
       </div>
 
-      <Section title="Variants">
+      <Section id="variants" title="Variants">
         <Button variant="primary">Primary</Button>
         <Button variant="secondary">Secondary</Button>
         <Button variant="ghost">Ghost</Button>
       </Section>
 
-      <Section title="Sizes">
+      <Section id="sizes" title="Sizes">
         <Button size="sm">Small</Button>
         <Button size="md">Medium</Button>
         <Button size="lg">Large</Button>
       </Section>
 
-      <Section title="States">
+      <Section id="states" title="States">
         <Button disabled>Disabled</Button>
         <Button loading>Loading</Button>
         <Button variant="secondary" disabled>
@@ -63,7 +63,7 @@ export function ButtonPage() {
         </Button>
       </Section>
 
-      <section>
+      <section id="props">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Props
         </p>
@@ -98,7 +98,7 @@ export function ButtonPage() {
         </div>
       </section>
 
-      <section>
+      <section id="usage">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Usage
         </p>

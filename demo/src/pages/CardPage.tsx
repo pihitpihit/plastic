@@ -34,7 +34,7 @@ export function CardPage() {
         </p>
       </div>
 
-      <section>
+      <section id="full-card">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Full Card
         </p>
@@ -59,7 +59,7 @@ export function CardPage() {
         </div>
       </section>
 
-      <section>
+      <section id="body-only">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Body Only
         </p>
@@ -74,7 +74,7 @@ export function CardPage() {
         </div>
       </section>
 
-      <section>
+      <section id="header-body">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Header + Body
         </p>
@@ -90,7 +90,7 @@ export function CardPage() {
         </div>
       </section>
 
-      <section>
+      <section id="usage">
         <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">
           Usage
         </p>

@@ -109,9 +109,9 @@ function ResetButton({ onClick }: { onClick: () => void }) {
 
 // ── 섹션 헬퍼 ────────────────────────────────────────────────────────────
 
-function Section({ title, desc, children }: { title: string; desc?: string; children: React.ReactNode }) {
+function Section({ id, title, desc, children }: { id?: string; title: string; desc?: string; children: React.ReactNode }) {
   return (
-    <section>
+    <section id={id}>
       <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">{title}</p>
       {desc && <p className="text-sm text-gray-500 mb-3">{desc}</p>}
       {children}
@@ -844,43 +844,43 @@ export function ActionablePage() {
         ))}
       </div>
 
-      <Section title="Icon Trigger" desc="hover 시 아이콘 버튼 표시. 클릭 → 즉시 실행.">
+      <Section id="icon-trigger" title="Icon Trigger" desc="hover 시 아이콘 버튼 표시. 클릭 → 즉시 실행.">
         <IconDemo theme={theme} />
       </Section>
 
-      <Section title="Icon Confirm" desc="첫 클릭 → 확인 상태 전환, 재클릭 시 실행. 3초 후 자동 원복.">
+      <Section id="icon-confirm" title="Icon Confirm" desc="첫 클릭 → 확인 상태 전환, 재클릭 시 실행. 3초 후 자동 원복.">
         <IconConfirmDemo theme={theme} />
       </Section>
 
-      <Section title="Swipe" desc="좌로 스와이프하여 액션 패널 노출. 마우스 드래그도 지원.">
+      <Section id="swipe" title="Swipe" desc="좌로 스와이프하여 액션 패널 노출. 마우스 드래그도 지원.">
         <SwipeDemo theme={theme} />
       </Section>
 
-      <Section title="Fade" desc="hover/focus 시 반투명 오버레이와 액션 툴바가 페이드인.">
+      <Section id="fade" title="Fade" desc="hover/focus 시 반투명 오버레이와 액션 툴바가 페이드인.">
         <FadeDemo theme={theme} />
       </Section>
 
-      <Section title="Checkbox" desc="체크박스로 다중 선택 후 상단 툴바에서 일괄 액션.">
+      <Section id="checkbox" title="Checkbox" desc="체크박스로 다중 선택 후 상단 툴바에서 일괄 액션.">
         <CheckboxDemo theme={theme} />
       </Section>
 
-      <Section title="Drag-out" desc="항목을 영역 밖으로 드래그하면 삭제. 시각적 피드백 제공.">
+      <Section id="drag-out" title="Drag-out" desc="항목을 영역 밖으로 드래그하면 삭제. 시각적 피드백 제공.">
         <DragOutDemo theme={theme} />
       </Section>
 
-      <Section title="Reveal (2단계 삭제)" desc="hover → 삭제 아이콘 오버레이 → 클릭 → 삭제 확인 버튼 패널.">
+      <Section id="reveal-delete" title="Reveal (2단계 삭제)" desc="hover → 삭제 아이콘 오버레이 → 클릭 → 삭제 확인 버튼 패널.">
         <RevealDeleteDemo theme={theme} />
       </Section>
 
-      <Section title="Reveal (멀티 액션)" desc="커스텀 '...' 오버레이 + 다중 액션 패널. 방향 토글 가능.">
+      <Section id="reveal-multi" title="Reveal (멀티 액션)" desc="커스텀 '...' 오버레이 + 다중 액션 패널. 방향 토글 가능.">
         <RevealMultiDemo theme={theme} />
       </Section>
 
-      <Section title="Dismiss Animations" desc="4가지 dismiss 애니메이션 비교.">
+      <Section id="dismiss-animations" title="Dismiss Animations" desc="4가지 dismiss 애니메이션 비교.">
         <DismissDemo theme={theme} />
       </Section>
 
-      <Section title="Props">
+      <Section id="props" title="Props">
         <PropsTable title="Common" rows={PROPS_COMMON} />
         <PropsTable title="ActionableAction" rows={PROPS_ACTION} />
         <PropsTable title="Icon / Icon-confirm" rows={PROPS_ICON} />
@@ -891,11 +891,11 @@ export function ActionablePage() {
         <PropsTable title="Reveal" rows={PROPS_REVEAL} />
       </Section>
 
-      <Section title="Usage">
+      <Section id="usage" title="Usage">
         <CodeView code={USAGE_CODE} language="tsx" showAlternatingRows={false} />
       </Section>
 
-      <Section title="Playground" desc="모든 reveal props를 실시간 조작.">
+      <Section id="playground" title="Playground" desc="모든 reveal props를 실시간 조작.">
         <RevealPlayground theme={theme} />
       </Section>
     </div>
