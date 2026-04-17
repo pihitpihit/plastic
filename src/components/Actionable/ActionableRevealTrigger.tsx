@@ -2,7 +2,7 @@ import { useRef, useState, useCallback, useEffect, useLayoutEffect } from "react
 import type { ReactNode } from "react";
 import type { TriggerChildProps, ActionableAction } from "./Actionable.types";
 import { ActionableActionButton } from "./ActionableActionButton";
-import { useControllable } from "./useControllable";
+import { useControllable } from "../_shared/useControllable";
 
 interface RevealTriggerProps extends TriggerChildProps {
   revealOpen?: boolean | undefined;

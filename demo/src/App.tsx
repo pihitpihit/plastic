@@ -3,8 +3,9 @@ import { ButtonPage } from "./pages/ButtonPage";
 import { CardPage } from "./pages/CardPage";
 import { CodeViewPage } from "./pages/CodeViewPage";
 import { ActionablePage } from "./pages/ActionablePage";
+import { PathInputPage } from "./pages/PathInputPage";
 
-type Page = "button" | "card" | "codeview" | "actionable";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput";
 
 interface SubItem { label: string; id: string }
 
@@ -44,6 +45,18 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Reveal (삭제)", id: "reveal-delete" },
     { label: "Reveal (멀티)", id: "reveal-multi" },
     { label: "Dismiss", id: "dismiss-animations" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "pathinput", label: "PathInput", description: "파일 경로 입력", sections: [
+    { label: "Combined", id: "combined" },
+    { label: "Input Only", id: "input-only" },
+    { label: "Browse Only", id: "browse-only" },
+    { label: "Drag & Drop", id: "drag-drop" },
+    { label: "Validation", id: "validation" },
+    { label: "Disabled", id: "disabled" },
+    { label: "Dark Theme", id: "dark-theme" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
@@ -275,6 +288,7 @@ export function App() {
         {current === "card" && <CardPage />}
         {current === "codeview" && <CodeViewPage />}
         {current === "actionable" && <ActionablePage />}
+        {current === "pathinput" && <PathInputPage />}
       </main>
     </div>
   );

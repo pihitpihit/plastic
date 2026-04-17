@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import type { TriggerChildProps, ActionableTheme } from "./Actionable.types";
 import { ActionableActionButton } from "./ActionableActionButton";
-import { useControllable } from "./useControllable";
+import { useControllable } from "../_shared/useControllable";
 
 interface IconTriggerProps extends TriggerChildProps {
   confirm: boolean;

@@ -1,5 +1,5 @@
 import type { TriggerChildProps } from "./Actionable.types";
-import { useControllable } from "./useControllable";
+import { useControllable } from "../_shared/useControllable";
 
 interface CheckboxTriggerProps extends TriggerChildProps {
   selected?: boolean | undefined;

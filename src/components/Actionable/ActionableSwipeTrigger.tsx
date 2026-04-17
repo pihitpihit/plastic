@@ -1,7 +1,7 @@
 import { useRef, useCallback } from "react";
 import type { TriggerChildProps } from "./Actionable.types";
 import { ActionableActionButton } from "./ActionableActionButton";
-import { useControllable } from "./useControllable";
+import { useControllable } from "../_shared/useControllable";
 import { useActionablePointer } from "./useActionablePointer";
 
 interface SwipeTriggerProps extends TriggerChildProps {
