@@ -7,7 +7,8 @@ export type ActionableTrigger =
   | "swipe"
   | "fade"
   | "checkbox"
-  | "drag-out";
+  | "drag-out"
+  | "reveal";
 
 // ── Action visual variant ───────────────────────────────────────────────
 export type ActionVariant = "default" | "danger" | "warning";
@@ -32,6 +33,7 @@ export interface ActionableAction {
   confirm?: boolean | string;
   onClick: () => void | Promise<void>;
   disabled?: boolean;
+  style?: CSSProperties;
 }
 
 // ── Internal phase (not exported from package) ──────────────────────────
@@ -98,6 +100,16 @@ export interface ActionableProps
   // ── fade ────────────────────────────────────────────────────
   fadeDuration?: number;
   fadePosition?: "top" | "bottom" | "center";
+
+  // ── reveal ─────────────────────────────────────────────────
+  revealOpen?: boolean;
+  onRevealOpenChange?: (open: boolean) => void;
+  revealDirection?: "left" | "right";
+  revealTriggerIndex?: number;
+  revealTriggerRender?: (action: ActionableAction) => ReactNode;
+  revealOverlayWidth?: number;
+  revealPanelWidth?: number;
+  revealAnimationDuration?: number;
 
   disabled?: boolean;
   className?: string;

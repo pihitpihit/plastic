@@ -33,6 +33,14 @@ const ShareIcon = () => (
   </svg>
 );
 
+const MoreIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+    <circle cx="12" cy="5" r="2" />
+    <circle cx="12" cy="12" r="2" />
+    <circle cx="12" cy="19" r="2" />
+  </svg>
+);
+
 // ── 샘플 데이터 ──────────────────────────────────────────────────────────
 
 interface Item {
@@ -352,6 +360,94 @@ function DragOutDemo({ theme }: { theme: ActionableTheme }) {
   );
 }
 
+// ── Reveal 데모 (2단계 삭제) ─────────────────────────────────────────────
+
+function RevealDeleteDemo({ theme }: { theme: ActionableTheme }) {
+  const [items, setItems] = useState(INITIAL_ITEMS);
+  const remove = useCallback((id: number) => setItems((p) => p.filter((i) => i.id !== id)), []);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-end"><ResetButton onClick={() => setItems(INITIAL_ITEMS)} /></div>
+      <ListWrapper theme={theme}>
+        {items.map((item) => (
+          <Actionable
+            key={item.id}
+            trigger="reveal"
+            theme={theme}
+            dismissAnimation="slide-left"
+            actions={[
+              { key: "delete", label: "삭제 확인", icon: <TrashIcon />, variant: "danger", onClick: () => {} },
+            ]}
+            onDismiss={() => remove(item.id)}
+          >
+            <ItemCard item={item} theme={theme} />
+          </Actionable>
+        ))}
+        {items.length === 0 && (
+          <div style={{ padding: "2rem", textAlign: "center", color: "#9ca3af", fontSize: "0.85rem" }}>
+            모든 항목이 삭제되었습니다
+          </div>
+        )}
+      </ListWrapper>
+    </div>
+  );
+}
+
+// ── Reveal 데모 (멀티 액션 + 방향) ──────────────────────────────────────
+
+function RevealMultiDemo({ theme }: { theme: ActionableTheme }) {
+  const [items, setItems] = useState(INITIAL_ITEMS);
+  const [direction, setDirection] = useState<"left" | "right">("right");
+  const remove = useCallback((id: number) => setItems((p) => p.filter((i) => i.id !== id)), []);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-1.5">
+          {(["left", "right"] as const).map((d) => (
+            <button
+              key={d}
+              onClick={() => setDirection(d)}
+              className={`px-2.5 py-1 text-xs rounded transition-colors ${
+                direction === d ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+        <ResetButton onClick={() => setItems(INITIAL_ITEMS)} />
+      </div>
+      <ListWrapper theme={theme}>
+        {items.map((item) => (
+          <Actionable
+            key={item.id}
+            trigger="reveal"
+            theme={theme}
+            revealDirection={direction}
+            revealTriggerRender={() => <MoreIcon />}
+            dismissAnimation="slide-left"
+            actions={[
+              { key: "edit", label: "편집", icon: <EditIcon />, onClick: () => alert(`편집: ${item.title}`) },
+              { key: "share", label: "공유", icon: <ShareIcon />, onClick: () => alert(`공유: ${item.title}`) },
+              { key: "delete", label: "삭제", icon: <TrashIcon />, variant: "danger", onClick: () => {} },
+            ]}
+            onDismiss={(k) => k === "delete" && remove(item.id)}
+          >
+            <ItemCard item={item} theme={theme} />
+          </Actionable>
+        ))}
+        {items.length === 0 && (
+          <div style={{ padding: "2rem", textAlign: "center", color: "#9ca3af", fontSize: "0.85rem" }}>
+            모든 항목이 삭제되었습니다
+          </div>
+        )}
+      </ListWrapper>
+    </div>
+  );
+}
+
 // ── Dismiss Animation 비교 ───────────────────────────────────────────────
 
 function DismissDemo({ theme }: { theme: ActionableTheme }) {
@@ -441,6 +537,30 @@ const USAGE_CODE = `import { Actionable } from "plastic";
   onDismiss={() => removeItem(id)}
 >
   <MyCard />
+</Actionable>
+
+// Reveal: 2-stage delete
+<Actionable
+  trigger="reveal"
+  actions={[
+    { key: "delete", label: "삭제 확인", icon: <TrashIcon />, variant: "danger", onClick: handleDelete },
+  ]}
+  onDismiss={() => removeItem(id)}
+>
+  <MyListItem />
+</Actionable>
+
+// Reveal: multi-action with custom trigger
+<Actionable
+  trigger="reveal"
+  revealDirection="right"
+  revealTriggerRender={() => <MoreIcon />}
+  actions={[
+    { key: "edit", label: "편집", icon: <EditIcon />, onClick: handleEdit },
+    { key: "delete", label: "삭제", icon: <TrashIcon />, variant: "danger", onClick: handleDelete },
+  ]}
+>
+  <MyListItem />
 </Actionable>`;
 
 // ── Props 테이블 ─────────────────────────────────────────────────────────
@@ -455,6 +575,17 @@ const PROPS_COMMON = [
   ["onDismiss", "(actionKey: string) => void", "—", "dismiss 완료 콜백"],
   ["onAction", "(actionKey: string) => void | false", "—", "액션 실행 시 콜백. false 반환 시 dismiss 방지"],
   ["disabled", "boolean", "false", "전체 비활성화"],
+];
+
+const PROPS_ACTION = [
+  ["key", "string", "—", "React key + 식별자 (필수)"],
+  ["label", "string", "—", "접근성 라벨, 툴팁 (필수)"],
+  ["icon", "ReactNode", "—", "버튼 아이콘"],
+  ["variant", '"default" | "danger" | "warning"', '"default"', "색상 프리셋"],
+  ["confirm", "boolean | string", "—", "icon-confirm 용 2단계 확인"],
+  ["onClick", "() => void | Promise<void>", "—", "액션 실행 함수 (필수)"],
+  ["disabled", "boolean", "—", "개별 버튼 비활성화"],
+  ["style", "CSSProperties", "—", "개별 버튼 커스텀 스타일"],
 ];
 
 const PROPS_ICON = [
@@ -490,6 +621,17 @@ const PROPS_FADE = [
   ["fadePosition", '"top" | "bottom" | "center"', '"top"', "오버레이 위치"],
 ];
 
+const PROPS_REVEAL = [
+  ["revealOpen", "boolean", "—", "controlled 패널 열림 상태"],
+  ["onRevealOpenChange", "(open: boolean) => void", "—", "패널 열림 변경 콜백"],
+  ["revealDirection", '"left" | "right"', '"right"', "오버레이 및 패널 위치"],
+  ["revealTriggerIndex", "number", "0", "오버레이 트리거로 사용할 액션 인덱스"],
+  ["revealTriggerRender", "(action) => ReactNode", "—", "커스텀 오버레이 트리거 렌더"],
+  ["revealOverlayWidth", "number", "40", "오버레이 트리거 버튼 너비 (px)"],
+  ["revealPanelWidth", "number", "auto", "고정 패널 너비 (미지정 시 자동 측정)"],
+  ["revealAnimationDuration", "number", "250", "애니메이션 지속 시간 (ms)"],
+];
+
 function PropsTable({ title, rows }: { title: string; rows: string[][] }) {
   return (
     <div className="mb-4">
@@ -515,6 +657,160 @@ function PropsTable({ title, rows }: { title: string; rows: string[][] }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ── Reveal Playground ────────────────────────────────────────────────────
+
+function RevealPlayground({ theme }: { theme: ActionableTheme }) {
+  const [direction, setDirection] = useState<"left" | "right">("right");
+  const [overlayWidth, setOverlayWidth] = useState(40);
+  const [animDuration, setAnimDuration] = useState(250);
+  const [triggerIndex, setTriggerIndex] = useState(0);
+  const [useCustomTrigger, setUseCustomTrigger] = useState(false);
+  const [dismissAnim, setDismissAnim] = useState<DismissAnimation>("collapse");
+  const [isDisabled, setIsDisabled] = useState(false);
+  const [useCustomStyle, setUseCustomStyle] = useState(false);
+  const [items, setItems] = useState(INITIAL_ITEMS);
+  const remove = useCallback((id: number) => setItems((p) => p.filter((i) => i.id !== id)), []);
+
+  const actions: ActionableAction[] = [
+    {
+      key: "edit", label: "편집", icon: <EditIcon />, onClick: () => alert("편집"),
+      ...(useCustomStyle ? { style: { background: "#7c3aed", color: "#fff", borderRadius: 0, flex: 1, height: "auto", margin: 0 } } : {}),
+    },
+    {
+      key: "share", label: "공유", icon: <ShareIcon />, onClick: () => alert("공유"),
+      ...(useCustomStyle ? { style: { background: "#0891b2", color: "#fff", borderRadius: 0, flex: 1, height: "auto", margin: 0 } } : {}),
+    },
+    {
+      key: "delete", label: "삭제", icon: <TrashIcon />, variant: "danger", onClick: () => {},
+      ...(useCustomStyle ? { style: { background: "#dc2626", color: "#fff", borderRadius: 0, flex: 1, height: "auto", margin: 0 } } : {}),
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm">
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">revealDirection</span>
+          <select
+            value={direction}
+            onChange={(e) => setDirection(e.target.value as "left" | "right")}
+            className="border rounded px-2 py-0.5 text-xs"
+          >
+            <option value="right">right</option>
+            <option value="left">left</option>
+          </select>
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">overlayWidth</span>
+          <input
+            type="range"
+            min={24}
+            max={80}
+            value={overlayWidth}
+            onChange={(e) => setOverlayWidth(Number(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-xs text-gray-400 w-8">{overlayWidth}</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">animationDuration</span>
+          <input
+            type="range"
+            min={100}
+            max={800}
+            step={50}
+            value={animDuration}
+            onChange={(e) => setAnimDuration(Number(e.target.value))}
+            className="flex-1"
+          />
+          <span className="text-xs text-gray-400 w-8">{animDuration}</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">triggerIndex</span>
+          <select
+            value={triggerIndex}
+            onChange={(e) => setTriggerIndex(Number(e.target.value))}
+            className="border rounded px-2 py-0.5 text-xs"
+          >
+            {actions.map((a, i) => (
+              <option key={a.key} value={i}>
+                {i}: {a.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">customTrigger</span>
+          <input
+            type="checkbox"
+            checked={useCustomTrigger}
+            onChange={(e) => setUseCustomTrigger(e.target.checked)}
+          />
+          <span className="text-xs text-gray-400">revealTriggerRender</span>
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">dismissAnimation</span>
+          <select
+            value={dismissAnim}
+            onChange={(e) => setDismissAnim(e.target.value as DismissAnimation)}
+            className="border rounded px-2 py-0.5 text-xs"
+          >
+            {(["collapse", "slide-left", "slide-right", "fade", "none"] as const).map((a) => (
+              <option key={a} value={a}>{a}</option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">disabled</span>
+          <input
+            type="checkbox"
+            checked={isDisabled}
+            onChange={(e) => setIsDisabled(e.target.checked)}
+          />
+        </label>
+        <label className="flex items-center gap-2">
+          <span className="text-gray-600 w-36 shrink-0">action.style</span>
+          <input
+            type="checkbox"
+            checked={useCustomStyle}
+            onChange={(e) => setUseCustomStyle(e.target.checked)}
+          />
+          <span className="text-xs text-gray-400">커스텀 버튼 스타일</span>
+        </label>
+      </div>
+
+      <div className="flex justify-end">
+        <ResetButton onClick={() => setItems(INITIAL_ITEMS)} />
+      </div>
+      <ListWrapper theme={theme}>
+        {items.map((item) => (
+          <Actionable
+            key={item.id}
+            trigger="reveal"
+            theme={theme}
+            revealDirection={direction}
+            revealOverlayWidth={overlayWidth}
+            revealAnimationDuration={animDuration}
+            revealTriggerIndex={triggerIndex}
+            revealTriggerRender={useCustomTrigger ? () => <MoreIcon /> : undefined}
+            dismissAnimation={dismissAnim}
+            disabled={isDisabled}
+            actions={actions}
+            onDismiss={(k) => k === "delete" && remove(item.id)}
+          >
+            <ItemCard item={item} theme={theme} />
+          </Actionable>
+        ))}
+        {items.length === 0 && (
+          <div style={{ padding: "2rem", textAlign: "center", color: "#9ca3af", fontSize: "0.85rem" }}>
+            모든 항목이 삭제되었습니다
+          </div>
+        )}
+      </ListWrapper>
     </div>
   );
 }
@@ -572,21 +868,35 @@ export function ActionablePage() {
         <DragOutDemo theme={theme} />
       </Section>
 
+      <Section title="Reveal (2단계 삭제)" desc="hover → 삭제 아이콘 오버레이 → 클릭 → 삭제 확인 버튼 패널.">
+        <RevealDeleteDemo theme={theme} />
+      </Section>
+
+      <Section title="Reveal (멀티 액션)" desc="커스텀 '...' 오버레이 + 다중 액션 패널. 방향 토글 가능.">
+        <RevealMultiDemo theme={theme} />
+      </Section>
+
       <Section title="Dismiss Animations" desc="4가지 dismiss 애니메이션 비교.">
         <DismissDemo theme={theme} />
       </Section>
 
       <Section title="Props">
         <PropsTable title="Common" rows={PROPS_COMMON} />
+        <PropsTable title="ActionableAction" rows={PROPS_ACTION} />
         <PropsTable title="Icon / Icon-confirm" rows={PROPS_ICON} />
         <PropsTable title="Swipe" rows={PROPS_SWIPE} />
         <PropsTable title="Checkbox" rows={PROPS_CHECKBOX} />
         <PropsTable title="Drag-out" rows={PROPS_DRAGOUT} />
         <PropsTable title="Fade" rows={PROPS_FADE} />
+        <PropsTable title="Reveal" rows={PROPS_REVEAL} />
       </Section>
 
       <Section title="Usage">
         <CodeView code={USAGE_CODE} language="tsx" showAlternatingRows={false} />
+      </Section>
+
+      <Section title="Playground" desc="모든 reveal props를 실시간 조작.">
+        <RevealPlayground theme={theme} />
       </Section>
     </div>
   );

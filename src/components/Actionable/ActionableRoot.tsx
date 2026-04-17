@@ -10,6 +10,7 @@ import { ActionableFadeTrigger } from "./ActionableFadeTrigger";
 import { ActionableCheckboxTrigger } from "./ActionableCheckboxTrigger";
 import { ActionableSwipeTrigger } from "./ActionableSwipeTrigger";
 import { ActionableDragOutTrigger } from "./ActionableDragOutTrigger";
+import { ActionableRevealTrigger } from "./ActionableRevealTrigger";
 
 export function ActionableRoot({
   children,
@@ -38,6 +39,14 @@ export function ActionableRoot({
   dragZoneLabel,
   fadeDuration = 200,
   fadePosition = "top",
+  revealOpen,
+  onRevealOpenChange,
+  revealDirection = "right",
+  revealTriggerIndex = 0,
+  revealTriggerRender,
+  revealOverlayWidth = 40,
+  revealPanelWidth,
+  revealAnimationDuration = 250,
   disabled = false,
   className,
   style,
@@ -159,6 +168,21 @@ export function ActionableRoot({
           dragThreshold={dragThreshold}
           onDragThreshold={onDragThreshold}
           dragZoneLabel={dragZoneLabel}
+        />
+      );
+      break;
+    case "reveal":
+      triggerContent = (
+        <ActionableRevealTrigger
+          {...triggerChildProps}
+          revealOpen={revealOpen}
+          onRevealOpenChange={onRevealOpenChange}
+          revealDirection={revealDirection}
+          revealTriggerIndex={revealTriggerIndex}
+          revealTriggerRender={revealTriggerRender}
+          revealOverlayWidth={revealOverlayWidth}
+          revealPanelWidth={revealPanelWidth}
+          revealAnimationDuration={revealAnimationDuration}
         />
       );
       break;

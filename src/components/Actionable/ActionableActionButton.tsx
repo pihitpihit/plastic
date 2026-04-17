@@ -41,7 +41,7 @@ interface ActionButtonProps {
   theme: ActionableTheme;
   onClick: () => void;
   disabled?: boolean;
-  mode?: "icon" | "swipe" | "fade";
+  mode?: "icon" | "swipe" | "fade" | "reveal";
   confirmLabel?: string | null;
 }
 
@@ -56,6 +56,44 @@ export function ActionableActionButton({
   const variant = action.variant ?? "default";
   const isConfirming = confirmLabel != null;
   const effectiveVariant = isConfirming ? "danger" : variant;
+
+  if (mode === "reveal") {
+    const colors = swipeVariantColors[effectiveVariant][theme];
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled || action.disabled}
+        aria-label={confirmLabel ?? action.label}
+        title={confirmLabel ?? action.label}
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "flex-start",
+          gap: "0.375rem",
+          width: "100%",
+          height: "2.25rem",
+          border: "none",
+          borderRadius: "0.25rem",
+          margin: "1px 0",
+          cursor: disabled || action.disabled ? "default" : "pointer",
+          opacity: disabled || action.disabled ? 0.4 : 1,
+          background: colors.bg,
+          color: colors.text,
+          fontSize: "0.7rem",
+          fontFamily: "ui-sans-serif, system-ui, sans-serif",
+          fontWeight: 500,
+          padding: "0 0.5rem",
+          transition: "opacity 0.15s ease",
+          ...action.style,
+        }}
+      >
+        {action.icon && <span style={{ fontSize: "0.9rem" }}>{action.icon}</span>}
+        <span>{confirmLabel ?? action.label}</span>
+      </button>
+    );
+  }
 
   if (mode === "swipe") {
     const colors = swipeVariantColors[effectiveVariant][theme];
@@ -84,6 +122,7 @@ export function ActionableActionButton({
           fontWeight: 500,
           padding: "0.5rem 0.25rem",
           transition: "opacity 0.15s ease",
+          ...action.style,
         }}
       >
         {action.icon && <span style={{ fontSize: "1.1rem" }}>{action.icon}</span>}
@@ -121,13 +160,15 @@ export function ActionableActionButton({
         minHeight: "1.5rem",
         whiteSpace: "nowrap",
         transition: "background 0.15s ease, color 0.15s ease, padding 0.15s ease",
+        ...action.style,
       }}
       onMouseEnter={(e) => {
-        if (!disabled && !action.disabled)
+        if (!disabled && !action.disabled && !action.style?.background)
           e.currentTarget.style.background = colors.hoverBg;
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = colors.bg;
+        if (!action.style?.background)
+          e.currentTarget.style.background = colors.bg;
       }}
     >
       {action.icon && !isConfirming && <span>{action.icon}</span>}
