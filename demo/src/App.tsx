@@ -2,13 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { ButtonPage } from "./pages/ButtonPage";
 import { CardPage } from "./pages/CardPage";
 import { CodeViewPage } from "./pages/CodeViewPage";
+import { ActionablePage } from "./pages/ActionablePage";
 
-type Page = "button" | "card" | "codeview";
+type Page = "button" | "card" | "codeview" | "actionable";
 
 const NAV: { id: Page; label: string; description: string }[] = [
   { id: "button", label: "Button", description: "단순 컴포넌트" },
   { id: "card", label: "Card", description: "Compound 컴포넌트" },
   { id: "codeview", label: "CodeView", description: "Syntax highlighting" },
+  { id: "actionable", label: "Actionable", description: "Action triggers" },
 ];
 
 const DEFAULT_PAGE: Page = "button";
@@ -178,6 +180,7 @@ export function App() {
         {current === "button" && <ButtonPage />}
         {current === "card" && <CardPage />}
         {current === "codeview" && <CodeViewPage />}
+        {current === "actionable" && <ActionablePage />}
       </main>
     </div>
   );
