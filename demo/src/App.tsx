@@ -91,7 +91,7 @@ export function App() {
   };
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <aside
         className="shrink-0 border-r border-gray-200 bg-white flex flex-col relative"
@@ -119,7 +119,7 @@ export function App() {
           </button>
         </div>
 
-        <nav className="flex-1 py-3 overflow-hidden">
+        <nav className="flex-1 py-3 overflow-y-auto">
           {NAV.map((item) => {
             const active = current === item.id;
             return (
