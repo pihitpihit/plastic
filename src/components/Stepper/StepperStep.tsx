@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { useCallback, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { useStepperContext } from "./StepperContext";
 import type {
   StepStatus,
@@ -98,9 +98,26 @@ export function StepperStep(props: StepperStepProps) {
   const colors = STEP_STATE_COLORS[ctx.theme][status];
   const isHorizontal = ctx.orientation === "horizontal";
 
-  void icon;
-  void completedIcon;
-  void errorIcon;
+  const canClick =
+    status !== "disabled" &&
+    (ctx.linear
+      ? ctx.completedSteps.has(index) ||
+        index === ctx.activeStep ||
+        index === ctx.activeStep - 1 ||
+        index === ctx.activeStep + 1
+      : true);
+
+  const handleClick = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      if (status === "disabled") {
+        e.preventDefault();
+        return;
+      }
+      if (index === ctx.activeStep) return;
+      void ctx.goToStep(index);
+    },
+    [ctx, index, status],
+  );
 
   const indicatorSize = ctx.variant === "dots" ? (status === "current" ? 14 : 10) : 36;
 
@@ -140,7 +157,7 @@ export function StepperStep(props: StepperStepProps) {
         background: "none",
         border: "none",
         padding: 0,
-        cursor: status === "disabled" ? "not-allowed" : "default",
+        cursor: status === "disabled" ? "not-allowed" : canClick ? "pointer" : "default",
         color: colors.labelColor,
         ...style,
       }
@@ -152,13 +169,21 @@ export function StepperStep(props: StepperStepProps) {
         background: "none",
         border: "none",
         padding: 0,
-        cursor: status === "disabled" ? "not-allowed" : "default",
+        cursor: status === "disabled" ? "not-allowed" : canClick ? "pointer" : "default",
         color: colors.labelColor,
         ...style,
       };
 
-  const indicatorContent =
-    ctx.variant === "dots" ? null : <span>{index + 1}</span>;
+  let indicatorContent: ReactNode = null;
+  if (ctx.variant !== "dots") {
+    if (status === "complete") {
+      indicatorContent = completedIcon ?? <span>{index + 1}</span>;
+    } else if (status === "error") {
+      indicatorContent = errorIcon ?? <span>{index + 1}</span>;
+    } else {
+      indicatorContent = icon ?? <span>{index + 1}</span>;
+    }
+  }
 
   const labelBlock =
     ctx.variant === "dots" ? null : (
@@ -210,6 +235,7 @@ export function StepperStep(props: StepperStepProps) {
       tabIndex={status === "current" ? 0 : -1}
       className={className}
       style={buttonStyle}
+      onClick={handleClick}
       {...rest}
     >
       <div style={indicatorStyle}>{indicatorContent}</div>
