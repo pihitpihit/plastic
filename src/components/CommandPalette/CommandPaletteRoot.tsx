@@ -100,6 +100,14 @@ export function CommandPaletteRoot({
     return () => document.removeEventListener("keydown", handler);
   }, [resolvedShortcut, open, setOpen]);
 
+  useEffect(() => {
+    if (open) {
+      setQuery("");
+      setActiveIndex(0);
+      setBreadcrumbs([]);
+    }
+  }, [open]);
+
   const pushBreadcrumb = useCallback((item: CommandItem) => {
     if (item.children === undefined || item.children.length === 0) return;
     setBreadcrumbs((prev) => [...prev, item]);
