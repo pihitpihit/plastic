@@ -23,6 +23,40 @@ function SearchIcon({ color }: { color: string }) {
   );
 }
 
+const SPIN_KEYFRAMES_ID = "plastic-commandpalette-spin";
+
+function ensureSpinKeyframes() {
+  if (typeof document === "undefined") return;
+  if (document.getElementById(SPIN_KEYFRAMES_ID)) return;
+  const style = document.createElement("style");
+  style.id = SPIN_KEYFRAMES_ID;
+  style.textContent =
+    "@keyframes plastic-cp-spin { to { transform: rotate(360deg) } }";
+  document.head.appendChild(style);
+}
+
+function Spinner({ color }: { color: string }) {
+  ensureSpinKeyframes();
+  return (
+    <svg
+      width={14}
+      height={14}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      style={{
+        flexShrink: 0,
+        animation: "plastic-cp-spin 1s linear infinite",
+      }}
+      aria-hidden="true"
+    >
+      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+    </svg>
+  );
+}
+
 export function CommandPaletteInput({
   placeholder = "Type a command or search…",
   className,
@@ -148,6 +182,7 @@ export function CommandPaletteInput({
         style={inputStyle}
         {...rest}
       />
+      {ctx.isLoading && <Spinner color={iconColor[theme]} />}
     </div>
   );
 }
