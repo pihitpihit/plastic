@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { CSSProperties, MutableRefObject, RefObject } from "react";
+import type { CSSProperties, MutableRefObject } from "react";
 import type {
   ArrowPosition,
   Placement,
@@ -20,8 +20,8 @@ export interface TooltipContextValue {
   theme: TooltipTheme;
 
   triggerRef: MutableRefObject<HTMLElement | null>;
-  floatingRef: RefObject<HTMLDivElement | null>;
-  arrowRef: RefObject<HTMLDivElement | null>;
+  floatingRef: MutableRefObject<HTMLDivElement | null>;
+  arrowRef: MutableRefObject<HTMLDivElement | null>;
   floatingStyles: CSSProperties;
   arrowPosition: ArrowPosition;
   arrowSide: Side;
