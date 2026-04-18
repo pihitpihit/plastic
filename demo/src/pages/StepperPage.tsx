@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { Stepper } from "plastic";
+import { CodeView, Stepper } from "plastic";
+import type {
+  StepperOrientation,
+  StepperTheme,
+  StepperVariant,
+} from "plastic";
 
 function Section({
   id,
@@ -605,6 +610,293 @@ function DarkDemo() {
   );
 }
 
+function PropsTable({
+  rows,
+}: {
+  rows: Array<[string, string, string, string]>;
+}) {
+  return (
+    <table className="w-full text-left text-sm border border-gray-200 rounded-lg overflow-hidden">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Prop</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Type</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Default</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(([prop, type, def, desc]) => (
+          <tr key={prop} className="border-t border-gray-100">
+            <td className="px-4 py-2 font-mono text-xs">{prop}</td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">{type}</td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">{def}</td>
+            <td className="px-4 py-2 text-gray-700">{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+const ROOT_PROPS: Array<[string, string, string, string]> = [
+  ["totalSteps", "number", "—", "전체 스텝 수 (필수)"],
+  ["activeStep", "number", "—", "현재 활성 스텝 (controlled)"],
+  ["defaultActiveStep", "number", "0", "초기 활성 스텝 (uncontrolled)"],
+  ["onStepChange", "(step: number) => void", "—", "스텝 변경 콜백"],
+  ["linear", "boolean", "true", "선형 네비게이션 모드"],
+  ["onBeforeNext", "(cur: number) => bool | Promise<bool>", "—", "다음 스텝 진입 검증"],
+  ["onBeforePrev", "(cur: number) => bool | Promise<bool>", "—", "이전 스텝 복귀 검증"],
+  ["stepErrors", "Record<number, string>", "—", "스텝별 에러 메시지"],
+  ["completedSteps", "Set<number>", "—", "완료된 스텝 (외부 제어)"],
+  ["disabledSteps", "Set<number>", "—", "비활성 스텝"],
+  ["orientation", "'horizontal' | 'vertical'", "'horizontal'", "레이아웃 방향"],
+  ["variant", "'default' | 'dots' | 'progress'", "'default'", "시각 변형"],
+  ["theme", "'light' | 'dark'", "'light'", "테마"],
+  ["onComplete", "() => void", "—", "CompleteButton 클릭 시 콜백"],
+];
+
+const STEP_PROPS: Array<[string, string, string, string]> = [
+  ["index", "number", "—", "스텝 인덱스 (필수)"],
+  ["label", "string", "—", "스텝 라벨"],
+  ["description", "string", "—", "스텝 설명 (vertical 권장)"],
+  ["icon", "ReactNode", "—", "기본 상태 커스텀 아이콘"],
+  ["completedIcon", "ReactNode", "CheckIcon", "완료 상태 아이콘"],
+  ["errorIcon", "ReactNode", "ExclamationIcon", "에러 상태 아이콘"],
+];
+
+const CONTENT_PROPS: Array<[string, string, string, string]> = [
+  ["transitionDuration", "number", "300", "전환 애니메이션 시간 (ms)"],
+  ["disableTransition", "boolean", "false", "전환 애니메이션 비활성화"],
+];
+
+const PANEL_PROPS: Array<[string, string, string, string]> = [
+  ["index", "number", "—", "패널 매칭 인덱스 (필수)"],
+  ["forceMount", "boolean", "false", "비활성 시에도 DOM 유지"],
+];
+
+const BUTTON_PROPS: Array<[string, string, string, string]> = [
+  ["hideOnFirst (Prev)", "boolean", "true", "첫 스텝에서 숨김"],
+  ["hideOnLast (Next)", "boolean", "true", "마지막 스텝에서 숨김"],
+  ["showOnlyOnLast (Complete)", "boolean", "true", "마지막 스텝에서만 표시"],
+];
+
+const USAGE_CODE = `import { Stepper } from "plastic";
+
+export function Example() {
+  return (
+    <Stepper.Root totalSteps={3} onComplete={() => alert("완료!")}>
+      <Stepper.List>
+        <Stepper.Step index={0} label="계정" />
+        <Stepper.Separator />
+        <Stepper.Step index={1} label="프로필" />
+        <Stepper.Separator />
+        <Stepper.Step index={2} label="확인" />
+      </Stepper.List>
+
+      <Stepper.Content>
+        <Stepper.Panel index={0}>계정 입력</Stepper.Panel>
+        <Stepper.Panel index={1}>프로필 입력</Stepper.Panel>
+        <Stepper.Panel index={2}>확인</Stepper.Panel>
+      </Stepper.Content>
+
+      <Stepper.Actions>
+        <Stepper.PrevButton>이전</Stepper.PrevButton>
+        <Stepper.NextButton>다음</Stepper.NextButton>
+        <Stepper.CompleteButton>완료</Stepper.CompleteButton>
+      </Stepper.Actions>
+    </Stepper.Root>
+  );
+}`;
+
+function PlaygroundDemo() {
+  const [orientation, setOrientation] = useState<StepperOrientation>("horizontal");
+  const [variant, setVariant] = useState<StepperVariant>("default");
+  const [linear, setLinear] = useState(true);
+  const [totalSteps, setTotalSteps] = useState(4);
+  const [theme, setTheme] = useState<StepperTheme>("light");
+  const [transitionDuration, setTransitionDuration] = useState(300);
+  const [disableTransition, setDisableTransition] = useState(false);
+
+  const wrapperStyle: React.CSSProperties =
+    theme === "dark"
+      ? { background: "#0f172a", padding: 24, borderRadius: 8 }
+      : {};
+
+  const content = (
+    <Stepper.Root
+      key={`${orientation}-${variant}-${linear}-${totalSteps}-${theme}-${transitionDuration}-${disableTransition}`}
+      totalSteps={totalSteps}
+      orientation={orientation}
+      variant={variant}
+      linear={linear}
+      theme={theme}
+    >
+      {orientation === "vertical" && variant !== "progress" ? (
+        <div style={{ display: "flex", gap: 32 }}>
+          <Stepper.List>
+            {Array.from({ length: totalSteps }).flatMap((_, i) =>
+              i === 0
+                ? [<Stepper.Step key={i} index={i} label={`Step ${i + 1}`} />]
+                : [
+                    <Stepper.Separator key={`sep-${i}`} />,
+                    <Stepper.Step key={i} index={i} label={`Step ${i + 1}`} />,
+                  ],
+            )}
+          </Stepper.List>
+          <div style={{ flex: 1 }}>
+            <Stepper.Content
+              transitionDuration={transitionDuration}
+              disableTransition={disableTransition}
+            >
+              {Array.from({ length: totalSteps }).map((_, i) => (
+                <Stepper.Panel key={i} index={i}>
+                  <div
+                    style={{
+                      padding: 16,
+                      color: theme === "dark" ? "#e5e7eb" : "#111827",
+                    }}
+                  >
+                    Panel {i + 1}
+                  </div>
+                </Stepper.Panel>
+              ))}
+            </Stepper.Content>
+          </div>
+        </div>
+      ) : (
+        <>
+          {variant === "progress" ? (
+            <Stepper.List />
+          ) : (
+            <Stepper.List>
+              {Array.from({ length: totalSteps }).flatMap((_, i) =>
+                i === 0
+                  ? [<Stepper.Step key={i} index={i} label={`Step ${i + 1}`} />]
+                  : [
+                      <Stepper.Separator key={`sep-${i}`} />,
+                      <Stepper.Step key={i} index={i} label={`Step ${i + 1}`} />,
+                    ],
+              )}
+            </Stepper.List>
+          )}
+          <Stepper.Content
+            transitionDuration={transitionDuration}
+            disableTransition={disableTransition}
+          >
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <Stepper.Panel key={i} index={i}>
+                <div
+                  style={{
+                    padding: 16,
+                    color: theme === "dark" ? "#e5e7eb" : "#111827",
+                  }}
+                >
+                  Panel {i + 1}
+                </div>
+              </Stepper.Panel>
+            ))}
+          </Stepper.Content>
+        </>
+      )}
+
+      <Stepper.Actions>
+        <Stepper.PrevButton>Previous</Stepper.PrevButton>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Stepper.NextButton>Next</Stepper.NextButton>
+          <Stepper.CompleteButton>Complete</Stepper.CompleteButton>
+        </div>
+      </Stepper.Actions>
+    </Stepper.Root>
+  );
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50 text-sm">
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-600">orientation</span>
+          <select
+            value={orientation}
+            onChange={(e) => setOrientation(e.target.value as StepperOrientation)}
+            className="px-2 py-1 border rounded"
+          >
+            <option value="horizontal">horizontal</option>
+            <option value="vertical">vertical</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-600">variant</span>
+          <select
+            value={variant}
+            onChange={(e) => setVariant(e.target.value as StepperVariant)}
+            className="px-2 py-1 border rounded"
+          >
+            <option value="default">default</option>
+            <option value="dots">dots</option>
+            <option value="progress">progress</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-600">theme</span>
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as StepperTheme)}
+            className="px-2 py-1 border rounded"
+          >
+            <option value="light">light</option>
+            <option value="dark">dark</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-600">
+            totalSteps: {totalSteps}
+          </span>
+          <input
+            type="range"
+            min={2}
+            max={8}
+            value={totalSteps}
+            onChange={(e) => setTotalSteps(Number(e.target.value))}
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-600">
+            transitionDuration: {transitionDuration}ms
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={600}
+            step={50}
+            value={transitionDuration}
+            onChange={(e) => setTransitionDuration(Number(e.target.value))}
+          />
+        </label>
+        <div className="flex items-end gap-4">
+          <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+            <input
+              type="checkbox"
+              checked={linear}
+              onChange={(e) => setLinear(e.target.checked)}
+            />
+            linear
+          </label>
+          <label className="flex items-center gap-2 text-xs font-medium text-gray-600">
+            <input
+              type="checkbox"
+              checked={disableTransition}
+              onChange={(e) => setDisableTransition(e.target.checked)}
+            />
+            disableTransition
+          </label>
+        </div>
+      </div>
+
+      <div style={wrapperStyle}>{content}</div>
+    </div>
+  );
+}
+
 export function StepperPage() {
   return (
     <div>
@@ -663,6 +955,39 @@ export function StepperPage() {
 
       <Section id="dark-theme" title="Dark Theme" desc="theme='dark' + completedSteps 외부 제어">
         <DarkDemo />
+      </Section>
+
+      <Section id="props" title="Props">
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="text-sm font-semibold mb-2">Stepper.Root</p>
+            <PropsTable rows={ROOT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Stepper.Step</p>
+            <PropsTable rows={STEP_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Stepper.Content</p>
+            <PropsTable rows={CONTENT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Stepper.Panel</p>
+            <PropsTable rows={PANEL_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Action Buttons</p>
+            <PropsTable rows={BUTTON_PROPS} />
+          </div>
+        </div>
+      </Section>
+
+      <Section id="usage" title="Usage">
+        <CodeView code={USAGE_CODE} language="tsx" />
+      </Section>
+
+      <Section id="playground" title="Playground">
+        <PlaygroundDemo />
       </Section>
     </div>
   );
