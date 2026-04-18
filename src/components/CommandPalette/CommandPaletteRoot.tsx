@@ -15,6 +15,7 @@ import type {
   CommandPaletteRootProps,
   FuzzyMatchResult,
 } from "./CommandPalette.types";
+import { filterItems } from "./fuzzyMatch";
 import { isMac, matchesShortcut } from "./helpers";
 
 const CommandPaletteContext =
@@ -32,6 +33,8 @@ export function useCommandPalette(): CommandPaletteContextValue {
 
 const DEFAULT_MAC_SHORTCUT = ["Meta", "k"];
 const DEFAULT_WIN_SHORTCUT = ["Control", "k"];
+const DEFAULT_DEBOUNCE = 150;
+const DEFAULT_MAX_RESULTS = 50;
 
 export function CommandPaletteRoot({
   children,
@@ -41,6 +44,10 @@ export function CommandPaletteRoot({
   open: openProp,
   defaultOpen,
   onOpenChange,
+  filter,
+  onSearch,
+  searchDebounce,
+  maxResults,
   shortcut,
   theme,
   onSelect,
@@ -70,6 +77,8 @@ export function CommandPaletteRoot({
   );
 
   const resolvedTheme = theme ?? "light";
+  const resolvedMaxResults = maxResults ?? DEFAULT_MAX_RESULTS;
+  const resolvedDebounce = searchDebounce ?? DEFAULT_DEBOUNCE;
   const resolvedItems = useMemo(() => items ?? [], [items]);
   const resolvedRecentItems = useMemo(
     () => recentItems ?? [],
@@ -121,7 +130,7 @@ export function CommandPaletteRoot({
     [onSelect, pushBreadcrumb, setOpen],
   );
 
-  const results: CommandItem[] = useMemo(() => {
+  const currentLevelItems = useMemo<CommandItem[]>(() => {
     if (breadcrumbs.length > 0) {
       const last = breadcrumbs[breadcrumbs.length - 1]!;
       return last.children ?? [];
@@ -129,7 +138,81 @@ export function CommandPaletteRoot({
     return resolvedItems;
   }, [breadcrumbs, resolvedItems]);
 
-  const matches = useMemo(() => new Map<string, FuzzyMatchResult>(), []);
+  const [asyncResults, setAsyncResults] = useState<CommandItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const searchSeqRef = useRef(0);
+
+  useEffect(() => {
+    if (!onSearch) return;
+    if (query.trim() === "") {
+      setAsyncResults([]);
+      setIsLoading(false);
+      searchSeqRef.current++;
+      return;
+    }
+    const seq = ++searchSeqRef.current;
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const res = await onSearch(query);
+          if (seq !== searchSeqRef.current) return;
+          setAsyncResults(res);
+        } catch {
+          if (seq !== searchSeqRef.current) return;
+          setAsyncResults([]);
+        } finally {
+          if (seq === searchSeqRef.current) setIsLoading(false);
+        }
+      })();
+    }, resolvedDebounce);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [query, onSearch, resolvedDebounce]);
+
+  const { results, matches } = useMemo<{
+    results: CommandItem[];
+    matches: Map<string, FuzzyMatchResult>;
+  }>(() => {
+    const matchMap = new Map<string, FuzzyMatchResult>();
+
+    if (onSearch) {
+      return { results: asyncResults, matches: matchMap };
+    }
+
+    if (query.trim() === "") {
+      return { results: currentLevelItems, matches: matchMap };
+    }
+
+    if (filter) {
+      return { results: filter(query, currentLevelItems), matches: matchMap };
+    }
+
+    const scored = filterItems(query, currentLevelItems, resolvedMaxResults);
+    for (const r of scored) matchMap.set(r.item.id, r);
+    return { results: scored.map((r) => r.item), matches: matchMap };
+  }, [
+    onSearch,
+    asyncResults,
+    query,
+    filter,
+    currentLevelItems,
+    resolvedMaxResults,
+  ]);
+
+  useEffect(() => {
+    setActiveIndex((prev) => {
+      if (results.length === 0) return -1;
+      if (prev < 0) return 0;
+      if (prev >= results.length) return results.length - 1;
+      return prev;
+    });
+  }, [results]);
+
+  useEffect(() => {
+    setActiveIndex(results.length === 0 ? -1 : 0);
+  }, [query, results.length]);
 
   const contextValue = useMemo<CommandPaletteContextValue>(
     () => ({
@@ -139,7 +222,7 @@ export function CommandPaletteRoot({
       setQuery,
       results,
       matches,
-      isLoading: false,
+      isLoading,
       activeIndex,
       setActiveIndex,
       selectItem,
@@ -160,6 +243,7 @@ export function CommandPaletteRoot({
       query,
       results,
       matches,
+      isLoading,
       activeIndex,
       selectItem,
       resolvedTheme,
