@@ -28,6 +28,7 @@ export interface UseFloatingReturn {
   floatingStyles: CSSProperties;
   arrowPosition: ArrowPosition;
   arrowSide: Side;
+  isPositioned: boolean;
   triggerRef: RefObject<HTMLElement | null>;
   floatingRef: RefObject<HTMLDivElement | null>;
   arrowRef: RefObject<HTMLDivElement | null>;
@@ -270,11 +271,13 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
     x: number;
     y: number;
     arrowPosition: ArrowPosition;
+    isPositioned: boolean;
   }>({
     placement: desiredPlacement,
     x: 0,
     y: 0,
     arrowPosition: { x: undefined, y: undefined },
+    isPositioned: false,
   });
 
   const update = useCallback(() => {
@@ -326,11 +329,15 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
       x: shifted.x,
       y: shifted.y,
       arrowPosition,
+      isPositioned: true,
     });
   }, [desiredPlacement, offset, arrowPadding, flip]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled) {
+      setPosition((prev) => ({ ...prev, isPositioned: false }));
+      return;
+    }
     const triggerEl = triggerRef.current;
     const floatingEl = floatingRef.current;
     if (!triggerEl || !floatingEl) return;
@@ -375,6 +382,7 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
     floatingStyles,
     arrowPosition: position.arrowPosition,
     arrowSide,
+    isPositioned: position.isPositioned,
     triggerRef,
     floatingRef,
     arrowRef,
