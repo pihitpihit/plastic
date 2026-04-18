@@ -105,6 +105,9 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Pinning", id: "pinning" },
     { label: "Virtual Scroll", id: "virtual" },
     { label: "Custom Cell", id: "custom-cell" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },
