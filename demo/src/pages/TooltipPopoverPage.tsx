@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button, Tooltip } from "plastic";
 import type { TooltipPlacement } from "plastic";
 
@@ -113,6 +114,119 @@ export function TooltipPopoverPage() {
       >
         <TooltipPlacementsDemo />
       </Section>
+
+      <Section
+        id="tooltip-arrow"
+        title="Tooltip Arrow"
+        desc="화살표 유무 비교 — Arrow 컴포넌트를 선언하면 placement에 맞춰 자동 배치"
+      >
+        <TooltipArrowDemo />
+      </Section>
+
+      <Section
+        id="tooltip-controlled"
+        title="Tooltip Controlled"
+        desc="외부 state로 open 제어 — open/onOpenChange prop"
+      >
+        <TooltipControlledDemo />
+      </Section>
+
+      <Section
+        id="tooltip-delay"
+        title="Tooltip Delay"
+        desc="showDelay/hideDelay로 표시·숨김 타이밍 조정"
+      >
+        <TooltipDelayDemo />
+      </Section>
     </div>
+  );
+}
+
+function TooltipArrowDemo() {
+  return (
+    <Card>
+      <Tooltip.Root placement="top">
+        <Tooltip.Trigger>
+          <Button variant="secondary">Without arrow</Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>No arrow here</Tooltip.Content>
+      </Tooltip.Root>
+
+      <Tooltip.Root placement="top">
+        <Tooltip.Trigger>
+          <Button>With arrow</Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>
+          <Tooltip.Arrow />
+          Arrow tooltip
+        </Tooltip.Content>
+      </Tooltip.Root>
+
+      <Tooltip.Root placement="right">
+        <Tooltip.Trigger>
+          <Button variant="secondary">Right + arrow</Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>
+          <Tooltip.Arrow size={10} />
+          큰 화살표(10px)
+        </Tooltip.Content>
+      </Tooltip.Root>
+    </Card>
+  );
+}
+
+function TooltipControlledDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Card>
+      <Button variant="secondary" onClick={() => setOpen((v) => !v)}>
+        {open ? "Hide" : "Show"} externally
+      </Button>
+      <Tooltip.Root open={open} onOpenChange={setOpen} placement="top">
+        <Tooltip.Trigger>
+          <Button>Controlled trigger</Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>
+          <Tooltip.Arrow />
+          외부 state로 제어됨
+        </Tooltip.Content>
+      </Tooltip.Root>
+    </Card>
+  );
+}
+
+function TooltipDelayDemo() {
+  return (
+    <Card>
+      <Tooltip.Root showDelay={0} hideDelay={0} placement="top">
+        <Tooltip.Trigger>
+          <Button variant="secondary">즉시 (0/0)</Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>
+          <Tooltip.Arrow />
+          딜레이 없음
+        </Tooltip.Content>
+      </Tooltip.Root>
+
+      <Tooltip.Root placement="top">
+        <Tooltip.Trigger>
+          <Button>기본 (300/100)</Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>
+          <Tooltip.Arrow />
+          기본 딜레이
+        </Tooltip.Content>
+      </Tooltip.Root>
+
+      <Tooltip.Root showDelay={1000} hideDelay={500} placement="top">
+        <Tooltip.Trigger>
+          <Button variant="secondary">느리게 (1000/500)</Button>
+        </Tooltip.Trigger>
+        <Tooltip.Content>
+          <Tooltip.Arrow />
+          느린 반응
+        </Tooltip.Content>
+      </Tooltip.Root>
+    </Card>
   );
 }
