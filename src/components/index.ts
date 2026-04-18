@@ -6,5 +6,6 @@ export * from "./DataTable";
 export * from "./Dialog";
 export * from "./PathInput";
 export * from "./Popover";
+export * from "./Stepper";
 export * from "./Toast";
 export * from "./Tooltip";
