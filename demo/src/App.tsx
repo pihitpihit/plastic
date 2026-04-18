@@ -101,6 +101,8 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Pagination", id: "pagination" },
     { label: "Selection", id: "selection" },
     { label: "Expandable", id: "expandable" },
+    { label: "Resize", id: "resize" },
+    { label: "Pinning", id: "pinning" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },

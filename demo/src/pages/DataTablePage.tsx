@@ -280,6 +280,109 @@ function ExpandableDemo() {
   );
 }
 
+// ── Section 7: Column Resize ─────────────────────────────────────────────
+function ResizeDemo() {
+  const data = useMemo(() => createPeople(10), []);
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      {
+        key: "id",
+        header: "ID",
+        cell: (r) => r.id,
+        width: 80,
+        minWidth: 60,
+        maxWidth: 140,
+        align: "right",
+        resizable: true,
+      },
+      {
+        key: "name",
+        header: "Name",
+        cell: (r) => r.name,
+        width: 160,
+        minWidth: 100,
+        resizable: true,
+      },
+      {
+        key: "email",
+        header: "Email",
+        cell: (r) => r.email,
+        width: 220,
+        minWidth: 120,
+        resizable: true,
+      },
+      {
+        key: "role",
+        header: "Role",
+        cell: (r) => r.role,
+        width: 120,
+        minWidth: 80,
+        resizable: true,
+      },
+    ],
+    [],
+  );
+  return (
+    <div className="space-y-2">
+      <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+        <DataTable columns={columns} data={data}>
+          <DataTable.Header />
+          <DataTable.Body />
+        </DataTable>
+      </div>
+      <p className="text-xs text-gray-500">
+        컬럼 헤더 우측 4px 영역을 드래그해서 너비 조정 (min/max 범위 clamp).
+      </p>
+    </div>
+  );
+}
+
+// ── Section 8: Column Pinning ────────────────────────────────────────────
+function PinningDemo() {
+  const data = useMemo(() => createPeople(15), []);
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      {
+        key: "id",
+        header: "ID",
+        cell: (r) => r.id,
+        width: 60,
+        align: "right",
+        pinned: "left",
+      },
+      { key: "name", header: "Name", cell: (r) => r.name, width: 160 },
+      { key: "email", header: "Email", cell: (r) => r.email, width: 260 },
+      { key: "role", header: "Role", cell: (r) => r.role, width: 140 },
+      { key: "createdAt", header: "Created", cell: (r) => r.createdAt, width: 140 },
+      {
+        key: "score",
+        header: "Score",
+        cell: (r) => r.score,
+        width: 100,
+        align: "right",
+        pinned: "right",
+      },
+    ],
+    [],
+  );
+  return (
+    <div className="space-y-2">
+      <div
+        className="border border-gray-200 rounded-md bg-white"
+        style={{ overflowX: "auto" }}
+      >
+        <DataTable columns={columns} data={data}>
+          <DataTable.Header />
+          <DataTable.Body />
+        </DataTable>
+      </div>
+      <p className="text-xs text-gray-500">
+        ID 컬럼은 좌측 고정, Score 컬럼은 우측 고정. 가로 스크롤 시 sticky.
+      </p>
+    </div>
+  );
+}
+
 // ── 페이지 ───────────────────────────────────────────────────────────────
 export default function DataTablePage() {
   return (
@@ -334,6 +437,22 @@ export default function DataTablePage() {
         desc="expandable=true, 화살표 클릭으로 renderExpandedRow 토글"
       >
         <ExpandableDemo />
+      </Section>
+
+      <Section
+        id="resize"
+        title="Column Resize"
+        desc="resizable=true 컬럼의 우측 핸들을 드래그해서 너비 조정"
+      >
+        <ResizeDemo />
+      </Section>
+
+      <Section
+        id="pinning"
+        title="Column Pinning"
+        desc="pinned: 'left' | 'right', 가로 스크롤 시 sticky"
+      >
+        <PinningDemo />
       </Section>
     </div>
   );
