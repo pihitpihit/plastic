@@ -13,6 +13,43 @@ interface StepColorSet {
   labelColor: string;
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="3.5 8.5 6.5 11.5 12.5 4.5" />
+    </svg>
+  );
+}
+
+function ExclamationIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <line x1="8" y1="4" x2="8" y2="9" />
+      <circle cx="8" cy="12" r="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 const STEP_STATE_COLORS: Record<StepperTheme, Record<StepStatus, StepColorSet>> = {
   light: {
     incomplete: {
@@ -177,9 +214,9 @@ export function StepperStep(props: StepperStepProps) {
   let indicatorContent: ReactNode = null;
   if (ctx.variant !== "dots") {
     if (status === "complete") {
-      indicatorContent = completedIcon ?? <span>{index + 1}</span>;
+      indicatorContent = completedIcon ?? <CheckIcon />;
     } else if (status === "error") {
-      indicatorContent = errorIcon ?? <span>{index + 1}</span>;
+      indicatorContent = errorIcon ?? <ExclamationIcon />;
     } else {
       indicatorContent = icon ?? <span>{index + 1}</span>;
     }
