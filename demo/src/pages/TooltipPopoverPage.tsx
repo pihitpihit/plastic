@@ -154,6 +154,30 @@ export function TooltipPopoverPage() {
       >
         <PopoverTriggerModeDemo />
       </Section>
+
+      <Section
+        id="popover-form"
+        title="Popover Form"
+        desc="인풋과 버튼이 포함된 폼 패턴"
+      >
+        <PopoverFormDemo />
+      </Section>
+
+      <Section
+        id="popover-nested"
+        title="Popover Nested"
+        desc="팝오버 안에 또 다른 팝오버 — 독립적으로 열고 닫힘"
+      >
+        <PopoverNestedDemo />
+      </Section>
+
+      <Section
+        id="popover-modal"
+        title="Popover Modal (Focus Trap)"
+        desc="trapFocus=true로 Tab 포커스를 팝오버 내부로 순환"
+      >
+        <PopoverModalDemo />
+      </Section>
     </div>
   );
 }
@@ -230,13 +254,149 @@ function PopoverBasicDemo() {
               Escape로 닫힙니다.
             </p>
             <div className="mt-3 flex gap-2 justify-end">
-              <Popover.Close>
-                <Button variant="ghost" size="sm">
-                  취소
-                </Button>
+              <Popover.Close
+                style={{
+                  width: "auto",
+                  height: "auto",
+                  padding: "0.375rem 0.75rem",
+                  fontSize: "0.875rem",
+                }}
+              >
+                취소
               </Popover.Close>
-              <Popover.Close>
-                <Button size="sm">확인</Button>
+              <Popover.Close
+                style={{
+                  width: "auto",
+                  height: "auto",
+                  padding: "0.375rem 0.75rem",
+                  fontSize: "0.875rem",
+                  background: "#2563eb",
+                  color: "#fff",
+                }}
+              >
+                확인
+              </Popover.Close>
+            </div>
+          </Popover.Body>
+        </Popover.Content>
+      </Popover.Root>
+    </Card>
+  );
+}
+
+function PopoverFormDemo() {
+  const [name, setName] = useState("");
+  return (
+    <Card>
+      <Popover.Root placement="bottom-start">
+        <Popover.Trigger>
+          <Button>이름 수정</Button>
+        </Popover.Trigger>
+        <Popover.Content minWidth={260}>
+          <Popover.Arrow />
+          <Popover.Header>이름 변경</Popover.Header>
+          <Popover.Body>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="새 이름"
+              className="w-full px-3 py-2 text-sm rounded-md border border-gray-200 focus:outline-none focus:border-blue-500"
+            />
+            <div className="mt-3 flex gap-2 justify-end">
+              <Popover.Close
+                style={{
+                  width: "auto",
+                  height: "auto",
+                  padding: "0.375rem 0.75rem",
+                  fontSize: "0.875rem",
+                }}
+              >
+                취소
+              </Popover.Close>
+              <Popover.Close
+                style={{
+                  width: "auto",
+                  height: "auto",
+                  padding: "0.375rem 0.75rem",
+                  fontSize: "0.875rem",
+                  background: "#2563eb",
+                  color: "#fff",
+                }}
+              >
+                저장
+              </Popover.Close>
+            </div>
+          </Popover.Body>
+        </Popover.Content>
+      </Popover.Root>
+      <span className="text-sm text-gray-500">현재: {name || "(없음)"}</span>
+    </Card>
+  );
+}
+
+function PopoverNestedDemo() {
+  return (
+    <Card>
+      <Popover.Root>
+        <Popover.Trigger>
+          <Button>Outer</Button>
+        </Popover.Trigger>
+        <Popover.Content minWidth={240}>
+          <Popover.Arrow />
+          <Popover.Header>Outer Popover</Popover.Header>
+          <Popover.Body>
+            <p className="text-sm text-gray-600 mb-3">
+              이 안에 또 다른 팝오버가 있습니다.
+            </p>
+            <Popover.Root placement="right-start">
+              <Popover.Trigger>
+                <Button size="sm" variant="secondary">
+                  Open inner
+                </Button>
+              </Popover.Trigger>
+              <Popover.Content minWidth={200}>
+                <Popover.Arrow />
+                <Popover.Body>Inner 팝오버입니다.</Popover.Body>
+              </Popover.Content>
+            </Popover.Root>
+          </Popover.Body>
+        </Popover.Content>
+      </Popover.Root>
+    </Card>
+  );
+}
+
+function PopoverModalDemo() {
+  return (
+    <Card>
+      <Popover.Root trapFocus>
+        <Popover.Trigger>
+          <Button>Modal popover</Button>
+        </Popover.Trigger>
+        <Popover.Content minWidth={280}>
+          <Popover.Arrow />
+          <Popover.Header>Focus Trap</Popover.Header>
+          <Popover.Body>
+            <p className="text-sm text-gray-600 mb-3">
+              Tab 키로 포커스가 팝오버 내부에서만 순환합니다. Escape로 닫으면
+              트리거로 복귀합니다.
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="첫 번째"
+                className="flex-1 px-3 py-2 text-sm rounded-md border border-gray-200 focus:outline-none focus:border-blue-500"
+              />
+              <Popover.Close
+                style={{
+                  width: "auto",
+                  height: "auto",
+                  padding: "0.375rem 0.75rem",
+                  fontSize: "0.875rem",
+                }}
+              >
+                닫기
               </Popover.Close>
             </div>
           </Popover.Body>
