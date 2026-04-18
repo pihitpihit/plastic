@@ -4,8 +4,9 @@ import { CardPage } from "./pages/CardPage";
 import { CodeViewPage } from "./pages/CodeViewPage";
 import { ActionablePage } from "./pages/ActionablePage";
 import { PathInputPage } from "./pages/PathInputPage";
+import { ToastPage } from "./pages/ToastPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast";
 
 interface SubItem { label: string; id: string }
 
@@ -56,6 +57,20 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Drag & Drop", id: "drag-drop" },
     { label: "Validation", id: "validation" },
     { label: "Disabled", id: "disabled" },
+    { label: "Dark Theme", id: "dark-theme" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "toast", label: "Toast", description: "알림 토스트 시스템", sections: [
+    { label: "Basic Variants", id: "basic" },
+    { label: "Positions", id: "positions" },
+    { label: "Custom Content", id: "custom-content" },
+    { label: "Auto-dismiss", id: "auto-dismiss" },
+    { label: "Swipe Dismiss", id: "swipe-dismiss" },
+    { label: "Stacking", id: "stacking" },
+    { label: "Promise", id: "promise" },
+    { label: "Persistent", id: "persistent" },
     { label: "Dark Theme", id: "dark-theme" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
@@ -289,6 +304,7 @@ export function App() {
         {current === "codeview" && <CodeViewPage />}
         {current === "actionable" && <ActionablePage />}
         {current === "pathinput" && <PathInputPage />}
+        {current === "toast" && <ToastPage />}
       </main>
     </div>
   );
