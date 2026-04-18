@@ -163,6 +163,142 @@ function VerticalDemo() {
   );
 }
 
+function NonLinearDemo() {
+  return (
+    <Stepper.Root totalSteps={4} linear={false}>
+      <p className="text-xs text-gray-500 mb-3">
+        linear=false — 아무 스텝이나 클릭해서 자유롭게 이동할 수 있습니다.
+      </p>
+      <Stepper.List>
+        <Stepper.Step index={0} label="General" />
+        <Stepper.Separator />
+        <Stepper.Step index={1} label="Details" />
+        <Stepper.Separator />
+        <Stepper.Step index={2} label="Review" />
+        <Stepper.Separator />
+        <Stepper.Step index={3} label="Submit" />
+      </Stepper.List>
+
+      <Stepper.Content>
+        <Stepper.Panel index={0}>
+          <div className="p-4 text-sm">General 정보 입력 섹션입니다.</div>
+        </Stepper.Panel>
+        <Stepper.Panel index={1}>
+          <div className="p-4 text-sm">상세 정보 섹션입니다.</div>
+        </Stepper.Panel>
+        <Stepper.Panel index={2}>
+          <div className="p-4 text-sm">입력 내용을 검토합니다.</div>
+        </Stepper.Panel>
+        <Stepper.Panel index={3}>
+          <div className="p-4 text-sm">최종 제출 단계입니다.</div>
+        </Stepper.Panel>
+      </Stepper.Content>
+
+      <Stepper.Actions>
+        <Stepper.PrevButton>이전</Stepper.PrevButton>
+        <div className="flex gap-2">
+          <Stepper.NextButton>다음</Stepper.NextButton>
+          <Stepper.CompleteButton>완료</Stepper.CompleteButton>
+        </div>
+      </Stepper.Actions>
+    </Stepper.Root>
+  );
+}
+
+function ValidationDemo() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [errors, setErrors] = useState<Record<number, string>>({});
+
+  return (
+    <Stepper.Root
+      totalSteps={3}
+      stepErrors={errors}
+      onBeforeNext={async (currentStep) => {
+        if (currentStep === 0) {
+          if (name.trim().length === 0) {
+            setErrors({ 0: "이름을 입력해주세요" });
+            return false;
+          }
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next[0];
+            return next;
+          });
+          return true;
+        }
+        if (currentStep === 1) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          if (!email.includes("@")) {
+            setErrors({ 1: "올바른 이메일 형식이 아닙니다" });
+            return false;
+          }
+          setErrors((prev) => {
+            const next = { ...prev };
+            delete next[1];
+            return next;
+          });
+          return true;
+        }
+        return true;
+      }}
+      onComplete={() => alert("검증 통과!")}
+    >
+      <Stepper.List>
+        <Stepper.Step index={0} label="이름" />
+        <Stepper.Separator />
+        <Stepper.Step index={1} label="이메일 (비동기)" />
+        <Stepper.Separator />
+        <Stepper.Step index={2} label="완료" />
+      </Stepper.List>
+
+      <Stepper.Content>
+        <Stepper.Panel index={0}>
+          <div className="flex flex-col gap-2 p-4">
+            <label className="text-sm font-medium">이름 (필수)</label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="이름을 입력하세요"
+              className="px-3 py-2 border border-gray-300 rounded-md"
+            />
+            {errors[0] && (
+              <p className="text-xs text-red-500">{errors[0]}</p>
+            )}
+          </div>
+        </Stepper.Panel>
+        <Stepper.Panel index={1}>
+          <div className="flex flex-col gap-2 p-4">
+            <label className="text-sm font-medium">
+              이메일 (다음 버튼 클릭 시 1초 비동기 검증)
+            </label>
+            <input
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="user@example.com"
+              className="px-3 py-2 border border-gray-300 rounded-md"
+            />
+            {errors[1] && (
+              <p className="text-xs text-red-500">{errors[1]}</p>
+            )}
+          </div>
+        </Stepper.Panel>
+        <Stepper.Panel index={2}>
+          <div className="p-4 text-sm">모든 검증을 통과했습니다.</div>
+        </Stepper.Panel>
+      </Stepper.Content>
+
+      <Stepper.Actions>
+        <Stepper.PrevButton>이전</Stepper.PrevButton>
+        <div className="flex gap-2">
+          <Stepper.NextButton>다음</Stepper.NextButton>
+          <Stepper.CompleteButton>제출</Stepper.CompleteButton>
+        </div>
+      </Stepper.Actions>
+    </Stepper.Root>
+  );
+}
+
 export function StepperPage() {
   return (
     <div>
@@ -180,6 +316,18 @@ export function StepperPage() {
       <Section id="vertical" title="Vertical" desc="orientation='vertical' + description 표시">
         <Card>
           <VerticalDemo />
+        </Card>
+      </Section>
+
+      <Section id="non-linear" title="Non-linear" desc="linear=false — 자유 이동">
+        <Card>
+          <NonLinearDemo />
+        </Card>
+      </Section>
+
+      <Section id="validation" title="Validation" desc="onBeforeNext 동기/비동기 검증">
+        <Card>
+          <ValidationDemo />
         </Card>
       </Section>
     </div>
