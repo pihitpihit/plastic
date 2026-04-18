@@ -377,6 +377,86 @@ function EmptyLoadingDemo() {
   );
 }
 
+function ControlledDemo() {
+  const [open, setOpen] = useState(false);
+  const [log, setLog] = useState<string[]>([]);
+
+  const items: CommandItem[] = [
+    { id: "a", label: "Alpha 작업", onSelect: () => setLog((l) => [...l, "Alpha"]) },
+    { id: "b", label: "Beta 작업", onSelect: () => setLog((l) => [...l, "Beta"]) },
+    { id: "c", label: "Gamma 작업", onSelect: () => setLog((l) => [...l, "Gamma"]) },
+  ];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Button onClick={() => setOpen(true)}>열기</Button>
+        <Button variant="secondary" onClick={() => setOpen(false)}>
+          닫기
+        </Button>
+        <span className="text-sm text-gray-500">
+          상태: <strong>{open ? "open" : "closed"}</strong>
+        </span>
+      </div>
+      {log.length > 0 && (
+        <ul className="text-sm text-gray-600">
+          {log.map((l, i) => (
+            <li key={i}>• {l}</li>
+          ))}
+        </ul>
+      )}
+      <CommandPalette.Root open={open} onOpenChange={setOpen} items={items}>
+        <CommandPalette.Input placeholder="검색…" />
+        <CommandPalette.List>
+          {items.map((item) => (
+            <CommandPalette.Item key={item.id} item={item} />
+          ))}
+        </CommandPalette.List>
+        <CommandPalette.Empty />
+        <CommandPalette.Footer />
+      </CommandPalette.Root>
+    </div>
+  );
+}
+
+function DarkDemo() {
+  const [open, setOpen] = useState(false);
+  const [lastAction, setLastAction] = useState("");
+
+  const items: CommandItem[] = [
+    { id: "d1", label: "다크 명령 1", description: "dark theme", onSelect: () => setLastAction("1") },
+    { id: "d2", label: "다크 명령 2", description: "dark theme", onSelect: () => setLastAction("2") },
+    { id: "d3", label: "다크 명령 3", description: "dark theme", onSelect: () => setLastAction("3") },
+    { id: "d4", label: "다크 명령 4", description: "dark theme", onSelect: () => setLastAction("4") },
+  ];
+
+  return (
+    <div className="flex flex-col gap-3 p-6 bg-gray-900 text-gray-100 rounded-lg">
+      <Button onClick={() => setOpen(true)}>Dark 열기</Button>
+      {lastAction && (
+        <p className="text-sm text-gray-300">
+          마지막 선택: <strong>{lastAction}</strong>
+        </p>
+      )}
+      <CommandPalette.Root
+        open={open}
+        onOpenChange={setOpen}
+        items={items}
+        theme="dark"
+      >
+        <CommandPalette.Input placeholder="검색…" />
+        <CommandPalette.List>
+          {items.map((item) => (
+            <CommandPalette.Item key={item.id} item={item} />
+          ))}
+        </CommandPalette.List>
+        <CommandPalette.Empty />
+        <CommandPalette.Footer />
+      </CommandPalette.Root>
+    </div>
+  );
+}
+
 export default function CommandPalettePage() {
   return (
     <div className="p-8 max-w-3xl">
@@ -444,6 +524,20 @@ export default function CommandPalettePage() {
         <Card>
           <EmptyLoadingDemo />
         </Card>
+      </Section>
+
+      <Section
+        id="controlled"
+        title="Controlled"
+        desc="open / onOpenChange로 외부 상태 제어"
+      >
+        <Card>
+          <ControlledDemo />
+        </Card>
+      </Section>
+
+      <Section id="dark" title="Dark Theme" desc="theme='dark'">
+        <DarkDemo />
       </Section>
     </div>
   );
