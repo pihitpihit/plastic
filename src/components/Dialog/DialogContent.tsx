@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useRef } from "react";
 import { useFocusTrap } from "../_shared/useFocusTrap";
+import { useReducedMotion } from "../_shared/useReducedMotion";
 import { useScrollLock } from "../_shared/useScrollLock";
 import { useDialogContext } from "./DialogContext";
 import {
@@ -46,6 +47,7 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
     const ctx = useDialogContext();
     const contentRef = useRef<HTMLDivElement | null>(null);
     const mergedRef = mergeRefs(contentRef, forwardedRef);
+    const prefersReducedMotion = useReducedMotion();
 
     const isOpenState =
       ctx.animationState === "open" || ctx.animationState === "opening";
@@ -147,8 +149,9 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(
           border: `1px solid ${contentBorder[ctx.theme]}`,
           boxShadow: contentShadow[ctx.theme],
           opacity: isOpenState ? 1 : 0,
-          transition:
-            "opacity 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: prefersReducedMotion
+            ? "none"
+            : "opacity 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1)",
           outline: "none",
           ...style,
         }}

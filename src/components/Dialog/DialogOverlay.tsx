@@ -1,10 +1,12 @@
 import { forwardRef } from "react";
+import { useReducedMotion } from "../_shared/useReducedMotion";
 import { useDialogContext } from "./DialogContext";
 import type { DialogOverlayProps } from "./Dialog.types";
 
 export const DialogOverlay = forwardRef<HTMLDivElement, DialogOverlayProps>(
   function DialogOverlay({ className, style, onClick, ...rest }, ref) {
     const ctx = useDialogContext();
+    const prefersReducedMotion = useReducedMotion();
     const isOpenState =
       ctx.animationState === "open" || ctx.animationState === "opening";
     const opacity = isOpenState ? 1 : 0;
@@ -31,7 +33,7 @@ export const DialogOverlay = forwardRef<HTMLDivElement, DialogOverlayProps>(
           zIndex: 1000 + ctx.nestingLevel * 10,
           background: "rgba(0, 0, 0, 0.5)",
           opacity,
-          transition: "opacity 150ms ease",
+          transition: prefersReducedMotion ? "none" : "opacity 150ms ease",
           ...style,
         }}
         {...rest}
