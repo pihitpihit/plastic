@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, CommandPalette, useCommandPalette } from "plastic";
+import { Button, CodeView, CommandPalette, useCommandPalette } from "plastic";
 import type { CommandItem } from "plastic";
 
 function ResultItems() {
@@ -457,6 +457,179 @@ function DarkDemo() {
   );
 }
 
+function PropsTable({
+  rows,
+}: {
+  rows: Array<[string, string, string, string]>;
+}) {
+  return (
+    <table className="w-full text-left text-sm border border-gray-200 rounded-lg overflow-hidden">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Prop</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Type</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Default</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(([prop, type, def, desc]) => (
+          <tr key={prop} className="border-t border-gray-100">
+            <td className="px-4 py-2 font-mono text-xs">{prop}</td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">{type}</td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">{def}</td>
+            <td className="px-4 py-2 text-gray-700">{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+const ROOT_PROPS: Array<[string, string, string, string]> = [
+  ["items", "CommandItem[]", "—", "명령 아이템 목록"],
+  ["recentItems", "CommandItem[]", "[]", "최근 사용 아이템"],
+  ["pinnedItems", "CommandItem[]", "[]", "고정 아이템"],
+  ["open", "boolean", "—", "열림 상태 (controlled)"],
+  ["defaultOpen", "boolean", "false", "초기 열림 상태 (uncontrolled)"],
+  ["onOpenChange", "(open: boolean) => void", "—", "열림 상태 변경 콜백"],
+  ["filter", "(query, items) => items", "fuzzy", "커스텀 필터 함수"],
+  ["onSearch", "(query) => Promise<items>", "—", "비동기 검색 함수"],
+  ["searchDebounce", "number", "150", "onSearch 디바운스 (ms)"],
+  ["maxResults", "number", "50", "최대 결과 수"],
+  ["shortcut", "string[]", "['Mod','k']", "전역 단축키"],
+  ["theme", "'light' | 'dark'", "'light'", "테마"],
+  ["onSelect", "(item: CommandItem) => void", "—", "아이템 선택 콜백"],
+];
+
+const INPUT_PROPS: Array<[string, string, string, string]> = [
+  ["placeholder", "string", "'Type a command…'", "플레이스홀더"],
+];
+
+const ITEM_PROPS: Array<[string, string, string, string]> = [
+  ["item", "CommandItem", "—", "렌더할 아이템 데이터"],
+  ["id", "string", "item.id", "DOM id 커스터마이징"],
+  ["onSelect", "() => void", "item.onSelect", "클릭/엔터 콜백 오버라이드"],
+];
+
+const GROUP_PROPS: Array<[string, string, string, string]> = [
+  ["heading", "string", "—", "그룹 헤더 텍스트 (필수)"],
+];
+
+const FOOTER_PROPS: Array<[string, string, string, string]> = [
+  ["showKeyboardHints", "boolean", "true", "기본 키보드 힌트 칩 표시"],
+];
+
+const USAGE_CODE = `import { CommandPalette } from "plastic";
+
+function App() {
+  const [open, setOpen] = useState(false);
+  const items = [
+    { id: "new", label: "New file", onSelect: () => createFile() },
+    { id: "save", label: "Save", shortcut: ["Mod", "S"], onSelect: () => save() },
+  ];
+
+  return (
+    <CommandPalette.Root open={open} onOpenChange={setOpen} items={items}>
+      <CommandPalette.Input placeholder="명령 검색…" />
+      <CommandPalette.List>
+        {items.map((item) => (
+          <CommandPalette.Item key={item.id} item={item} />
+        ))}
+      </CommandPalette.List>
+      <CommandPalette.Empty />
+      <CommandPalette.Footer />
+    </CommandPalette.Root>
+  );
+}`;
+
+function Playground() {
+  const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [debounce, setDebounce] = useState(150);
+  const [maxResults, setMaxResults] = useState(20);
+  const [customShortcut, setCustomShortcut] = useState(false);
+
+  const items: CommandItem[] = Array.from({ length: 40 }, (_, i) => ({
+    id: `item-${i}`,
+    label: `Command ${i + 1}`,
+    description: i % 3 === 0 ? `설명 샘플 #${i}` : undefined,
+    onSelect: () => {},
+  }));
+
+  const rootProps = {
+    open,
+    onOpenChange: setOpen,
+    items,
+    theme,
+    searchDebounce: debounce,
+    maxResults,
+    ...(customShortcut ? { shortcut: ["Control", "Shift", "p"] } : {}),
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 gap-4">
+        <label className="flex flex-col gap-1 text-sm">
+          <span>theme</span>
+          <select
+            className="px-2 py-1 border rounded"
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as "light" | "dark")}
+          >
+            <option value="light">light</option>
+            <option value="dark">dark</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span>searchDebounce ({debounce}ms)</span>
+          <input
+            type="range"
+            min={0}
+            max={500}
+            step={50}
+            value={debounce}
+            onChange={(e) => setDebounce(Number(e.target.value))}
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-sm">
+          <span>maxResults ({maxResults})</span>
+          <input
+            type="range"
+            min={5}
+            max={50}
+            step={5}
+            value={maxResults}
+            onChange={(e) => setMaxResults(Number(e.target.value))}
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={customShortcut}
+            onChange={(e) => setCustomShortcut(e.target.checked)}
+          />
+          <span>커스텀 shortcut (Ctrl+Shift+P)</span>
+        </label>
+      </div>
+      <div>
+        <Button onClick={() => setOpen(true)}>Playground 열기</Button>
+        <span className="ml-3 text-sm text-gray-500">
+          기본 {customShortcut ? "Ctrl+Shift+P" : "⌘K/Ctrl+K"} 로도 열림
+        </span>
+      </div>
+      <CommandPalette.Root {...rootProps}>
+        <CommandPalette.Input placeholder="검색…" />
+        <CommandPalette.List>
+          <ResultItems />
+        </CommandPalette.List>
+        <CommandPalette.Empty />
+        <CommandPalette.Footer />
+      </CommandPalette.Root>
+    </div>
+  );
+}
+
 export default function CommandPalettePage() {
   return (
     <div className="p-8 max-w-3xl">
@@ -538,6 +711,45 @@ export default function CommandPalettePage() {
 
       <Section id="dark" title="Dark Theme" desc="theme='dark'">
         <DarkDemo />
+      </Section>
+
+      <Section id="props" title="Props">
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="text-sm font-semibold mb-2">CommandPalette.Root</p>
+            <PropsTable rows={ROOT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">CommandPalette.Input</p>
+            <PropsTable rows={INPUT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">CommandPalette.Item</p>
+            <PropsTable rows={ITEM_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">CommandPalette.Group</p>
+            <PropsTable rows={GROUP_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">CommandPalette.Footer</p>
+            <PropsTable rows={FOOTER_PROPS} />
+          </div>
+        </div>
+      </Section>
+
+      <Section id="usage" title="Usage">
+        <CodeView code={USAGE_CODE} language="tsx" />
+      </Section>
+
+      <Section
+        id="playground"
+        title="Playground"
+        desc="theme, debounce, maxResults, 커스텀 shortcut 인터랙티브 제어"
+      >
+        <Card>
+          <Playground />
+        </Card>
       </Section>
     </div>
   );
