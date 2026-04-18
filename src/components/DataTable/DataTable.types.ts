@@ -177,6 +177,12 @@ export interface DataTableContextValue<T = unknown> {
   rowHeight: number;
   height: number;
 
+  virtualEnabled: boolean;
+  virtualStartIndex: number;
+  virtualEndIndex: number;
+  virtualPaddingTop: number;
+  virtualPaddingBottom: number;
+
   loading: boolean;
   loadingRows: number;
   emptyState: ReactNode | undefined;

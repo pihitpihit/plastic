@@ -32,6 +32,46 @@ export function DataTableBody({
     );
   }
 
+  if (ctx.virtualEnabled) {
+    const start = ctx.virtualStartIndex;
+    const end = ctx.virtualEndIndex;
+    const visibleRows = rows.slice(start, end);
+
+    return (
+      <tbody role="rowgroup" className={className} style={style}>
+        {ctx.virtualPaddingTop > 0 && (
+          <tr
+            aria-hidden="true"
+            style={{ height: `${ctx.virtualPaddingTop}px` }}
+          >
+            <td colSpan={totalColSpan} style={{ padding: 0, border: "none" }} />
+          </tr>
+        )}
+        {visibleRows.map((row, i) => {
+          const absoluteIndex = start + i;
+          const key = ctx.rowKey(row, absoluteIndex);
+          return (
+            <DataTableRow
+              key={key}
+              row={row}
+              rowIndex={absoluteIndex}
+              rowKey={key}
+              style={{ height: `${ctx.rowHeight}px` }}
+            />
+          );
+        })}
+        {ctx.virtualPaddingBottom > 0 && (
+          <tr
+            aria-hidden="true"
+            style={{ height: `${ctx.virtualPaddingBottom}px` }}
+          >
+            <td colSpan={totalColSpan} style={{ padding: 0, border: "none" }} />
+          </tr>
+        )}
+      </tbody>
+    );
+  }
+
   return (
     <tbody role="rowgroup" className={className} style={style}>
       {rows.map((row, index) => {
