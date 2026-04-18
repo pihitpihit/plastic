@@ -15,6 +15,8 @@ export interface UseVirtualListReturn {
   endIndex: number;
   totalHeight: number;
   offsetY: number;
+  paddingTop: number;
+  paddingBottom: number;
   visibleCount: number;
   onScroll: (e: UIEvent<HTMLElement>) => void;
   scrollTo: (index: number) => void;
@@ -48,6 +50,10 @@ export function useVirtualList(
   }, [enabled, scrollTop, itemHeight, visibleCount, itemCount, overscan]);
 
   const offsetY = enabled ? startIndex * itemHeight : 0;
+  const paddingTop = offsetY;
+  const paddingBottom = enabled
+    ? Math.max(0, (itemCount - endIndex) * itemHeight)
+    : 0;
 
   const onScroll = useCallback((e: UIEvent<HTMLElement>) => {
     setScrollTop(e.currentTarget.scrollTop);
@@ -68,6 +74,8 @@ export function useVirtualList(
     endIndex,
     totalHeight,
     offsetY,
+    paddingTop,
+    paddingBottom,
     visibleCount,
     onScroll,
     scrollTo,
