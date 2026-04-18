@@ -103,6 +103,8 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Expandable", id: "expandable" },
     { label: "Resize", id: "resize" },
     { label: "Pinning", id: "pinning" },
+    { label: "Virtual Scroll", id: "virtual" },
+    { label: "Custom Cell", id: "custom-cell" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },

@@ -1,7 +1,18 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { ReactNode } from "react";
+import {
+  Children,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
+import type { ReactElement, ReactNode, UIEvent } from "react";
 import { useControllable } from "../_shared/useControllable";
 import { DataTableContext } from "./DataTableContext";
+import { DataTableHeader } from "./DataTableHeader";
+import { DataTableBody } from "./DataTableBody";
+import { DataTableToolbar } from "./DataTableToolbar";
+import { DataTablePagination } from "./DataTablePagination";
 import { useColumnResize } from "./useColumnResize";
 import { useVirtualList } from "./useVirtualList";
 import type {
@@ -440,14 +451,26 @@ export function DataTableRoot<T>(props: DataTableProps<T>) {
     ],
   );
 
+  const onScrollWrapper = useCallback(
+    (e: UIEvent<HTMLElement>) => {
+      virtual.onScroll(e);
+    },
+    [virtual],
+  );
+
   return (
     <DataTableContext.Provider value={ctxValue as DataTableContextValue<unknown>}>
       <DataTableRootView
         className={className}
         style={style}
         rest={rest}
-        children={children}
-      />
+        onScroll={onScrollWrapper}
+        theme={theme}
+        virtualScroll={virtualScroll}
+        height={height}
+      >
+        {children}
+      </DataTableRootView>
     </DataTableContext.Provider>
   );
 }
@@ -456,21 +479,99 @@ interface DataTableRootViewProps {
   className: string | undefined;
   style: React.CSSProperties | undefined;
   rest: Record<string, unknown>;
+  onScroll: (e: UIEvent<HTMLElement>) => void;
+  theme: "light" | "dark";
+  virtualScroll: boolean;
+  height: number;
   children: ReactNode | undefined;
 }
 
 function DataTableRootView(props: DataTableRootViewProps) {
-  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const bg = props.theme === "dark" ? "#111827" : "#ffffff";
+  const textColor = props.theme === "dark" ? "#f3f4f6" : "#111827";
+
+  const groups = groupChildren(props.children);
+
+  const scrollStyle: React.CSSProperties = {
+    overflow: "auto",
+    maxHeight: `${props.height}px`,
+    position: "relative",
+  };
+
   return (
     <div
-      ref={wrapperRef}
       className={props.className}
-      style={props.style}
+      style={{
+        background: bg,
+        color: textColor,
+        ...props.style,
+      }}
       {...props.rest}
     >
-      {props.children}
+      {groups.toolbar}
+      <div style={scrollStyle} onScroll={props.onScroll}>
+        <table
+          role="table"
+          style={{
+            width: "100%",
+            borderCollapse: "separate",
+            borderSpacing: 0,
+            tableLayout: "fixed",
+          }}
+        >
+          {groups.header}
+          {groups.body}
+        </table>
+      </div>
+      {groups.pagination}
+      {groups.other}
     </div>
   );
+}
+
+interface ChildrenGroups {
+  toolbar: ReactNode | null;
+  header: ReactNode | null;
+  body: ReactNode | null;
+  pagination: ReactNode | null;
+  other: ReactNode[];
+}
+
+function groupChildren(children: ReactNode | undefined): ChildrenGroups {
+  const groups: ChildrenGroups = {
+    toolbar: null,
+    header: null,
+    body: null,
+    pagination: null,
+    other: [],
+  };
+  if (children == null) {
+    groups.header = <DataTableHeader />;
+    groups.body = <DataTableBody />;
+    return groups;
+  }
+  Children.forEach(children, (child) => {
+    if (!isValidElement(child)) {
+      if (child != null && child !== false) groups.other.push(child as ReactNode);
+      return;
+    }
+    const el = child as ReactElement;
+    const type = el.type;
+    if (type === DataTableToolbar) {
+      groups.toolbar = el;
+    } else if (type === DataTableHeader) {
+      groups.header = el;
+    } else if (type === DataTableBody) {
+      groups.body = el;
+    } else if (type === DataTablePagination) {
+      groups.pagination = el;
+    } else {
+      groups.other.push(el);
+    }
+  });
+  if (groups.header == null) groups.header = <DataTableHeader />;
+  if (groups.body == null) groups.body = <DataTableBody />;
+  return groups;
 }
 
 interface ApplySortArgs<T> {

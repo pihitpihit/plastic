@@ -383,6 +383,147 @@ function PinningDemo() {
   );
 }
 
+// ── Section 9: Virtual Scroll ────────────────────────────────────────────
+function VirtualDemo() {
+  const data = useMemo(() => createPeople(10000), []);
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      { key: "id", header: "ID", cell: (r) => r.id, width: 80, align: "right" },
+      { key: "name", header: "Name", cell: (r) => r.name, width: 180 },
+      { key: "email", header: "Email", cell: (r) => r.email, width: 240 },
+      { key: "role", header: "Role", cell: (r) => r.role, width: 120 },
+      {
+        key: "score",
+        header: "Score",
+        cell: (r) => r.score,
+        width: 100,
+        align: "right",
+      },
+    ],
+    [],
+  );
+  return (
+    <div className="space-y-2">
+      <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+        <DataTable
+          columns={columns}
+          data={data}
+          virtualScroll
+          rowHeight={36}
+          height={400}
+        >
+          <DataTable.Header />
+          <DataTable.Body />
+        </DataTable>
+      </div>
+      <p className="text-xs text-gray-500">
+        10,000행 더미 데이터, virtualScroll=true, rowHeight=36, height=400.
+        현재 뷰포트에 보이는 행만 렌더링.
+      </p>
+    </div>
+  );
+}
+
+// ── Section 10: Custom Cell ──────────────────────────────────────────────
+function CustomCellDemo() {
+  const data = useMemo(() => createPeople(8), []);
+
+  const roleBadge = (role: Person["role"]) => {
+    const colors: Record<Person["role"], string> = {
+      admin: "bg-red-100 text-red-700",
+      editor: "bg-blue-100 text-blue-700",
+      viewer: "bg-gray-100 text-gray-700",
+    };
+    return (
+      <span
+        className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${colors[role]}`}
+      >
+        {role}
+      </span>
+    );
+  };
+
+  const scoreBar = (score: number) => (
+    <div className="flex items-center gap-2">
+      <div className="w-20 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-blue-500"
+          style={{ width: `${score}%` }}
+        />
+      </div>
+      <span className="text-xs tabular-nums">{score}</span>
+    </div>
+  );
+
+  const avatar = (name: string) => {
+    const initials = name
+      .split(" ")
+      .map((s) => s[0])
+      .join("")
+      .slice(0, 2);
+    return (
+      <div className="flex items-center gap-2">
+        <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-xs font-semibold">
+          {initials}
+        </div>
+        <span>{name}</span>
+      </div>
+    );
+  };
+
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      { key: "id", header: "ID", cell: (r) => r.id, width: 60, align: "right" },
+      {
+        key: "name",
+        header: "Name",
+        cell: (r) => avatar(r.name),
+        width: 200,
+      },
+      {
+        key: "role",
+        header: "Role",
+        cell: (r) => roleBadge(r.role),
+        width: 120,
+        align: "center",
+      },
+      {
+        key: "score",
+        header: "Score",
+        cell: (r) => scoreBar(r.score),
+        width: 180,
+      },
+      {
+        key: "actions",
+        header: "Actions",
+        cell: () => (
+          <button
+            type="button"
+            className="px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 rounded"
+            onClick={(e) => {
+              e.stopPropagation();
+              alert("Edit clicked");
+            }}
+          >
+            Edit
+          </button>
+        ),
+        width: 100,
+        align: "center",
+      },
+    ],
+    [],
+  );
+  return (
+    <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+      <DataTable columns={columns} data={data}>
+        <DataTable.Header />
+        <DataTable.Body />
+      </DataTable>
+    </div>
+  );
+}
+
 // ── 페이지 ───────────────────────────────────────────────────────────────
 export default function DataTablePage() {
   return (
@@ -453,6 +594,22 @@ export default function DataTablePage() {
         desc="pinned: 'left' | 'right', 가로 스크롤 시 sticky"
       >
         <PinningDemo />
+      </Section>
+
+      <Section
+        id="virtual"
+        title="Virtual Scroll"
+        desc="10,000행 데이터, virtualScroll=true + rowHeight로 가시 영역만 렌더"
+      >
+        <VirtualDemo />
+      </Section>
+
+      <Section
+        id="custom-cell"
+        title="Custom Cell"
+        desc="column.cell 함수로 뱃지 / 아바타 / 프로그레스 / 버튼 렌더"
+      >
+        <CustomCellDemo />
       </Section>
     </div>
   );
