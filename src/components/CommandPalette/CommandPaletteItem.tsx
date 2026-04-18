@@ -15,7 +15,7 @@ import type {
   CommandPaletteItemProps,
 } from "./CommandPalette.types";
 import { useCommandPalette } from "./CommandPaletteRoot";
-import { formatShortcutKey } from "./helpers";
+import { formatShortcutKey, renderHighlightedText } from "./helpers";
 
 function ChevronRight({ color }: { color: string }) {
   return (
@@ -100,12 +100,15 @@ export function CommandPaletteItem({
   if (!content && resolvedItem) {
     const match = ctx.matches.get(resolvedItem.id);
     const labelNode = match
-      ? renderWithMarks(resolvedItem.label, match.labelMatches)
+      ? renderHighlightedText(resolvedItem.label, match.labelMatches)
       : resolvedItem.label;
     const descNode =
       resolvedItem.description !== undefined
         ? match
-          ? renderWithMarks(resolvedItem.description, match.descriptionMatches)
+          ? renderHighlightedText(
+              resolvedItem.description,
+              match.descriptionMatches,
+            )
           : resolvedItem.description
         : null;
 
@@ -214,37 +217,3 @@ export function CommandPaletteItem({
   );
 }
 
-function renderWithMarks(text: string, indices: number[]): ReactNode {
-  if (indices.length === 0) return text;
-  const set = new Set(indices);
-  const parts: ReactNode[] = [];
-  let i = 0;
-  while (i < text.length) {
-    if (set.has(i)) {
-      let end = i;
-      while (end < text.length && set.has(end)) end++;
-      parts.push(
-        <mark
-          key={`m${i}`}
-          style={{
-            background: "transparent",
-            color: "inherit",
-            fontWeight: 600,
-            textDecoration: "underline",
-            textDecorationThickness: "1px",
-            textUnderlineOffset: "2px",
-          }}
-        >
-          {text.slice(i, end)}
-        </mark>,
-      );
-      i = end;
-    } else {
-      let end = i;
-      while (end < text.length && !set.has(end)) end++;
-      parts.push(<span key={`t${i}`}>{text.slice(i, end)}</span>);
-      i = end;
-    }
-  }
-  return parts;
-}
