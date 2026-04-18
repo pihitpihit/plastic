@@ -114,6 +114,51 @@ function computeBasePosition(
 
 const VIEWPORT_PADDING = 8;
 
+function computeArrowPosition(
+  triggerRect: Rect,
+  floatingPos: FloatingPosition,
+  floatingWidth: number,
+  floatingHeight: number,
+  side: Side,
+  arrowSize: number,
+  arrowPadding: number,
+): ArrowPosition {
+  const isVerticalSide = side === "top" || side === "bottom";
+
+  if (isVerticalSide) {
+    const triggerCenterX = triggerRect.x + triggerRect.width / 2;
+    const arrowX = triggerCenterX - floatingPos.x - arrowSize / 2;
+    const min = arrowPadding;
+    const max = floatingWidth - arrowPadding - arrowSize;
+    const clampedX = Math.max(min, Math.min(max, arrowX));
+    return { x: clampedX, y: undefined };
+  } else {
+    const triggerCenterY = triggerRect.y + triggerRect.height / 2;
+    const arrowY = triggerCenterY - floatingPos.y - arrowSize / 2;
+    const min = arrowPadding;
+    const max = floatingHeight - arrowPadding - arrowSize;
+    const clampedY = Math.max(min, Math.min(max, arrowY));
+    return { x: undefined, y: clampedY };
+  }
+}
+
+function getScrollParents(element: HTMLElement): (HTMLElement | Window)[] {
+  const parents: (HTMLElement | Window)[] = [];
+  let current: HTMLElement | null = element.parentElement;
+
+  while (current) {
+    const style = getComputedStyle(current);
+    const overflow = style.overflow + style.overflowX + style.overflowY;
+    if (/auto|scroll|overlay/.test(overflow)) {
+      parents.push(current);
+    }
+    current = current.parentElement;
+  }
+
+  parents.push(window);
+  return parents;
+}
+
 function shiftPosition(
   pos: FloatingPosition,
   floatingWidth: number,
@@ -211,6 +256,7 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
   const {
     placement: desiredPlacement = "top",
     offset = 8,
+    arrowPadding = 8,
     enabled = true,
     flip = true,
   } = options;
@@ -223,7 +269,13 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
     placement: Placement;
     x: number;
     y: number;
-  }>({ placement: desiredPlacement, x: 0, y: 0 });
+    arrowPosition: ArrowPosition;
+  }>({
+    placement: desiredPlacement,
+    x: 0,
+    y: 0,
+    arrowPosition: { x: undefined, y: undefined },
+  });
 
   const update = useCallback(() => {
     const triggerEl = triggerRef.current;
@@ -255,16 +307,54 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
     const { side } = parsePlacement(resolvedPlacement);
     const shifted = shiftPosition(basePos, floatingWidth, floatingHeight, side);
 
+    const arrowEl = arrowRef.current;
+    const arrowSize = arrowEl ? arrowEl.offsetWidth : 0;
+    const arrowPosition = arrowEl
+      ? computeArrowPosition(
+          triggerRect,
+          shifted,
+          floatingWidth,
+          floatingHeight,
+          side,
+          arrowSize,
+          arrowPadding,
+        )
+      : { x: undefined, y: undefined };
+
     setPosition({
       placement: resolvedPlacement,
       x: shifted.x,
       y: shifted.y,
+      arrowPosition,
     });
-  }, [desiredPlacement, offset, flip]);
+  }, [desiredPlacement, offset, arrowPadding, flip]);
 
   useEffect(() => {
     if (!enabled) return;
+    const triggerEl = triggerRef.current;
+    const floatingEl = floatingRef.current;
+    if (!triggerEl || !floatingEl) return;
+
     update();
+
+    const resizeObserver = new ResizeObserver(() => update());
+    resizeObserver.observe(triggerEl);
+    resizeObserver.observe(floatingEl);
+
+    const scrollParents = getScrollParents(triggerEl);
+    const onScroll = () => update();
+    for (const parent of scrollParents) {
+      parent.addEventListener("scroll", onScroll, { passive: true });
+    }
+    window.addEventListener("resize", onScroll, { passive: true });
+
+    return () => {
+      resizeObserver.disconnect();
+      for (const parent of scrollParents) {
+        parent.removeEventListener("scroll", onScroll);
+      }
+      window.removeEventListener("resize", onScroll);
+    };
   }, [enabled, update]);
 
   const floatingStyles: CSSProperties = {
@@ -283,7 +373,7 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
   return {
     placement: position.placement,
     floatingStyles,
-    arrowPosition: { x: undefined, y: undefined },
+    arrowPosition: position.arrowPosition,
     arrowSide,
     triggerRef,
     floatingRef,
