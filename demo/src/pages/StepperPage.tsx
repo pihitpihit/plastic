@@ -503,6 +503,108 @@ function CustomIconsDemo() {
   );
 }
 
+function ControlledDemo() {
+  const [step, setStep] = useState(0);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-gray-600">현재 스텝:</span>
+        <span className="font-mono text-sm">{step}</span>
+        <div className="flex gap-2 ml-4">
+          {[0, 1, 2, 3].map((i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setStep(i)}
+              className={`px-3 py-1 text-xs border rounded ${
+                step === i
+                  ? "bg-blue-500 text-white border-blue-500"
+                  : "bg-white text-gray-700 border-gray-300"
+              }`}
+            >
+              {i}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <Stepper.Root totalSteps={4} activeStep={step} onStepChange={setStep}>
+        <Stepper.List>
+          <Stepper.Step index={0} label="One" />
+          <Stepper.Separator />
+          <Stepper.Step index={1} label="Two" />
+          <Stepper.Separator />
+          <Stepper.Step index={2} label="Three" />
+          <Stepper.Separator />
+          <Stepper.Step index={3} label="Four" />
+        </Stepper.List>
+
+        <Stepper.Content>
+          <Stepper.Panel index={0}>
+            <div className="p-4 text-sm">첫 번째 패널 — 외부 상태로 제어됨</div>
+          </Stepper.Panel>
+          <Stepper.Panel index={1}>
+            <div className="p-4 text-sm">두 번째 패널</div>
+          </Stepper.Panel>
+          <Stepper.Panel index={2}>
+            <div className="p-4 text-sm">세 번째 패널</div>
+          </Stepper.Panel>
+          <Stepper.Panel index={3}>
+            <div className="p-4 text-sm">네 번째 패널</div>
+          </Stepper.Panel>
+        </Stepper.Content>
+      </Stepper.Root>
+    </div>
+  );
+}
+
+function DarkDemo() {
+  return (
+    <div className="p-6 rounded-lg" style={{ background: "#0f172a" }}>
+      <Stepper.Root
+        totalSteps={4}
+        defaultActiveStep={2}
+        completedSteps={new Set([0, 1])}
+        theme="dark"
+      >
+        <Stepper.List>
+          <Stepper.Step index={0} label="계정" />
+          <Stepper.Separator />
+          <Stepper.Step index={1} label="프로필" />
+          <Stepper.Separator />
+          <Stepper.Step index={2} label="확인" />
+          <Stepper.Separator />
+          <Stepper.Step index={3} label="완료" />
+        </Stepper.List>
+
+        <Stepper.Content>
+          <Stepper.Panel index={0}>
+            <div className="p-4 text-sm text-gray-300">계정 정보</div>
+          </Stepper.Panel>
+          <Stepper.Panel index={1}>
+            <div className="p-4 text-sm text-gray-300">프로필 정보</div>
+          </Stepper.Panel>
+          <Stepper.Panel index={2}>
+            <div className="p-4 text-sm text-gray-300">입력 내용 확인</div>
+          </Stepper.Panel>
+          <Stepper.Panel index={3}>
+            <div className="p-4 text-sm text-gray-300">모든 단계 완료</div>
+          </Stepper.Panel>
+        </Stepper.Content>
+
+        <Stepper.Actions>
+          <Stepper.PrevButton>이전</Stepper.PrevButton>
+          <div className="flex gap-2">
+            <Stepper.NextButton>다음</Stepper.NextButton>
+            <Stepper.CompleteButton>완료</Stepper.CompleteButton>
+          </div>
+        </Stepper.Actions>
+      </Stepper.Root>
+    </div>
+  );
+}
+
 export function StepperPage() {
   return (
     <div>
@@ -551,6 +653,16 @@ export function StepperPage() {
         <Card>
           <CustomIconsDemo />
         </Card>
+      </Section>
+
+      <Section id="controlled" title="Controlled" desc="activeStep + onStepChange 외부 상태로 제어">
+        <Card>
+          <ControlledDemo />
+        </Card>
+      </Section>
+
+      <Section id="dark-theme" title="Dark Theme" desc="theme='dark' + completedSteps 외부 제어">
+        <DarkDemo />
       </Section>
     </div>
   );
