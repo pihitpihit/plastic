@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Tooltip } from "plastic";
+import { Button, Popover, Tooltip } from "plastic";
 import type { TooltipPlacement } from "plastic";
 
 function Section({
@@ -138,6 +138,22 @@ export function TooltipPopoverPage() {
       >
         <TooltipDelayDemo />
       </Section>
+
+      <Section
+        id="popover-basic"
+        title="Popover Basic"
+        desc="Trigger + Content + Header + Body + Close 기본 조합"
+      >
+        <PopoverBasicDemo />
+      </Section>
+
+      <Section
+        id="popover-trigger-mode"
+        title="Popover Click vs Hover"
+        desc="triggerMode로 click 또는 hover 활성화 방식 선택"
+      >
+        <PopoverTriggerModeDemo />
+      </Section>
     </div>
   );
 }
@@ -191,6 +207,67 @@ function TooltipControlledDemo() {
           외부 state로 제어됨
         </Tooltip.Content>
       </Tooltip.Root>
+    </Card>
+  );
+}
+
+function PopoverBasicDemo() {
+  return (
+    <Card>
+      <Popover.Root>
+        <Popover.Trigger>
+          <Button>Click me</Button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Arrow />
+          <Popover.Header>
+            Popover Title
+            <Popover.Close />
+          </Popover.Header>
+          <Popover.Body>
+            <p className="text-sm text-gray-600">
+              팝오버 안에 임의의 컨텐츠를 넣을 수 있습니다. 외부 클릭이나
+              Escape로 닫힙니다.
+            </p>
+            <div className="mt-3 flex gap-2 justify-end">
+              <Popover.Close>
+                <Button variant="ghost" size="sm">
+                  취소
+                </Button>
+              </Popover.Close>
+              <Popover.Close>
+                <Button size="sm">확인</Button>
+              </Popover.Close>
+            </div>
+          </Popover.Body>
+        </Popover.Content>
+      </Popover.Root>
+    </Card>
+  );
+}
+
+function PopoverTriggerModeDemo() {
+  return (
+    <Card>
+      <Popover.Root triggerMode="click">
+        <Popover.Trigger>
+          <Button>Click mode</Button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Arrow />
+          <Popover.Body>클릭으로 토글</Popover.Body>
+        </Popover.Content>
+      </Popover.Root>
+
+      <Popover.Root triggerMode="hover">
+        <Popover.Trigger>
+          <Button variant="secondary">Hover mode</Button>
+        </Popover.Trigger>
+        <Popover.Content>
+          <Popover.Arrow />
+          <Popover.Body>마우스 올리면 열림</Popover.Body>
+        </Popover.Content>
+      </Popover.Root>
     </Card>
   );
 }
