@@ -55,6 +55,10 @@ export interface ToastItemContextValue {
   elapsed: number;
   isPaused: boolean;
   dismiss: () => void;
+  pause: () => void;
+  resume: () => void;
+  /** Swipe dismiss: exit 애니메이션 생략하고 즉시 REMOVE */
+  swipeDismiss: () => void;
   theme: ToastTheme;
 }
 

@@ -1,8 +1,9 @@
 import { forwardRef, useEffect, useRef } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { toastBg, toastBorder, titleColor } from "./colors";
 import { useToastContext, useToastItemContext } from "./ToastContext";
 import { useReducedMotion } from "./useReducedMotion";
+import { useToastSwipe } from "./useToastSwipe";
 import {
   ENTER_DURATION,
   ENTER_EASING,
@@ -27,7 +28,19 @@ function mergeRefs<T>(
 
 export const ToastRoot = forwardRef<HTMLDivElement, ToastRootProps>(
   function ToastRoot(
-    { children, className, style, ...rest },
+    {
+      children,
+      className,
+      style,
+      swipeDismissible: swipeDismissibleProp,
+      pauseOnHover: pauseOnHoverProp,
+      onPointerEnter: userPointerEnter,
+      onPointerLeave: userPointerLeave,
+      onPointerDown: userPointerDown,
+      onPointerMove: userPointerMove,
+      onPointerUp: userPointerUp,
+      ...rest
+    },
     forwardedRef,
   ) {
     const provider = useToastContext();
@@ -38,6 +51,19 @@ export const ToastRoot = forwardRef<HTMLDivElement, ToastRootProps>(
     const rafRef1 = useRef<number | null>(null);
     const rafRef2 = useRef<number | null>(null);
     const setRef = mergeRefs<HTMLDivElement>(forwardedRef, rootRef);
+
+    const swipeEnabled =
+      (swipeDismissibleProp ?? provider.swipeDismissible) &&
+      item.phase !== "exiting";
+    const pauseOnHover = pauseOnHoverProp ?? provider.pauseOnHover;
+
+    const swipe = useToastSwipe({
+      enabled: swipeEnabled,
+      threshold: provider.swipeThreshold,
+      direction: provider.swipeDirection,
+      onDismiss: item.swipeDismiss,
+      rootRef,
+    });
 
     // Entering: 2-frame trick (initial offset → transition to rest)
     useEffect(() => {
@@ -97,6 +123,21 @@ export const ToastRoot = forwardRef<HTMLDivElement, ToastRootProps>(
         ? "0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.06)"
         : "0 4px 12px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2)";
 
+    const isIdle = item.phase === "idle" || item.phase === "entering";
+    const swipeTransform = swipe.isSwiping
+      ? provider.swipeDirection === "horizontal"
+        ? `translateX(${swipe.offset}px)`
+        : `translateY(${swipe.offset}px)`
+      : undefined;
+
+    const swipeStyles: CSSProperties = swipe.isSwiping
+      ? {
+          transform: swipeTransform,
+          opacity: swipe.opacity,
+          transition: "none",
+        }
+      : {};
+
     const mergedStyle: CSSProperties = {
       pointerEvents: "auto",
       display: "flex",
@@ -113,7 +154,40 @@ export const ToastRoot = forwardRef<HTMLDivElement, ToastRootProps>(
       width: "100%",
       position: "relative",
       overflow: "hidden",
+      touchAction: swipeEnabled
+        ? provider.swipeDirection === "horizontal"
+          ? "pan-y"
+          : "pan-x"
+        : "auto",
+      userSelect: "none",
+      ...(isIdle && !swipe.isSwiping ? {} : {}),
       ...style,
+      ...swipeStyles,
+    };
+
+    const handlePointerEnter = (e: ReactPointerEvent<HTMLDivElement>) => {
+      userPointerEnter?.(e);
+      if (pauseOnHover) item.pause();
+    };
+
+    const handlePointerLeave = (e: ReactPointerEvent<HTMLDivElement>) => {
+      userPointerLeave?.(e);
+      if (pauseOnHover) item.resume();
+    };
+
+    const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+      userPointerDown?.(e);
+      swipe.handlePointerDown(e);
+    };
+
+    const handlePointerMove = (e: ReactPointerEvent<HTMLDivElement>) => {
+      userPointerMove?.(e);
+      swipe.handlePointerMove(e);
+    };
+
+    const handlePointerUp = (e: ReactPointerEvent<HTMLDivElement>) => {
+      userPointerUp?.(e);
+      swipe.handlePointerUp(e);
     };
 
     return (
@@ -125,8 +199,15 @@ export const ToastRoot = forwardRef<HTMLDivElement, ToastRootProps>(
         data-toast-id={item.id}
         data-variant={item.variant}
         data-phase={item.phase}
+        data-swiping={swipe.isSwiping || undefined}
         className={className}
         style={mergedStyle}
+        onPointerEnter={handlePointerEnter}
+        onPointerLeave={handlePointerLeave}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         {...rest}
       >
         {children}
