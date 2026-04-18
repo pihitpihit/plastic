@@ -97,6 +97,8 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
   { id: "datatable", label: "DataTable", description: "정렬/필터/페이지/선택", sections: [
     { label: "Basic", id: "basic" },
     { label: "Sorting", id: "sorting" },
+    { label: "Filtering", id: "filtering" },
+    { label: "Pagination", id: "pagination" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },

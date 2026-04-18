@@ -128,6 +128,83 @@ function SortingDemo() {
   );
 }
 
+// ── Section 3: Filtering ─────────────────────────────────────────────────
+function FilteringDemo() {
+  const data = useMemo(() => createPeople(30), []);
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      { key: "id", header: "ID", cell: (r) => r.id, width: 60, align: "right" },
+      {
+        key: "name",
+        header: "Name",
+        cell: (r) => r.name,
+        width: 160,
+        filterable: true,
+      },
+      {
+        key: "email",
+        header: "Email",
+        cell: (r) => r.email,
+        width: 220,
+        filterable: true,
+      },
+      {
+        key: "role",
+        header: "Role",
+        cell: (r) => r.role,
+        width: 120,
+        filterable: true,
+      },
+      { key: "score", header: "Score", cell: (r) => r.score, width: 100, align: "right" },
+    ],
+    [],
+  );
+  return (
+    <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+      <DataTable columns={columns} data={data}>
+        <DataTable.Toolbar showGlobalFilter globalFilterPlaceholder="전체 검색..." />
+        <DataTable.Header showFilterRow />
+        <DataTable.Body />
+      </DataTable>
+    </div>
+  );
+}
+
+// ── Section 4: Pagination ────────────────────────────────────────────────
+function PaginationDemo() {
+  const data = useMemo(() => createPeople(50), []);
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      { key: "id", header: "ID", cell: (r) => r.id, width: 60, align: "right", sortable: true },
+      { key: "name", header: "Name", cell: (r) => r.name, width: 160, sortable: true },
+      { key: "email", header: "Email", cell: (r) => r.email, width: 220 },
+      { key: "role", header: "Role", cell: (r) => r.role, width: 120, sortable: true },
+      {
+        key: "score",
+        header: "Score",
+        cell: (r) => r.score,
+        width: 100,
+        align: "right",
+        sortable: true,
+      },
+    ],
+    [],
+  );
+  return (
+    <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+      <DataTable
+        columns={columns}
+        data={data}
+        defaultPagination={{ page: 1, pageSize: 10 }}
+      >
+        <DataTable.Header />
+        <DataTable.Body />
+        <DataTable.Pagination pageSizeOptions={[5, 10, 20, 50]} />
+      </DataTable>
+    </div>
+  );
+}
+
 // ── 페이지 ───────────────────────────────────────────────────────────────
 export default function DataTablePage() {
   return (
@@ -150,6 +227,22 @@ export default function DataTablePage() {
         desc="sortable 컬럼 헤더 클릭, multiSort=true로 다중 정렬"
       >
         <SortingDemo />
+      </Section>
+
+      <Section
+        id="filtering"
+        title="Filtering"
+        desc="Toolbar 글로벌 검색 + 컬럼별 필터 행 (showFilterRow)"
+      >
+        <FilteringDemo />
+      </Section>
+
+      <Section
+        id="pagination"
+        title="Pagination"
+        desc="50행 데이터, pageSize 10, pageSizeOptions 선택 가능"
+      >
+        <PaginationDemo />
       </Section>
     </div>
   );
