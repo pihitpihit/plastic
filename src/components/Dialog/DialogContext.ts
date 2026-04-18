@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import type { Dispatch, RefObject, SetStateAction } from "react";
+import type { Dispatch, MutableRefObject, SetStateAction } from "react";
 import type {
   DialogAnimationState,
   DialogTheme,
@@ -22,7 +22,7 @@ export interface DialogContextValue {
   descriptionId: string;
   contentId: string;
 
-  triggerRef: RefObject<HTMLElement | null>;
+  triggerRef: MutableRefObject<HTMLElement | null>;
 
   hasDescription: boolean;
   setHasDescription: Dispatch<SetStateAction<boolean>>;
