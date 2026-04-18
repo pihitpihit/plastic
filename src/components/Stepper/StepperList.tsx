@@ -8,6 +8,7 @@ import {
   type ReactElement,
 } from "react";
 import { useStepperContext } from "./StepperContext";
+import { StepperSeparator } from "./StepperSeparator";
 import type { StepperListProps } from "./Stepper.types";
 
 export function StepperList(props: StepperListProps) {
@@ -108,12 +109,7 @@ export function StepperList(props: StepperListProps) {
   let separatorCounter = 0;
   const enhancedChildren = Children.map(children, (child) => {
     if (!isValidElement(child)) return child;
-    const typeName =
-      typeof child.type === "function"
-        ? (child.type as { displayName?: string; name?: string }).displayName ??
-          (child.type as { name?: string }).name
-        : undefined;
-    if (typeName === "StepperSeparator") {
+    if (child.type === StepperSeparator) {
       const injected: Record<string, unknown> = {
         __separatorIndex: separatorCounter++,
       };
