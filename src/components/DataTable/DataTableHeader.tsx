@@ -5,6 +5,7 @@ import type { ColumnDef, HeaderContext, SortDirection } from "./DataTable.types"
 export interface DataTableHeaderProps {
   className?: string | undefined;
   style?: CSSProperties | undefined;
+  showFilterRow?: boolean | undefined;
 }
 
 function SortIcon({
@@ -45,10 +46,18 @@ function SortIcon({
   );
 }
 
-export function DataTableHeader({ className, style }: DataTableHeaderProps) {
+export function DataTableHeader({
+  className,
+  style,
+  showFilterRow = false,
+}: DataTableHeaderProps) {
   const ctx = useDataTableContext();
   const theme = ctx.theme;
   const selectionEnabled = ctx.selectionMode !== "none";
+  const hasFilterableColumns = ctx.visibleColumns.some(
+    (c) => c.filterable === true,
+  );
+  const renderFilterRow = showFilterRow && hasFilterableColumns;
 
   const bg = theme === "dark" ? "#1f2937" : "#f9fafb";
   const text = theme === "dark" ? "#f3f4f6" : "#111827";
@@ -189,6 +198,71 @@ export function DataTableHeader({ className, style }: DataTableHeaderProps) {
           );
         })}
       </tr>
+      {renderFilterRow && (
+        <tr role="row">
+          {selectionEnabled && (
+            <th
+              aria-hidden="true"
+              style={{
+                padding: "0.375rem 0.75rem",
+                borderBottom: `1px solid ${borderColor}`,
+              }}
+            />
+          )}
+          {ctx.expandable && (
+            <th
+              aria-hidden="true"
+              style={{
+                padding: "0.375rem 0.5rem",
+                borderBottom: `1px solid ${borderColor}`,
+              }}
+            />
+          )}
+          {ctx.visibleColumns.map((col) => {
+            const value = ctx.columnFilters[col.key] ?? "";
+            if (col.filterable !== true) {
+              return (
+                <th
+                  key={col.key}
+                  aria-hidden="true"
+                  style={{
+                    padding: "0.375rem 0.75rem",
+                    borderBottom: `1px solid ${borderColor}`,
+                  }}
+                />
+              );
+            }
+            return (
+              <th
+                key={col.key}
+                style={{
+                  padding: "0.375rem 0.75rem",
+                  borderBottom: `1px solid ${borderColor}`,
+                }}
+              >
+                <input
+                  type="text"
+                  value={value}
+                  onChange={(e) => ctx.setColumnFilter(col.key, e.target.value)}
+                  placeholder="Filter..."
+                  aria-label={`Filter ${col.key}`}
+                  style={{
+                    width: "100%",
+                    padding: "0.25rem 0.5rem",
+                    border: `1px solid ${borderColor}`,
+                    borderRadius: "0.25rem",
+                    background: theme === "dark" ? "#111827" : "#ffffff",
+                    color: text,
+                    fontSize: "0.8125rem",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </th>
+            );
+          })}
+        </tr>
+      )}
     </thead>
   );
 }
