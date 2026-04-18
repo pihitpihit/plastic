@@ -8,7 +8,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { useControllable } from "../_shared/useControllable";
+import { modalBg, modalBorder, modalShadow, overlayBg } from "./colors";
 import type {
   CommandItem,
   CommandPaletteContextValue,
@@ -266,9 +268,48 @@ export function CommandPaletteRoot({
     ],
   );
 
-  return (
+  if (typeof document === "undefined") return null;
+  if (!open) return null;
+
+  return createPortal(
     <CommandPaletteContext.Provider value={contextValue}>
-      <div {...rest}>{children}</div>
-    </CommandPaletteContext.Provider>
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
+          backgroundColor: overlayBg[resolvedTheme],
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "center",
+          paddingTop: "min(20vh, 140px)",
+        }}
+        onClick={() => setOpen(false)}
+        aria-hidden="true"
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command palette"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            width: "100%",
+            maxWidth: "640px",
+            maxHeight: "min(400px, 60vh)",
+            backgroundColor: modalBg[resolvedTheme],
+            borderRadius: "12px",
+            boxShadow: modalShadow[resolvedTheme],
+            border: `1px solid ${modalBorder[resolvedTheme]}`,
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+          }}
+          {...rest}
+        >
+          {children}
+        </div>
+      </div>
+    </CommandPaletteContext.Provider>,
+    document.body,
   );
 }
