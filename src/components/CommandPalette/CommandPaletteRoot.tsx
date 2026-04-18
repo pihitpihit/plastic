@@ -110,6 +110,46 @@ export function CommandPaletteRoot({
     }
   }, [open]);
 
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      previousFocusRef.current =
+        (document.activeElement as HTMLElement | null) ?? null;
+      setMounted(true);
+      const raf = requestAnimationFrame(() => setVisible(true));
+      return () => cancelAnimationFrame(raf);
+    }
+    setVisible(false);
+    if (!mounted) return;
+    const timer = setTimeout(() => setMounted(false), 100);
+    return () => clearTimeout(timer);
+  }, [open]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [mounted]);
+
+  useEffect(() => {
+    if (visible) {
+      const el = inputRef.current;
+      if (el) el.focus();
+      return;
+    }
+    if (!mounted) {
+      const prev = previousFocusRef.current;
+      if (prev && typeof prev.focus === "function") prev.focus();
+      previousFocusRef.current = null;
+    }
+  }, [visible, mounted]);
+
   const pushBreadcrumb = useCallback((item: CommandItem) => {
     if (item.children === undefined || item.children.length === 0) return;
     setBreadcrumbs((prev) => [...prev, item]);
@@ -269,7 +309,7 @@ export function CommandPaletteRoot({
   );
 
   if (typeof document === "undefined") return null;
-  if (!open) return null;
+  if (!mounted) return null;
 
   return createPortal(
     <CommandPaletteContext.Provider value={contextValue}>
@@ -283,6 +323,10 @@ export function CommandPaletteRoot({
           alignItems: "flex-start",
           justifyContent: "center",
           paddingTop: "min(20vh, 140px)",
+          opacity: visible ? 1 : 0,
+          transition: visible
+            ? "opacity 150ms ease-out"
+            : "opacity 100ms ease-in",
         }}
         onClick={() => setOpen(false)}
         aria-hidden="true"
@@ -303,6 +347,13 @@ export function CommandPaletteRoot({
             display: "flex",
             flexDirection: "column",
             overflow: "hidden",
+            opacity: visible ? 1 : 0,
+            transform: visible
+              ? "scale(1) translateY(0)"
+              : "scale(0.98) translateY(-4px)",
+            transition: visible
+              ? "opacity 150ms cubic-bezier(0.16,1,0.3,1), transform 150ms cubic-bezier(0.16,1,0.3,1)"
+              : "opacity 100ms ease-in, transform 100ms ease-in",
           }}
           {...rest}
         >
