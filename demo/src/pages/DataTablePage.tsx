@@ -1,6 +1,6 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { DataTable } from "plastic";
-import type { ColumnDef } from "plastic";
+import type { ColumnDef, SelectionState } from "plastic";
 
 // ── Section 헬퍼 ─────────────────────────────────────────────────────────
 function Section({
@@ -205,6 +205,81 @@ function PaginationDemo() {
   );
 }
 
+// ── Section 5: Selection ─────────────────────────────────────────────────
+function SelectionDemo() {
+  const data = useMemo(() => createPeople(12), []);
+  const [selected, setSelected] = useState<SelectionState>(
+    () => new Set<string | number>(),
+  );
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      { key: "id", header: "ID", cell: (r) => r.id, width: 60, align: "right" },
+      { key: "name", header: "Name", cell: (r) => r.name, width: 160 },
+      { key: "email", header: "Email", cell: (r) => r.email, width: 220 },
+      { key: "role", header: "Role", cell: (r) => r.role, width: 120 },
+    ],
+    [],
+  );
+  return (
+    <div className="space-y-2">
+      <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+        <DataTable
+          columns={columns}
+          data={data}
+          selectionMode="multi"
+          selectedKeys={selected}
+          onSelectionChange={setSelected}
+        >
+          <DataTable.Toolbar showSelectionCount />
+          <DataTable.Header />
+          <DataTable.Body />
+        </DataTable>
+      </div>
+      <p className="text-xs text-gray-500">
+        선택된 ID: {selected.size === 0 ? "없음" : [...selected].sort().join(", ")}
+      </p>
+    </div>
+  );
+}
+
+// ── Section 6: Expandable ────────────────────────────────────────────────
+function ExpandableDemo() {
+  const data = useMemo(() => createPeople(8), []);
+  const columns: ColumnDef<Person>[] = useMemo(
+    () => [
+      { key: "name", header: "Name", cell: (r) => r.name, width: 160 },
+      { key: "email", header: "Email", cell: (r) => r.email, width: 220 },
+      { key: "role", header: "Role", cell: (r) => r.role, width: 120 },
+    ],
+    [],
+  );
+  return (
+    <div className="border border-gray-200 rounded-md overflow-hidden bg-white">
+      <DataTable
+        columns={columns}
+        data={data}
+        expandable
+        renderExpandedRow={(row) => (
+          <div className="space-y-1">
+            <div>
+              <strong>Score:</strong> {row.score}
+            </div>
+            <div>
+              <strong>Created:</strong> {row.createdAt}
+            </div>
+            <div className="text-xs text-gray-500">
+              이 행의 세부 정보는 renderExpandedRow로 렌더링됩니다.
+            </div>
+          </div>
+        )}
+      >
+        <DataTable.Header />
+        <DataTable.Body />
+      </DataTable>
+    </div>
+  );
+}
+
 // ── 페이지 ───────────────────────────────────────────────────────────────
 export default function DataTablePage() {
   return (
@@ -243,6 +318,22 @@ export default function DataTablePage() {
         desc="50행 데이터, pageSize 10, pageSizeOptions 선택 가능"
       >
         <PaginationDemo />
+      </Section>
+
+      <Section
+        id="selection"
+        title="Selection"
+        desc="selectionMode='multi' + Toolbar showSelectionCount, controlled"
+      >
+        <SelectionDemo />
+      </Section>
+
+      <Section
+        id="expandable"
+        title="Expandable"
+        desc="expandable=true, 화살표 클릭으로 renderExpandedRow 토글"
+      >
+        <ExpandableDemo />
       </Section>
     </div>
   );
