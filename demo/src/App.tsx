@@ -6,8 +6,9 @@ import { ActionablePage } from "./pages/ActionablePage";
 import { PathInputPage } from "./pages/PathInputPage";
 import { ToastPage } from "./pages/ToastPage";
 import { DialogPage } from "./pages/DialogPage";
+import { TooltipPopoverPage } from "./pages/TooltipPopoverPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip";
 
 interface SubItem { label: string; id: string }
 
@@ -73,6 +74,21 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Promise", id: "promise" },
     { label: "Persistent", id: "persistent" },
     { label: "Dark Theme", id: "dark-theme" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "tooltip", label: "Tooltip / Popover", description: "Floating UI", sections: [
+    { label: "Tooltip Basic", id: "tooltip-basic" },
+    { label: "Tooltip Placements", id: "tooltip-placements" },
+    { label: "Tooltip Arrow", id: "tooltip-arrow" },
+    { label: "Tooltip Controlled", id: "tooltip-controlled" },
+    { label: "Tooltip Delay", id: "tooltip-delay" },
+    { label: "Popover Basic", id: "popover-basic" },
+    { label: "Click vs Hover", id: "popover-trigger-mode" },
+    { label: "Popover Form", id: "popover-form" },
+    { label: "Popover Nested", id: "popover-nested" },
+    { label: "Popover Modal", id: "popover-modal" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
@@ -322,6 +338,7 @@ export function App() {
         {current === "pathinput" && <PathInputPage />}
         {current === "toast" && <ToastPage />}
         {current === "dialog" && <DialogPage />}
+        {current === "tooltip" && <TooltipPopoverPage />}
       </main>
     </div>
   );
