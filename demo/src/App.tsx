@@ -7,8 +7,9 @@ import { PathInputPage } from "./pages/PathInputPage";
 import { ToastPage } from "./pages/ToastPage";
 import { DialogPage } from "./pages/DialogPage";
 import { TooltipPopoverPage } from "./pages/TooltipPopoverPage";
+import DataTablePage from "./pages/DataTablePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable";
 
 interface SubItem { label: string; id: string }
 
@@ -92,6 +93,10 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "datatable", label: "DataTable", description: "정렬/필터/페이지/선택", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Sorting", id: "sorting" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },
@@ -339,6 +344,7 @@ export function App() {
         {current === "toast" && <ToastPage />}
         {current === "dialog" && <DialogPage />}
         {current === "tooltip" && <TooltipPopoverPage />}
+        {current === "datatable" && <DataTablePage />}
       </main>
     </div>
   );
