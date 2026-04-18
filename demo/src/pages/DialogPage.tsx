@@ -180,6 +180,153 @@ function ConfirmationDemo() {
   );
 }
 
+function ScrollableDemo() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger>
+        <Button variant="secondary">긴 본문</Button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay />
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>이용약관</Dialog.Title>
+            <Dialog.Close />
+          </Dialog.Header>
+          <Dialog.Body>
+            {Array.from({ length: 30 }, (_, i) => (
+              <p key={i} style={{ marginBottom: "1rem" }}>
+                {i + 1}. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
+                do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim
+                ad minim veniam, quis nostrud exercitation ullamco laboris.
+              </p>
+            ))}
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close asChild>
+              <Button>동의</Button>
+            </Dialog.Close>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function NestedDemo() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger>
+        <Button>외부 다이얼로그 열기</Button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay />
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>외부 다이얼로그</Dialog.Title>
+            <Dialog.Close />
+          </Dialog.Header>
+          <Dialog.Body>
+            <Dialog.Description>
+              이 안에서 내부 다이얼로그를 열 수 있습니다. scroll-lock은 중첩 카운터로 유지됩니다.
+            </Dialog.Description>
+            <div style={{ marginTop: "1rem" }}>
+              <Dialog.Root>
+                <Dialog.Trigger>
+                  <Button size="sm" variant="secondary">내부 다이얼로그 열기</Button>
+                </Dialog.Trigger>
+                <Dialog.Portal>
+                  <Dialog.Overlay />
+                  <Dialog.Content size="sm">
+                    <Dialog.Header>
+                      <Dialog.Title>내부 다이얼로그</Dialog.Title>
+                      <Dialog.Close />
+                    </Dialog.Header>
+                    <Dialog.Body>
+                      <Dialog.Description>중첩된 다이얼로그입니다.</Dialog.Description>
+                    </Dialog.Body>
+                    <Dialog.Footer>
+                      <Dialog.Close asChild>
+                        <Button size="sm">확인</Button>
+                      </Dialog.Close>
+                    </Dialog.Footer>
+                  </Dialog.Content>
+                </Dialog.Portal>
+              </Dialog.Root>
+            </div>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close asChild>
+              <Button>닫기</Button>
+            </Dialog.Close>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function FormDemo() {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [submitted, setSubmitted] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(name);
+    setOpen(false);
+    setName("");
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Trigger>
+          <Button variant="secondary">프로필 편집</Button>
+        </Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content size="md">
+            <form onSubmit={handleSubmit}>
+              <Dialog.Header>
+                <Dialog.Title>프로필 편집</Dialog.Title>
+                <Dialog.Close />
+              </Dialog.Header>
+              <Dialog.Body>
+                <label style={{ display: "block", marginBottom: "1rem" }}>
+                  <span style={{ fontSize: "0.875rem", fontWeight: 500, display: "block", marginBottom: "0.25rem" }}>
+                    이름
+                  </span>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="이름을 입력하세요"
+                    style={{
+                      width: "100%",
+                      padding: "0.5rem 0.75rem",
+                      border: "1px solid #d1d5db",
+                      borderRadius: "0.375rem",
+                      fontSize: "0.875rem",
+                    }}
+                  />
+                </label>
+              </Dialog.Body>
+              <Dialog.Footer>
+                <Dialog.Close asChild>
+                  <Button type="button" variant="ghost">취소</Button>
+                </Dialog.Close>
+                <Button type="submit">저장</Button>
+              </Dialog.Footer>
+            </form>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      {submitted && <p className="text-xs text-gray-500">제출됨: {submitted}</p>}
+    </div>
+  );
+}
+
 export function DialogPage() {
   return (
     <div className="max-w-4xl">
@@ -213,6 +360,24 @@ export function DialogPage() {
       <Section id="confirmation" title="Confirmation" desc="2-버튼(취소/확인) + onConfirm 콜백">
         <Card>
           <ConfirmationDemo />
+        </Card>
+      </Section>
+
+      <Section id="scrollable" title="Scrollable" desc="Body가 max-height 초과 시 독립 스크롤">
+        <Card>
+          <ScrollableDemo />
+        </Card>
+      </Section>
+
+      <Section id="nested" title="Nested" desc="중첩 다이얼로그 + scroll-lock 카운터">
+        <Card>
+          <NestedDemo />
+        </Card>
+      </Section>
+
+      <Section id="form" title="Form" desc="폼 다이얼로그 + submit 시 close">
+        <Card>
+          <FormDemo />
         </Card>
       </Section>
     </div>
