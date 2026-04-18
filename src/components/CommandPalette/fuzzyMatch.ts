@@ -1,3 +1,5 @@
+import type { CommandItem, FuzzyMatchResult } from "./CommandPalette.types";
+
 export const SCORE = {
   SEQUENTIAL: 15,
   SEPARATOR_BONUS: 10,
@@ -99,4 +101,107 @@ export function fuzzyMatchOptimized(
   }
 
   return [score, matches];
+}
+
+export function scoreItem(
+  query: string,
+  item: CommandItem,
+): FuzzyMatchResult | null {
+  if (item.disabled) return null;
+
+  if (query.trim() === "") {
+    return {
+      item,
+      score: 0,
+      labelMatches: [],
+      descriptionMatches: [],
+    };
+  }
+
+  let bestScore = -Infinity;
+  let labelMatches: number[] = [];
+  let descriptionMatches: number[] = [];
+  let matched = false;
+
+  const labelResult = fuzzyMatchOptimized(query, item.label);
+  if (labelResult !== null) {
+    matched = true;
+    const weighted = labelResult[0] * SCORE.LABEL_WEIGHT;
+    if (weighted > bestScore) {
+      bestScore = weighted;
+      labelMatches = labelResult[1];
+      descriptionMatches = [];
+    }
+  }
+
+  if (item.description !== undefined) {
+    const descResult = fuzzyMatchOptimized(query, item.description);
+    if (descResult !== null) {
+      matched = true;
+      const weighted = descResult[0] * SCORE.DESCRIPTION_WEIGHT;
+      if (weighted > bestScore) {
+        bestScore = weighted;
+        descriptionMatches = descResult[1];
+        if (
+          labelResult === null ||
+          weighted > labelResult[0] * SCORE.LABEL_WEIGHT
+        ) {
+          labelMatches = [];
+        }
+      }
+    }
+  }
+
+  if (item.keywords !== undefined) {
+    for (const kw of item.keywords) {
+      const kwResult = fuzzyMatchOptimized(query, kw);
+      if (kwResult !== null) {
+        matched = true;
+        const weighted = kwResult[0] * SCORE.KEYWORDS_WEIGHT;
+        if (weighted > bestScore) {
+          bestScore = weighted;
+        }
+      }
+    }
+  }
+
+  if (!matched) return null;
+
+  return {
+    item,
+    score: bestScore,
+    labelMatches,
+    descriptionMatches,
+  };
+}
+
+export function filterItems(
+  query: string,
+  items: CommandItem[],
+  maxResults = 50,
+): FuzzyMatchResult[] {
+  const results: FuzzyMatchResult[] = [];
+
+  if (query.trim() === "") {
+    for (const item of items) {
+      if (item.disabled) continue;
+      results.push({
+        item,
+        score: 0,
+        labelMatches: [],
+        descriptionMatches: [],
+      });
+      if (results.length >= maxResults) break;
+    }
+    return results;
+  }
+
+  for (const item of items) {
+    const result = scoreItem(query, item);
+    if (result !== null) results.push(result);
+  }
+
+  results.sort((a, b) => b.score - a.score);
+
+  return results.slice(0, maxResults);
 }
