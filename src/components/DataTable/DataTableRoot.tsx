@@ -221,25 +221,10 @@ export function DataTableRoot<T>(props: DataTableProps<T>) {
     [data, globalFilter, globalFilterFn, columnFilters, columns, visibleColumns],
   );
 
-  const sortedData = useMemo(() => {
-    if (sortState.length === 0) return filteredData;
-    const arr = [...filteredData];
-    arr.sort((a, b) => {
-      for (const { key, direction } of sortState) {
-        const col = columns.find((c) => c.key === key);
-        if (!col) continue;
-        const cmp = col.sortFn
-          ? col.sortFn(a, b)
-          : defaultCompare(
-              (a as unknown as Record<string, unknown>)[key],
-              (b as unknown as Record<string, unknown>)[key],
-            );
-        if (cmp !== 0) return direction === "asc" ? cmp : -cmp;
-      }
-      return 0;
-    });
-    return arr;
-  }, [filteredData, sortState, columns]);
+  const sortedData = useMemo(
+    () => applySort({ data: filteredData, sortState, columns }),
+    [filteredData, sortState, columns],
+  );
 
   const totalFilteredCount = sortedData.length;
   const totalPages = pagination
@@ -461,6 +446,33 @@ function DataTableRootView(props: DataTableRootViewProps) {
       {props.children}
     </div>
   );
+}
+
+interface ApplySortArgs<T> {
+  data: T[];
+  sortState: SortState;
+  columns: ColumnDef<T>[];
+}
+
+function applySort<T>(args: ApplySortArgs<T>): T[] {
+  const { data, sortState, columns } = args;
+  if (sortState.length === 0) return data;
+  const arr = [...data];
+  arr.sort((a, b) => {
+    for (const { key, direction } of sortState) {
+      const col = columns.find((c) => c.key === key);
+      if (!col) continue;
+      const cmp = col.sortFn
+        ? col.sortFn(a, b)
+        : defaultCompare(
+            (a as unknown as Record<string, unknown>)[key],
+            (b as unknown as Record<string, unknown>)[key],
+          );
+      if (cmp !== 0) return direction === "asc" ? cmp : -cmp;
+    }
+    return 0;
+  });
+  return arr;
 }
 
 interface ApplyFiltersArgs<T> {
