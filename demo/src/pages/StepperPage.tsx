@@ -299,6 +299,210 @@ function ValidationDemo() {
   );
 }
 
+function VariantsDemo() {
+  const [step, setStep] = useState(1);
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <p className="text-xs text-gray-500 mb-2">variant="default"</p>
+        <Stepper.Root totalSteps={4} activeStep={step} onStepChange={setStep}>
+          <Stepper.List>
+            <Stepper.Step index={0} label="A" />
+            <Stepper.Separator />
+            <Stepper.Step index={1} label="B" />
+            <Stepper.Separator />
+            <Stepper.Step index={2} label="C" />
+            <Stepper.Separator />
+            <Stepper.Step index={3} label="D" />
+          </Stepper.List>
+        </Stepper.Root>
+      </div>
+
+      <div>
+        <p className="text-xs text-gray-500 mb-2">variant="dots"</p>
+        <Stepper.Root
+          totalSteps={4}
+          activeStep={step}
+          onStepChange={setStep}
+          variant="dots"
+        >
+          <Stepper.List>
+            <Stepper.Step index={0} />
+            <Stepper.Separator />
+            <Stepper.Step index={1} />
+            <Stepper.Separator />
+            <Stepper.Step index={2} />
+            <Stepper.Separator />
+            <Stepper.Step index={3} />
+          </Stepper.List>
+        </Stepper.Root>
+      </div>
+
+      <div>
+        <p className="text-xs text-gray-500 mb-2">variant="progress"</p>
+        <Stepper.Root
+          totalSteps={4}
+          activeStep={step}
+          onStepChange={setStep}
+          variant="progress"
+        >
+          <Stepper.List />
+        </Stepper.Root>
+      </div>
+
+      <div className="flex gap-2 items-center">
+        <span className="text-xs text-gray-500">동기화된 스텝: {step + 1} / 4</span>
+        <button
+          type="button"
+          onClick={() => setStep((s) => Math.max(0, s - 1))}
+          className="px-2 py-1 text-xs border rounded"
+        >
+          이전
+        </button>
+        <button
+          type="button"
+          onClick={() => setStep((s) => Math.min(3, s + 1))}
+          className="px-2 py-1 text-xs border rounded"
+        >
+          다음
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function ErrorStateDemo() {
+  return (
+    <Stepper.Root
+      totalSteps={3}
+      defaultActiveStep={1}
+      stepErrors={{ 1: "이 단계에 오류가 있습니다" }}
+    >
+      <Stepper.List>
+        <Stepper.Step index={0} label="Step 1" />
+        <Stepper.Separator />
+        <Stepper.Step index={1} label="Step 2" />
+        <Stepper.Separator />
+        <Stepper.Step index={2} label="Step 3" />
+      </Stepper.List>
+
+      <Stepper.Content>
+        <Stepper.Panel index={0}>
+          <div className="p-4 text-sm">Step 1 컨텐츠</div>
+        </Stepper.Panel>
+        <Stepper.Panel index={1}>
+          <div className="p-4">
+            <p className="text-sm text-red-500">
+              이 단계에 오류가 있습니다. 입력을 확인해주세요.
+            </p>
+          </div>
+        </Stepper.Panel>
+        <Stepper.Panel index={2}>
+          <div className="p-4 text-sm">Step 3 컨텐츠</div>
+        </Stepper.Panel>
+      </Stepper.Content>
+
+      <Stepper.Actions>
+        <Stepper.PrevButton>이전</Stepper.PrevButton>
+        <div className="flex gap-2">
+          <Stepper.NextButton>다음</Stepper.NextButton>
+          <Stepper.CompleteButton>완료</Stepper.CompleteButton>
+        </div>
+      </Stepper.Actions>
+    </Stepper.Root>
+  );
+}
+
+function UserIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="5" r="2.5" />
+      <path d="M3 14c0-2.5 2-4.5 5-4.5s5 2 5 4.5" />
+    </svg>
+  );
+}
+
+function GearIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <circle cx="8" cy="8" r="2.5" />
+      <path d="M8 2v1.5M8 12.5V14M3.5 8H2M14 8h-1.5M4.8 4.8l-1-1M12.2 12.2l-1-1M4.8 11.2l-1 1M12.2 3.8l-1 1" />
+    </svg>
+  );
+}
+
+function StarIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polygon points="8 2 10 6 14 6.5 11 9.5 12 14 8 12 4 14 5 9.5 2 6.5 6 6 8 2" />
+    </svg>
+  );
+}
+
+function CustomIconsDemo() {
+  return (
+    <Stepper.Root totalSteps={3}>
+      <Stepper.List>
+        <Stepper.Step index={0} label="사용자" icon={<UserIcon />} />
+        <Stepper.Separator />
+        <Stepper.Step index={1} label="설정" icon={<GearIcon />} />
+        <Stepper.Separator />
+        <Stepper.Step index={2} label="완료" icon={<StarIcon />} />
+      </Stepper.List>
+
+      <Stepper.Content>
+        <Stepper.Panel index={0}>
+          <div className="p-4 text-sm">사용자 정보를 입력해주세요.</div>
+        </Stepper.Panel>
+        <Stepper.Panel index={1}>
+          <div className="p-4 text-sm">설정을 조정해주세요.</div>
+        </Stepper.Panel>
+        <Stepper.Panel index={2}>
+          <div className="p-4 text-sm">모든 설정이 완료되었습니다.</div>
+        </Stepper.Panel>
+      </Stepper.Content>
+
+      <Stepper.Actions>
+        <Stepper.PrevButton>이전</Stepper.PrevButton>
+        <div className="flex gap-2">
+          <Stepper.NextButton>다음</Stepper.NextButton>
+          <Stepper.CompleteButton>완료</Stepper.CompleteButton>
+        </div>
+      </Stepper.Actions>
+    </Stepper.Root>
+  );
+}
+
 export function StepperPage() {
   return (
     <div>
@@ -328,6 +532,24 @@ export function StepperPage() {
       <Section id="validation" title="Validation" desc="onBeforeNext 동기/비동기 검증">
         <Card>
           <ValidationDemo />
+        </Card>
+      </Section>
+
+      <Section id="variants" title="Variants" desc="default / dots / progress — 동일 activeStep 동기화">
+        <Card>
+          <VariantsDemo />
+        </Card>
+      </Section>
+
+      <Section id="error-state" title="Error State" desc="stepErrors로 특정 스텝에 에러 상태 고정">
+        <Card>
+          <ErrorStateDemo />
+        </Card>
+      </Section>
+
+      <Section id="custom-icons" title="Custom Icons" desc="icon prop으로 번호 대신 커스텀 SVG 표시">
+        <Card>
+          <CustomIconsDemo />
         </Card>
       </Section>
     </div>
