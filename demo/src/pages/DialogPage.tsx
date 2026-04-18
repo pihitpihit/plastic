@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button, Dialog } from "plastic";
 import type { DialogSize } from "plastic";
 
@@ -92,6 +93,93 @@ function SizeDemo({ size }: { size: DialogSize }) {
   );
 }
 
+function AlertDemo() {
+  const [log, setLog] = useState<string>("");
+  return (
+    <div className="flex flex-col gap-3">
+      <Dialog.Root variant="alert" closeOnEscape={false} closeOnOverlayClick={false}>
+        <Dialog.Trigger>
+          <Button>계정 삭제</Button>
+        </Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content size="sm">
+            <Dialog.Header>
+              <Dialog.Title>정말 삭제하시겠습니까?</Dialog.Title>
+            </Dialog.Header>
+            <Dialog.Body>
+              <Dialog.Description>
+                이 작업은 되돌릴 수 없습니다. 계정과 관련된 모든 데이터가 영구적으로 삭제됩니다.
+              </Dialog.Description>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Dialog.Close asChild>
+                <Button variant="ghost" onClick={() => setLog("취소됨")}>취소</Button>
+              </Dialog.Close>
+              <Dialog.Close asChild>
+                <button
+                  style={{
+                    padding: "0.5rem 1rem",
+                    borderRadius: "0.375rem",
+                    background: "#dc2626",
+                    color: "white",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.875rem",
+                    fontWeight: 500,
+                  }}
+                  onClick={() => setLog("삭제됨")}
+                >
+                  삭제
+                </button>
+              </Dialog.Close>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      {log && <p className="text-xs text-gray-500">마지막 작업: {log}</p>}
+    </div>
+  );
+}
+
+function ConfirmationDemo() {
+  const [confirmed, setConfirmed] = useState<boolean | null>(null);
+  return (
+    <div className="flex flex-col gap-3">
+      <Dialog.Root>
+        <Dialog.Trigger>
+          <Button variant="secondary">변경 저장</Button>
+        </Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content size="sm">
+            <Dialog.Header>
+              <Dialog.Title>변경사항 저장</Dialog.Title>
+              <Dialog.Close />
+            </Dialog.Header>
+            <Dialog.Body>
+              <Dialog.Description>편집한 내용을 저장하시겠습니까?</Dialog.Description>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Dialog.Close asChild>
+                <Button variant="ghost" onClick={() => setConfirmed(false)}>취소</Button>
+              </Dialog.Close>
+              <Dialog.Close asChild>
+                <Button onClick={() => setConfirmed(true)}>저장</Button>
+              </Dialog.Close>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      {confirmed !== null && (
+        <p className="text-xs text-gray-500">
+          결과: {confirmed ? "저장됨" : "취소됨"}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function DialogPage() {
   return (
     <div className="max-w-4xl">
@@ -113,6 +201,18 @@ export function DialogPage() {
           {(["sm", "md", "lg", "xl", "full"] as const).map((s) => (
             <SizeDemo key={s} size={s} />
           ))}
+        </Card>
+      </Section>
+
+      <Section id="alert-dialog" title="Alert Dialog" desc="variant='alert' + destructive 빨간 버튼">
+        <Card>
+          <AlertDemo />
+        </Card>
+      </Section>
+
+      <Section id="confirmation" title="Confirmation" desc="2-버튼(취소/확인) + onConfirm 콜백">
+        <Card>
+          <ConfirmationDemo />
         </Card>
       </Section>
     </div>
