@@ -20,6 +20,7 @@ export interface UseFloatingOptions {
   offset?: number | undefined;
   arrowPadding?: number | undefined;
   enabled?: boolean | undefined;
+  flip?: boolean | undefined;
 }
 
 export interface UseFloatingReturn {
@@ -52,6 +53,13 @@ function parsePlacement(placement: Placement): {
   const [side, alignment] = placement.split("-") as [Side, Alignment | undefined];
   return { side, alignment };
 }
+
+const OPPOSITE_SIDE: Record<Side, Side> = {
+  top: "bottom",
+  bottom: "top",
+  left: "right",
+  right: "left",
+};
 
 function computeBasePosition(
   triggerRect: Rect,
@@ -104,11 +112,80 @@ function computeBasePosition(
   return { x, y };
 }
 
+function flipPlacement(
+  triggerRect: Rect,
+  floatingWidth: number,
+  floatingHeight: number,
+  placement: Placement,
+  offset: number,
+): Placement {
+  const { side, alignment } = parsePlacement(placement);
+  const pos = computeBasePosition(
+    triggerRect,
+    floatingWidth,
+    floatingHeight,
+    placement,
+    offset,
+  );
+
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let overflows = false;
+  switch (side) {
+    case "top":
+      overflows = pos.y < 0;
+      break;
+    case "bottom":
+      overflows = pos.y + floatingHeight > viewportHeight;
+      break;
+    case "left":
+      overflows = pos.x < 0;
+      break;
+    case "right":
+      overflows = pos.x + floatingWidth > viewportWidth;
+      break;
+  }
+
+  if (!overflows) return placement;
+
+  const oppositeSide = OPPOSITE_SIDE[side];
+  const oppositePlacement: Placement = alignment
+    ? `${oppositeSide}-${alignment}`
+    : oppositeSide;
+  const oppositePos = computeBasePosition(
+    triggerRect,
+    floatingWidth,
+    floatingHeight,
+    oppositePlacement,
+    offset,
+  );
+
+  let oppositeOverflows = false;
+  switch (oppositeSide) {
+    case "top":
+      oppositeOverflows = oppositePos.y < 0;
+      break;
+    case "bottom":
+      oppositeOverflows = oppositePos.y + floatingHeight > viewportHeight;
+      break;
+    case "left":
+      oppositeOverflows = oppositePos.x < 0;
+      break;
+    case "right":
+      oppositeOverflows = oppositePos.x + floatingWidth > viewportWidth;
+      break;
+  }
+
+  return oppositeOverflows ? placement : oppositePlacement;
+}
+
 export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn {
   const {
     placement: desiredPlacement = "top",
     offset = 8,
     enabled = true,
+    flip = true,
   } = options;
 
   const triggerRef = useRef<HTMLElement | null>(null);
@@ -130,20 +207,30 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
     const floatingWidth = floatingEl.offsetWidth;
     const floatingHeight = floatingEl.offsetHeight;
 
+    const resolvedPlacement = flip
+      ? flipPlacement(
+          triggerRect,
+          floatingWidth,
+          floatingHeight,
+          desiredPlacement,
+          offset,
+        )
+      : desiredPlacement;
+
     const basePos = computeBasePosition(
       triggerRect,
       floatingWidth,
       floatingHeight,
-      desiredPlacement,
+      resolvedPlacement,
       offset,
     );
 
     setPosition({
-      placement: desiredPlacement,
+      placement: resolvedPlacement,
       x: basePos.x,
       y: basePos.y,
     });
-  }, [desiredPlacement, offset]);
+  }, [desiredPlacement, offset, flip]);
 
   useEffect(() => {
     if (!enabled) return;
