@@ -9,8 +9,9 @@ import { DialogPage } from "./pages/DialogPage";
 import { TooltipPopoverPage } from "./pages/TooltipPopoverPage";
 import DataTablePage from "./pages/DataTablePage";
 import { StepperPage } from "./pages/StepperPage";
+import CommandPalettePage from "./pages/CommandPalettePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette";
 
 interface SubItem { label: string; id: string }
 
@@ -120,6 +121,19 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Custom Icons", id: "custom-icons" },
     { label: "Controlled", id: "controlled" },
     { label: "Dark Theme", id: "dark-theme" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "commandpalette", label: "CommandPalette", description: "Cmd+K 명령 팔레트", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Groups", id: "groups" },
+    { label: "Nested", id: "nested" },
+    { label: "Shortcuts", id: "shortcuts" },
+    { label: "Async", id: "async" },
+    { label: "Empty / Loading", id: "empty-loading" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Dark Theme", id: "dark" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
@@ -372,6 +386,7 @@ export function App() {
         {current === "tooltip" && <TooltipPopoverPage />}
         {current === "datatable" && <DataTablePage />}
         {current === "stepper" && <StepperPage />}
+        {current === "commandpalette" && <CommandPalettePage />}
       </main>
     </div>
   );
