@@ -87,41 +87,52 @@ export function StepperRoot(props: StepperRootProps) {
 
   const navigatingRef = useRef(false);
 
+  const runGate = useCallback(
+    async (
+      gate: ((step: number) => boolean | Promise<boolean>) | undefined,
+      fromStep: number,
+    ): Promise<boolean> => {
+      if (!gate) return true;
+      navigatingRef.current = true;
+      setIsNavigating(true);
+      try {
+        const ok = await gate(fromStep);
+        return ok;
+      } catch {
+        return false;
+      } finally {
+        navigatingRef.current = false;
+        setIsNavigating(false);
+      }
+    },
+    [],
+  );
+
+  const canNavigateTo = useCallback(
+    (index: number): boolean => {
+      if (index < 0 || index >= totalSteps) return false;
+      if (disabledSteps.has(index)) return false;
+      if (index === activeStep) return false;
+      if (!linear) return true;
+
+      const forward = index > activeStep;
+      if (!forward) return true; // linear 모드라도 뒤로는 자유
+      if (index === activeStep + 1) return true; // 다음 단계
+      if (completedSteps.has(index)) return true; // 이미 완료한 단계로 복귀
+      return false;
+    },
+    [activeStep, totalSteps, disabledSteps, linear, completedSteps],
+  );
+
   const goToStep = useCallback(
     async (index: number) => {
       if (navigatingRef.current) return;
-      if (index < 0 || index >= totalSteps) return;
-      if (disabledSteps.has(index)) return;
-      if (index === activeStep) return;
+      if (!canNavigateTo(index)) return;
 
       const forward = index > activeStep;
-
-      if (linear && forward && index !== activeStep + 1) {
-        return;
-      }
-
-      if (forward && onBeforeNext) {
-        navigatingRef.current = true;
-        setIsNavigating(true);
-        try {
-          const ok = await onBeforeNext(activeStep);
-          if (!ok) return;
-        } finally {
-          navigatingRef.current = false;
-          setIsNavigating(false);
-        }
-      }
-      if (!forward && onBeforePrev) {
-        navigatingRef.current = true;
-        setIsNavigating(true);
-        try {
-          const ok = await onBeforePrev(activeStep);
-          if (!ok) return;
-        } finally {
-          navigatingRef.current = false;
-          setIsNavigating(false);
-        }
-      }
+      const gate = forward ? onBeforeNext : onBeforePrev;
+      const ok = await runGate(gate, activeStep);
+      if (!ok) return;
 
       if (forward) markCompleted(activeStep);
       setDirection(forward ? "forward" : "backward");
@@ -129,11 +140,10 @@ export function StepperRoot(props: StepperRootProps) {
     },
     [
       activeStep,
-      totalSteps,
-      disabledSteps,
-      linear,
+      canNavigateTo,
       onBeforeNext,
       onBeforePrev,
+      runGate,
       markCompleted,
       setActiveStep,
     ],
