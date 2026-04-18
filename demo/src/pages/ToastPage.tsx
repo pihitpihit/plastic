@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ToastProvider, useToast, CodeView } from "plastic";
-import type { ToastPosition, ToastVariant } from "plastic";
+import type { ToastPosition, ToastTheme, ToastVariant } from "plastic";
 
 // ── Section 헬퍼 ────────────────────────────────────────────────────────
 function Section({
@@ -277,13 +277,166 @@ function StackingDemo() {
   );
 }
 
+// ── 7. Promise (loading → success/error) ─────────────────────────────────
+function PromiseDemo() {
+  const toast = useToast();
+  const runSuccess = () => {
+    toast.promise(
+      new Promise<string>((resolve) => setTimeout(() => resolve("OK"), 2000)),
+      {
+        loading: { title: "저장 중...", description: "서버에 전송하고 있습니다." },
+        success: {
+          title: "저장 완료",
+          description: "모든 변경사항이 적용되었습니다.",
+        },
+        error: {
+          title: "저장 실패",
+          description: "다시 시도해주세요.",
+        },
+      },
+    );
+  };
+  const runError = () => {
+    toast
+      .promise(
+        new Promise<string>((_, reject) =>
+          setTimeout(() => reject(new Error("Network timeout")), 2000),
+        ),
+        {
+          loading: { title: "업로드 중...", description: "파일을 전송합니다." },
+          success: { title: "업로드 완료" },
+          error: (err) => ({
+            title: "업로드 실패",
+            description: err instanceof Error ? err.message : String(err),
+          }),
+        },
+      )
+      .catch(() => {
+        // 사용자가 잡을 수 있도록 재발생. 데모에서는 의도적으로 무시.
+      });
+  };
+  return (
+    <div className="flex flex-wrap gap-2">
+      <DemoButton variant="green" onClick={runSuccess}>
+        Resolve (2s 후 success)
+      </DemoButton>
+      <DemoButton variant="red" onClick={runError}>
+        Reject (2s 후 error)
+      </DemoButton>
+    </div>
+  );
+}
+
+// ── 8. Persistent (duration: Infinity) ──────────────────────────────────
+function PersistentDemo() {
+  const toast = useToast();
+  const [lastId, setLastId] = useState<string | null>(null);
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-gray-600">
+        <code className="bg-gray-100 px-1 rounded">duration: Infinity</code>{" "}
+        사용 시 자동 dismiss 비활성. 진행바도 숨겨집니다.
+      </p>
+      <div className="flex gap-2">
+        <DemoButton
+          onClick={() => {
+            const id = toast.show({
+              variant: "info",
+              title: "업로드 진행 중",
+              description: "이 토스트는 수동으로 닫기 전까지 유지됩니다.",
+              duration: Infinity,
+            });
+            setLastId(id);
+          }}
+        >
+          영구 토스트 표시
+        </DemoButton>
+        <DemoButton
+          variant="red"
+          onClick={() => {
+            if (lastId) {
+              toast.dismiss(lastId);
+              setLastId(null);
+            }
+          }}
+        >
+          수동 dismiss (마지막)
+        </DemoButton>
+      </div>
+    </div>
+  );
+}
+
+// ── 9. Dark Theme (theme toggle) ────────────────────────────────────────
+function DarkThemeDemo({
+  theme,
+  setTheme,
+}: {
+  theme: ToastTheme;
+  setTheme: (t: ToastTheme) => void;
+}) {
+  const toast = useToast();
+  return (
+    <div
+      className="rounded-lg p-6 transition-colors"
+      style={{
+        background: theme === "dark" ? "#0f172a" : "#f8fafc",
+        color: theme === "dark" ? "#e2e8f0" : "#0f172a",
+      }}
+    >
+      <div className="mb-3 flex items-center gap-3">
+        <span className="text-sm">현재 테마:</span>
+        <button
+          onClick={() => setTheme("light")}
+          className={`px-3 py-1 text-xs rounded border ${
+            theme === "light"
+              ? "bg-blue-500 text-white border-blue-500"
+              : "bg-white text-gray-700 border-gray-300"
+          }`}
+        >
+          light
+        </button>
+        <button
+          onClick={() => setTheme("dark")}
+          className={`px-3 py-1 text-xs rounded border ${
+            theme === "dark"
+              ? "bg-blue-500 text-white border-blue-500"
+              : "bg-slate-700 text-gray-300 border-slate-600"
+          }`}
+        >
+          dark
+        </button>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {(["default", "success", "error", "warning", "info"] as ToastVariant[]).map(
+          (v) => (
+            <button
+              key={v}
+              onClick={() =>
+                toast.show({ variant: v, title: `${v} 토스트`, description: `테마=${theme}` })
+              }
+              className="px-3 py-1.5 text-sm rounded-md bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+            >
+              {v}
+            </button>
+          ),
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Page (ToastProvider wrap) ────────────────────────────────────────────
 function ToastPageInner({
   position,
   setPosition,
+  theme,
+  setTheme,
 }: {
   position: ToastPosition;
   setPosition: (p: ToastPosition) => void;
+  theme: ToastTheme;
+  setTheme: (t: ToastTheme) => void;
 }) {
   return (
     <div className="mx-auto max-w-4xl space-y-10">
@@ -344,15 +497,50 @@ function ToastPageInner({
       >
         <StackingDemo />
       </Section>
+
+      <Section
+        id="promise"
+        title="Promise (loading → success/error)"
+        desc="toast.promise(p, { loading, success, error })로 비동기 상태 자동 전환"
+      >
+        <PromiseDemo />
+      </Section>
+
+      <Section
+        id="persistent"
+        title="Persistent"
+        desc="duration: Infinity — 수동 dismiss 전까지 유지"
+      >
+        <PersistentDemo />
+      </Section>
+
+      <Section
+        id="dark-theme"
+        title="Dark Theme"
+        desc="Provider theme='dark' 토글. 토스트 배경/테두리/텍스트가 전역적으로 변경."
+      >
+        <DarkThemeDemo theme={theme} setTheme={setTheme} />
+      </Section>
     </div>
   );
 }
 
 export function ToastPage() {
   const [position, setPosition] = useState<ToastPosition>("bottom-right");
+  const [theme, setTheme] = useState<ToastTheme>("light");
   return (
-    <ToastProvider position={position} maxToasts={5} defaultDuration={5000}>
-      <ToastPageInner position={position} setPosition={setPosition} />
+    <ToastProvider
+      position={position}
+      theme={theme}
+      maxToasts={5}
+      defaultDuration={5000}
+    >
+      <ToastPageInner
+        position={position}
+        setPosition={setPosition}
+        theme={theme}
+        setTheme={setTheme}
+      />
     </ToastProvider>
   );
 }
