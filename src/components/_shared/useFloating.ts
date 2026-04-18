@@ -112,6 +112,33 @@ function computeBasePosition(
   return { x, y };
 }
 
+const VIEWPORT_PADDING = 8;
+
+function shiftPosition(
+  pos: FloatingPosition,
+  floatingWidth: number,
+  floatingHeight: number,
+  side: Side,
+): FloatingPosition {
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+
+  let { x, y } = pos;
+  const isVerticalSide = side === "top" || side === "bottom";
+
+  if (isVerticalSide) {
+    const minX = VIEWPORT_PADDING;
+    const maxX = viewportWidth - floatingWidth - VIEWPORT_PADDING;
+    x = Math.max(minX, Math.min(maxX, x));
+  } else {
+    const minY = VIEWPORT_PADDING;
+    const maxY = viewportHeight - floatingHeight - VIEWPORT_PADDING;
+    y = Math.max(minY, Math.min(maxY, y));
+  }
+
+  return { x, y };
+}
+
 function flipPlacement(
   triggerRect: Rect,
   floatingWidth: number,
@@ -225,10 +252,13 @@ export function useFloating(options: UseFloatingOptions = {}): UseFloatingReturn
       offset,
     );
 
+    const { side } = parsePlacement(resolvedPlacement);
+    const shifted = shiftPosition(basePos, floatingWidth, floatingHeight, side);
+
     setPosition({
       placement: resolvedPlacement,
-      x: basePos.x,
-      y: basePos.y,
+      x: shifted.x,
+      y: shifted.y,
     });
   }, [desiredPlacement, offset, flip]);
 
