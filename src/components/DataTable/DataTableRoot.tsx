@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { useControllable } from "../_shared/useControllable";
 import { DataTableContext } from "./DataTableContext";
@@ -236,6 +236,31 @@ export function DataTableRoot<T>(props: DataTableProps<T>) {
     const start = (pagination.page - 1) * pagination.pageSize;
     return sortedData.slice(start, start + pagination.pageSize);
   }, [sortedData, pagination]);
+
+  // 필터/정렬 변경 시 현재 페이지가 유효 범위를 벗어나면 1페이지로 리셋
+  const prevFilterSortKey = useRef("");
+  useEffect(() => {
+    if (!pagination) return;
+    const filterKey = JSON.stringify({
+      g: globalFilter,
+      c: columnFilters,
+      s: sortState,
+    });
+    if (prevFilterSortKey.current !== "" && prevFilterSortKey.current !== filterKey) {
+      if (pagination.page !== 1) {
+        setPagination({ page: 1, pageSize: pagination.pageSize });
+      }
+    }
+    prevFilterSortKey.current = filterKey;
+  }, [globalFilter, columnFilters, sortState, pagination, setPagination]);
+
+  // 페이지가 totalPages를 초과하면 clamp
+  useEffect(() => {
+    if (!pagination) return;
+    if (pagination.page > totalPages) {
+      setPagination({ page: totalPages, pageSize: pagination.pageSize });
+    }
+  }, [pagination, totalPages, setPagination]);
 
   // ── 전체 선택 ────────────────────────────────────────
   const allKeysOnPage = useMemo(
