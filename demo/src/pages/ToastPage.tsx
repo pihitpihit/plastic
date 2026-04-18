@@ -220,6 +220,63 @@ function AutoDismissDemo() {
   );
 }
 
+// ── 5. Swipe Dismiss ─────────────────────────────────────────────────────
+function SwipeDemo() {
+  const toast = useToast();
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-gray-600">
+        👆 토스트를 <strong>좌우로 드래그</strong>하거나 마우스로{" "}
+        <strong>스와이프</strong>하면 dismiss됩니다. 임계치(100px)에 도달하지
+        않으면 원위치로 복귀합니다.
+      </p>
+      <DemoButton
+        onClick={() =>
+          toast.show({
+            variant: "info",
+            title: "스와이프해서 닫기",
+            description: "좌/우로 드래그하여 dismiss 해보세요.",
+            duration: 20000,
+          })
+        }
+      >
+        스와이프 테스트 토스트
+      </DemoButton>
+    </div>
+  );
+}
+
+// ── 6. Stacking (maxToasts) ─────────────────────────────────────────────
+function StackingDemo() {
+  const toast = useToast();
+  const showBurst = () => {
+    for (let i = 1; i <= 5; i += 1) {
+      setTimeout(() => {
+        toast.show({
+          variant: (["default", "success", "warning", "info", "error"] as const)[
+            (i - 1) % 5
+          ],
+          title: `토스트 ${i} / 5`,
+          description: "maxToasts=5 설정 시 5개까지만 유지됩니다.",
+        });
+      }, i * 150);
+    }
+  };
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-gray-600">
+        rapid-fire 5연타. maxToasts 제한 초과 시 가장 오래된 항목이 밀려나갑니다.
+      </p>
+      <div className="flex gap-2">
+        <DemoButton onClick={showBurst}>5개 연속 생성</DemoButton>
+        <DemoButton variant="red" onClick={() => toast.dismissAll()}>
+          모두 닫기
+        </DemoButton>
+      </div>
+    </div>
+  );
+}
+
 // ── Page (ToastProvider wrap) ────────────────────────────────────────────
 function ToastPageInner({
   position,
@@ -270,6 +327,22 @@ function ToastPageInner({
         desc="duration 슬라이더로 자동 dismiss 시간 제어. 진행바가 남은 시간 표시."
       >
         <AutoDismissDemo />
+      </Section>
+
+      <Section
+        id="swipe-dismiss"
+        title="Swipe Dismiss"
+        desc="포인터 드래그로 dismiss. 임계치 도달 시 즉시 제거, 미달 시 스냅백."
+      >
+        <SwipeDemo />
+      </Section>
+
+      <Section
+        id="stacking"
+        title="Stacking (maxToasts)"
+        desc="maxToasts=5 설정. 초과 생성 시 가장 오래된 토스트가 exit."
+      >
+        <StackingDemo />
       </Section>
     </div>
   );
