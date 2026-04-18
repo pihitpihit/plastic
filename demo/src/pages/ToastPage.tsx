@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ToastProvider, useToast } from "plastic";
+import { ToastProvider, useToast, CodeView } from "plastic";
 import type { ToastPosition, ToastVariant } from "plastic";
 
 // ── Section 헬퍼 ────────────────────────────────────────────────────────
@@ -134,6 +134,92 @@ function PositionsDemo({
   );
 }
 
+// ── 3. Custom Content (title + description + action) ────────────────────
+function CustomContentDemo() {
+  const toast = useToast();
+  return (
+    <div className="flex flex-wrap gap-2">
+      <DemoButton
+        onClick={() =>
+          toast.show({
+            variant: "default",
+            title: "파일이 이동되었습니다",
+            description: "1개 항목이 아카이브로 이동되었습니다.",
+            action: {
+              label: "실행 취소",
+              onClick: () => toast.show({ title: "되돌림", variant: "info" }),
+            },
+          })
+        }
+      >
+        Action 버튼 포함
+      </DemoButton>
+      <DemoButton
+        variant="red"
+        onClick={() =>
+          toast.show({
+            variant: "error",
+            title: "연결 실패",
+            description:
+              "서버에 연결할 수 없습니다. 네트워크 상태를 확인한 후 다시 시도해주세요. 계속 문제가 발생하면 관리자에게 문의하세요.",
+            action: {
+              label: "재시도",
+              variant: "primary",
+              onClick: () => toast.show({ title: "재연결 중...", variant: "info" }),
+            },
+          })
+        }
+      >
+        긴 설명 + Primary Action
+      </DemoButton>
+    </div>
+  );
+}
+
+// ── 4. Auto-dismiss (duration 제어) ──────────────────────────────────────
+function AutoDismissDemo() {
+  const toast = useToast();
+  const [duration, setDuration] = useState(5000);
+  return (
+    <div className="space-y-3 max-w-md">
+      <div>
+        <label className="text-sm text-gray-600 flex items-center gap-3">
+          <span>duration (ms):</span>
+          <input
+            type="range"
+            min={1000}
+            max={10000}
+            step={500}
+            value={duration}
+            onChange={(e) => setDuration(Number(e.target.value))}
+            className="flex-1"
+          />
+          <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">
+            {duration}
+          </code>
+        </label>
+      </div>
+      <DemoButton
+        onClick={() =>
+          toast.show({
+            variant: "success",
+            title: "커스텀 duration",
+            description: `${duration}ms 동안 표시됩니다. 진행바가 남은 시간을 보여줍니다.`,
+            duration,
+          })
+        }
+      >
+        duration={duration}ms로 표시
+      </DemoButton>
+      <CodeView
+        code={`toast.show({\n  variant: "success",\n  title: "알림",\n  duration: ${duration},\n});`}
+        language="typescript"
+        showLineNumbers={false}
+      />
+    </div>
+  );
+}
+
 // ── Page (ToastProvider wrap) ────────────────────────────────────────────
 function ToastPageInner({
   position,
@@ -168,6 +254,22 @@ function ToastPageInner({
         desc="6개 고정 포지션 중 선택. 버튼 클릭 시 현재 포지션에 토스트 표시."
       >
         <PositionsDemo position={position} setPosition={setPosition} />
+      </Section>
+
+      <Section
+        id="custom-content"
+        title="Custom Content"
+        desc="title + description + action 버튼 조합"
+      >
+        <CustomContentDemo />
+      </Section>
+
+      <Section
+        id="auto-dismiss"
+        title="Auto-dismiss"
+        desc="duration 슬라이더로 자동 dismiss 시간 제어. 진행바가 남은 시간 표시."
+      >
+        <AutoDismissDemo />
       </Section>
     </div>
   );
