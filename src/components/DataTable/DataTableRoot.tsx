@@ -208,49 +208,18 @@ export function DataTableRoot<T>(props: DataTableProps<T>) {
   }, [columns, hiddenColumns]);
 
   // ── 데이터 파이프라인: filter → sort → paginate ────────
-  const filteredData = useMemo(() => {
-    let result = data;
-
-    if (globalFilter) {
-      const lower = globalFilter.toLowerCase();
-      result = result.filter((row) => {
-        if (globalFilterFn) return globalFilterFn(row, globalFilter);
-        return visibleColumns.some((col) => {
-          try {
-            const cell = col.cell(row, 0);
-            if (typeof cell === "string" || typeof cell === "number") {
-              return String(cell).toLowerCase().includes(lower);
-            }
-          } catch {
-            /* ignore */
-          }
-          const v = (row as unknown as Record<string, unknown>)[col.key];
-          if (v === null || v === undefined) return false;
-          return String(v).toLowerCase().includes(lower);
-        });
-      });
-    }
-
-    const activeFilters = Object.entries(columnFilters).filter(
-      ([, v]) => v !== "",
-    );
-    if (activeFilters.length > 0) {
-      result = result.filter((row) =>
-        activeFilters.every(([key, filterValue]) => {
-          const col = columns.find((c) => c.key === key);
-          if (!col) return true;
-          if (col.filterFn) return col.filterFn(row, filterValue);
-          const v = (row as unknown as Record<string, unknown>)[key];
-          if (v === null || v === undefined) return false;
-          return String(v)
-            .toLowerCase()
-            .includes(filterValue.toLowerCase());
-        }),
-      );
-    }
-
-    return result;
-  }, [data, globalFilter, globalFilterFn, columnFilters, columns, visibleColumns]);
+  const filteredData = useMemo(
+    () =>
+      applyFilters({
+        data,
+        globalFilter,
+        globalFilterFn,
+        columnFilters,
+        columns,
+        visibleColumns,
+      }),
+    [data, globalFilter, globalFilterFn, columnFilters, columns, visibleColumns],
+  );
 
   const sortedData = useMemo(() => {
     if (sortState.length === 0) return filteredData;
@@ -492,6 +461,64 @@ function DataTableRootView(props: DataTableRootViewProps) {
       {props.children}
     </div>
   );
+}
+
+interface ApplyFiltersArgs<T> {
+  data: T[];
+  globalFilter: string;
+  globalFilterFn: ((row: T, filterValue: string) => boolean) | undefined;
+  columnFilters: FilterState;
+  columns: ColumnDef<T>[];
+  visibleColumns: ColumnDef<T>[];
+}
+
+function applyFilters<T>(args: ApplyFiltersArgs<T>): T[] {
+  const { data, globalFilter, globalFilterFn, columnFilters, columns, visibleColumns } = args;
+  let result = data;
+
+  if (globalFilter) {
+    const lower = globalFilter.toLowerCase();
+    result = result.filter((row) => {
+      if (globalFilterFn) return globalFilterFn(row, globalFilter);
+      return visibleColumns.some((col) => rowMatchesString(row, col, lower));
+    });
+  }
+
+  const activeFilters = Object.entries(columnFilters).filter(
+    ([, v]) => v !== "",
+  );
+  if (activeFilters.length > 0) {
+    result = result.filter((row) =>
+      activeFilters.every(([key, filterValue]) => {
+        const col = columns.find((c) => c.key === key);
+        if (!col) return true;
+        if (col.filterFn) return col.filterFn(row, filterValue);
+        const v = (row as unknown as Record<string, unknown>)[key];
+        if (v === null || v === undefined) return false;
+        return String(v).toLowerCase().includes(filterValue.toLowerCase());
+      }),
+    );
+  }
+
+  return result;
+}
+
+function rowMatchesString<T>(
+  row: T,
+  col: ColumnDef<T>,
+  lowerQuery: string,
+): boolean {
+  try {
+    const cell = col.cell(row, 0);
+    if (typeof cell === "string" || typeof cell === "number") {
+      return String(cell).toLowerCase().includes(lowerQuery);
+    }
+  } catch {
+    /* cell renderer failed — fall through to raw value */
+  }
+  const v = (row as unknown as Record<string, unknown>)[col.key];
+  if (v === null || v === undefined) return false;
+  return String(v).toLowerCase().includes(lowerQuery);
 }
 
 function defaultCompare(a: unknown, b: unknown): number {
