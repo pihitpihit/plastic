@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Button, Dialog } from "plastic";
-import type { DialogSize } from "plastic";
+import { Button, CodeView, Dialog } from "plastic";
+import type { DialogSize, DialogTheme } from "plastic";
 
 function Section({
   id,
@@ -327,6 +327,314 @@ function FormDemo() {
   );
 }
 
+function CustomTriggerDemo() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger asChild>
+        <a
+          href="#"
+          onClick={(e) => e.preventDefault()}
+          style={{
+            color: "#2563eb",
+            textDecoration: "underline",
+            cursor: "pointer",
+            fontSize: "0.875rem",
+          }}
+        >
+          링크로 열기
+        </a>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay />
+        <Dialog.Content size="sm">
+          <Dialog.Header>
+            <Dialog.Title>커스텀 트리거</Dialog.Title>
+            <Dialog.Close />
+          </Dialog.Header>
+          <Dialog.Body>
+            <Dialog.Description>
+              asChild 옵션으로 링크, 아이콘 버튼 등 임의의 요소를 트리거로 사용할 수 있습니다.
+            </Dialog.Description>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close asChild>
+              <Button>닫기</Button>
+            </Dialog.Close>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+
+function ControlledDemo() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="flex items-center gap-3">
+      <Button size="sm" onClick={() => setOpen(true)}>외부 버튼으로 열기</Button>
+      <span className="text-xs text-gray-500">open: {String(open)}</span>
+      <Dialog.Root open={open} onOpenChange={setOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content size="sm">
+            <Dialog.Header>
+              <Dialog.Title>Controlled Dialog</Dialog.Title>
+              <Dialog.Close />
+            </Dialog.Header>
+            <Dialog.Body>
+              <Dialog.Description>부모 상태로 open을 제어합니다.</Dialog.Description>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Button onClick={() => setOpen(false)}>닫기</Button>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
+  );
+}
+
+function DarkDemo() {
+  return (
+    <div
+      style={{
+        background: "#111827",
+        borderRadius: "0.5rem",
+        padding: "1.5rem",
+      }}
+    >
+      <Dialog.Root theme="dark">
+        <Dialog.Trigger>
+          <button
+            style={{
+              padding: "0.5rem 1rem",
+              borderRadius: "0.375rem",
+              background: "#3b82f6",
+              color: "white",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+            }}
+          >
+            다크 테마 열기
+          </button>
+        </Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content size="md">
+            <Dialog.Header>
+              <Dialog.Title>다크 테마</Dialog.Title>
+              <Dialog.Close />
+            </Dialog.Header>
+            <Dialog.Body>
+              <Dialog.Description>
+                theme="dark" prop으로 어두운 배경과 밝은 텍스트 조합을 사용합니다.
+              </Dialog.Description>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Dialog.Close asChild>
+                <button
+                  style={{
+                    padding: "0.5rem 1rem",
+                    borderRadius: "0.375rem",
+                    background: "#374151",
+                    color: "#f3f4f6",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: "0.875rem",
+                  }}
+                >
+                  닫기
+                </button>
+              </Dialog.Close>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
+  );
+}
+
+const ROOT_PROPS: Array<[string, string, string, string]> = [
+  ["open", "boolean", "-", "Controlled open 상태"],
+  ["defaultOpen", "boolean", "false", "Uncontrolled 초기 open"],
+  ["onOpenChange", "(o: boolean) => void", "-", "open 변경 콜백"],
+  ["variant", "'default' | 'alert'", "'default'", "alert는 role=alertdialog"],
+  ["closeOnEscape", "boolean", "true", "Escape 키로 닫기"],
+  ["closeOnOverlayClick", "boolean", "true", "오버레이 클릭으로 닫기"],
+  ["theme", "'light' | 'dark'", "'light'", "테마"],
+];
+
+const CONTENT_PROPS: Array<[string, string, string, string]> = [
+  ["size", "'sm' | 'md' | 'lg' | 'xl' | 'full'", "'md'", "패널 너비"],
+  ["initialFocus", "RefObject<HTMLElement>", "-", "열릴 때 포커스할 요소"],
+  ["returnFocus", "boolean", "true", "닫힐 때 Trigger로 포커스 복귀"],
+  ["onOpenAutoFocus", "(e: Event) => void", "-", "자동 포커스 전 호출"],
+  ["onCloseAutoFocus", "(e: Event) => void", "-", "닫힘 포커스 복귀 전"],
+  ["onEscapeKeyDown", "(e: KeyboardEvent) => void", "-", "Escape 전 호출"],
+  ["onPointerDownOutside", "(e: PointerEvent) => void", "-", "외부 클릭 전 호출"],
+];
+
+const TRIGGER_PROPS: Array<[string, string, string, string]> = [
+  ["asChild", "boolean", "false", "자식 요소에 props 주입 (cloneElement)"],
+];
+
+const CLOSE_PROPS: Array<[string, string, string, string]> = [
+  ["asChild", "boolean", "false", "자식 요소에 onClick 주입"],
+];
+
+function PropsTable({ rows }: { rows: Array<[string, string, string, string]> }) {
+  return (
+    <table className="w-full text-left text-sm border border-gray-200 rounded-lg overflow-hidden">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Prop</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Type</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Default</th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(([prop, type, def, desc]) => (
+          <tr key={prop} className="border-t border-gray-100">
+            <td className="px-4 py-2 font-mono text-xs">{prop}</td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">{type}</td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">{def}</td>
+            <td className="px-4 py-2 text-gray-700">{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+const USAGE_CODE = `import { Dialog, Button } from "plastic";
+
+export function Example() {
+  return (
+    <Dialog.Root>
+      <Dialog.Trigger>
+        <Button>열기</Button>
+      </Dialog.Trigger>
+      <Dialog.Portal>
+        <Dialog.Overlay />
+        <Dialog.Content size="md">
+          <Dialog.Header>
+            <Dialog.Title>제목</Dialog.Title>
+            <Dialog.Close />
+          </Dialog.Header>
+          <Dialog.Body>
+            <Dialog.Description>본문 설명</Dialog.Description>
+          </Dialog.Body>
+          <Dialog.Footer>
+            <Dialog.Close asChild>
+              <Button variant="ghost">취소</Button>
+            </Dialog.Close>
+            <Dialog.Close asChild>
+              <Button>확인</Button>
+            </Dialog.Close>
+          </Dialog.Footer>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}
+`;
+
+function PlaygroundDemo() {
+  const [size, setSize] = useState<DialogSize>("md");
+  const [theme, setTheme] = useState<DialogTheme>("light");
+  const [closeOnEscape, setCloseOnEscape] = useState(true);
+  const [closeOnOverlayClick, setCloseOnOverlayClick] = useState(true);
+  const [variant, setVariant] = useState<"default" | "alert">("default");
+
+  return (
+    <div className="p-6 bg-white rounded-lg border border-gray-200">
+      <div className="flex flex-wrap gap-4 mb-4 text-sm">
+        <label>
+          size&nbsp;
+          <select
+            value={size}
+            onChange={(e) => setSize(e.target.value as DialogSize)}
+            className="border rounded px-2 py-1"
+          >
+            {(["sm", "md", "lg", "xl", "full"] as const).map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          theme&nbsp;
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as DialogTheme)}
+            className="border rounded px-2 py-1"
+          >
+            <option value="light">light</option>
+            <option value="dark">dark</option>
+          </select>
+        </label>
+        <label>
+          variant&nbsp;
+          <select
+            value={variant}
+            onChange={(e) => setVariant(e.target.value as "default" | "alert")}
+            className="border rounded px-2 py-1"
+          >
+            <option value="default">default</option>
+            <option value="alert">alert</option>
+          </select>
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={closeOnEscape}
+            onChange={(e) => setCloseOnEscape(e.target.checked)}
+          />
+          &nbsp;closeOnEscape
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={closeOnOverlayClick}
+            onChange={(e) => setCloseOnOverlayClick(e.target.checked)}
+          />
+          &nbsp;closeOnOverlayClick
+        </label>
+      </div>
+      <Dialog.Root
+        variant={variant}
+        theme={theme}
+        closeOnEscape={closeOnEscape}
+        closeOnOverlayClick={closeOnOverlayClick}
+      >
+        <Dialog.Trigger>
+          <Button>Playground 열기</Button>
+        </Dialog.Trigger>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content size={size}>
+            <Dialog.Header>
+              <Dialog.Title>Playground</Dialog.Title>
+              <Dialog.Close />
+            </Dialog.Header>
+            <Dialog.Body>
+              <Dialog.Description>
+                size={size}, theme={theme}, variant={variant}
+              </Dialog.Description>
+            </Dialog.Body>
+            <Dialog.Footer>
+              <Dialog.Close asChild>
+                <Button>닫기</Button>
+              </Dialog.Close>
+            </Dialog.Footer>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+    </div>
+  );
+}
+
 export function DialogPage() {
   return (
     <div className="max-w-4xl">
@@ -379,6 +687,51 @@ export function DialogPage() {
         <Card>
           <FormDemo />
         </Card>
+      </Section>
+
+      <Section id="custom-trigger" title="Custom Trigger" desc="asChild로 링크·아이콘 등 임의 요소">
+        <Card>
+          <CustomTriggerDemo />
+        </Card>
+      </Section>
+
+      <Section id="controlled" title="Controlled" desc="open / onOpenChange로 외부 제어">
+        <Card>
+          <ControlledDemo />
+        </Card>
+      </Section>
+
+      <Section id="dark-theme" title="Dark Theme">
+        <DarkDemo />
+      </Section>
+
+      <Section id="props" title="Props">
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="text-sm font-semibold mb-2">Dialog.Root</p>
+            <PropsTable rows={ROOT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Dialog.Content</p>
+            <PropsTable rows={CONTENT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Dialog.Trigger</p>
+            <PropsTable rows={TRIGGER_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Dialog.Close</p>
+            <PropsTable rows={CLOSE_PROPS} />
+          </div>
+        </div>
+      </Section>
+
+      <Section id="usage" title="Usage">
+        <CodeView code={USAGE_CODE} language="tsx" />
+      </Section>
+
+      <Section id="playground" title="Playground">
+        <PlaygroundDemo />
       </Section>
     </div>
   );
