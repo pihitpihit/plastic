@@ -130,6 +130,153 @@ function GroupsDemo() {
   );
 }
 
+function NestedDemo() {
+  const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  const items: CommandItem[] = [
+    {
+      id: "theme",
+      label: "테마 변경",
+      description: "라이트/다크 전환",
+      onSelect: () => {},
+      children: [
+        {
+          id: "theme-light",
+          label: "라이트 모드",
+          onSelect: () => setTheme("light"),
+        },
+        {
+          id: "theme-dark",
+          label: "다크 모드",
+          onSelect: () => setTheme("dark"),
+        },
+        {
+          id: "theme-system",
+          label: "시스템 설정 따름",
+          onSelect: () => setTheme("light"),
+        },
+      ],
+    },
+    {
+      id: "language",
+      label: "언어 변경",
+      description: "UI 언어 전환",
+      onSelect: () => {},
+      children: [
+        { id: "lang-ko", label: "한국어", onSelect: () => {} },
+        { id: "lang-en", label: "English", onSelect: () => {} },
+        { id: "lang-ja", label: "日本語", onSelect: () => {} },
+      ],
+    },
+    {
+      id: "export",
+      label: "내보내기",
+      onSelect: () => {},
+      children: [
+        { id: "export-json", label: "JSON", onSelect: () => {} },
+        { id: "export-csv", label: "CSV", onSelect: () => {} },
+        { id: "export-pdf", label: "PDF", onSelect: () => {} },
+      ],
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Button onClick={() => setOpen(true)}>Nested 열기</Button>
+      <p className="text-sm text-gray-600">현재 테마: <strong>{theme}</strong></p>
+      <p className="text-xs text-gray-500">
+        Enter로 드릴다운, Backspace(빈 쿼리)로 상위로.
+      </p>
+      <CommandPalette.Root open={open} onOpenChange={setOpen} items={items}>
+        <CommandPalette.Input placeholder="명령 검색…" />
+        <CommandPalette.List>
+          {items.map((item) => (
+            <CommandPalette.Item key={item.id} item={item} />
+          ))}
+        </CommandPalette.List>
+        <CommandPalette.Empty />
+        <CommandPalette.Footer />
+      </CommandPalette.Root>
+    </div>
+  );
+}
+
+function ShortcutsDemo() {
+  const [open, setOpen] = useState(false);
+  const [lastAction, setLastAction] = useState<string>("");
+
+  const items: CommandItem[] = [
+    {
+      id: "new-file",
+      label: "새 파일",
+      shortcut: ["Mod", "N"],
+      onSelect: () => setLastAction("새 파일"),
+    },
+    {
+      id: "open-file",
+      label: "파일 열기",
+      shortcut: ["Mod", "O"],
+      onSelect: () => setLastAction("파일 열기"),
+    },
+    {
+      id: "save",
+      label: "저장",
+      shortcut: ["Mod", "S"],
+      onSelect: () => setLastAction("저장"),
+    },
+    {
+      id: "save-as",
+      label: "다른 이름으로 저장",
+      shortcut: ["Mod", "Shift", "S"],
+      onSelect: () => setLastAction("다른 이름으로 저장"),
+    },
+    {
+      id: "find",
+      label: "찾기",
+      shortcut: ["Mod", "F"],
+      onSelect: () => setLastAction("찾기"),
+    },
+    {
+      id: "replace",
+      label: "바꾸기",
+      shortcut: ["Mod", "H"],
+      onSelect: () => setLastAction("바꾸기"),
+    },
+  ];
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex items-center gap-3">
+        <Button onClick={() => setOpen(true)}>Shortcuts 열기</Button>
+        <span className="text-sm text-gray-500">
+          커스텀 trigger: Ctrl+Shift+P
+        </span>
+      </div>
+      {lastAction && (
+        <p className="text-sm text-gray-600">
+          마지막 선택: <strong>{lastAction}</strong>
+        </p>
+      )}
+      <CommandPalette.Root
+        open={open}
+        onOpenChange={setOpen}
+        shortcut={["Control", "Shift", "p"]}
+        items={items}
+      >
+        <CommandPalette.Input placeholder="명령 검색…" />
+        <CommandPalette.List>
+          {items.map((item) => (
+            <CommandPalette.Item key={item.id} item={item} />
+          ))}
+        </CommandPalette.List>
+        <CommandPalette.Empty />
+        <CommandPalette.Footer />
+      </CommandPalette.Root>
+    </div>
+  );
+}
+
 export default function CommandPalettePage() {
   return (
     <div className="p-8 max-w-3xl">
@@ -156,6 +303,26 @@ export default function CommandPalettePage() {
       >
         <Card>
           <GroupsDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="nested"
+        title="Nested"
+        desc="children 아이템 drill-down → Backspace로 상위"
+      >
+        <Card>
+          <NestedDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="shortcuts"
+        title="Shortcuts"
+        desc="각 아이템에 단축키 표시 + 커스텀 전역 shortcut (Ctrl+Shift+P)"
+      >
+        <Card>
+          <ShortcutsDemo />
         </Card>
       </Section>
     </div>
