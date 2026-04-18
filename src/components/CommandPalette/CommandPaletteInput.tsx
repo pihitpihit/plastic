@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, type KeyboardEvent, useRef } from "react";
 import { chipBg, chipText, dividerColor, iconColor, inputText } from "./colors";
 import type { CommandPaletteInputProps } from "./CommandPalette.types";
 import { useCommandPalette } from "./CommandPaletteRoot";
@@ -53,6 +53,56 @@ export function CommandPaletteInput({
     minWidth: 0,
   };
 
+  const isComposingRef = useRef(false);
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (isComposingRef.current || e.nativeEvent.isComposing) return;
+
+    switch (e.key) {
+      case "ArrowDown": {
+        e.preventDefault();
+        const total = ctx.results.length;
+        if (total === 0) return;
+        const next = ctx.activeIndex < 0 ? 0 : (ctx.activeIndex + 1) % total;
+        ctx.setActiveIndex(next);
+        break;
+      }
+      case "ArrowUp": {
+        e.preventDefault();
+        const total = ctx.results.length;
+        if (total === 0) return;
+        const next =
+          ctx.activeIndex < 0
+            ? total - 1
+            : (ctx.activeIndex - 1 + total) % total;
+        ctx.setActiveIndex(next);
+        break;
+      }
+      case "Enter": {
+        e.preventDefault();
+        const idx = ctx.activeIndex;
+        if (idx < 0 || idx >= ctx.results.length) return;
+        const selected = ctx.results[idx]!;
+        ctx.selectItem(selected);
+        break;
+      }
+      case "Escape": {
+        e.preventDefault();
+        ctx.setOpen(false);
+        break;
+      }
+      case "Backspace": {
+        if (ctx.query === "" && ctx.breadcrumbs.length > 0) {
+          e.preventDefault();
+          ctx.popBreadcrumb();
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
   const chipStyle: CSSProperties = {
     fontSize: 12,
     padding: "2px 6px",
@@ -87,6 +137,13 @@ export function CommandPaletteInput({
         }
         value={ctx.query}
         onChange={(e) => ctx.setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onCompositionStart={() => {
+          isComposingRef.current = true;
+        }}
+        onCompositionEnd={() => {
+          isComposingRef.current = false;
+        }}
         placeholder={placeholder}
         style={inputStyle}
         {...rest}
