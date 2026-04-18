@@ -1,6 +1,17 @@
 import { useState } from "react";
-import { Button, CommandPalette } from "plastic";
+import { Button, CommandPalette, useCommandPalette } from "plastic";
 import type { CommandItem } from "plastic";
+
+function ResultItems() {
+  const ctx = useCommandPalette();
+  return (
+    <>
+      {ctx.results.map((item) => (
+        <CommandPalette.Item key={item.id} item={item} />
+      ))}
+    </>
+  );
+}
 
 function Section({
   id,
@@ -277,6 +288,95 @@ function ShortcutsDemo() {
   );
 }
 
+function AsyncDemo() {
+  const [open, setOpen] = useState(false);
+  const [lastAction, setLastAction] = useState<string>("");
+
+  const handleSearch = async (query: string): Promise<CommandItem[]> => {
+    await new Promise((r) => setTimeout(r, 900));
+    if (query.trim() === "") return [];
+    const seeds = [
+      "Get started",
+      "User settings",
+      "Billing history",
+      "Invite teammates",
+      "API keys",
+      "Webhooks",
+      "Audit log",
+      "Delete workspace",
+    ];
+    return seeds
+      .filter((s) => s.toLowerCase().includes(query.toLowerCase()))
+      .map((s, i) => ({
+        id: `result-${i}`,
+        label: s,
+        description: `원격 결과: "${query}"`,
+        onSelect: () => setLastAction(s),
+      }));
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Button onClick={() => setOpen(true)}>Async 열기</Button>
+      <p className="text-xs text-gray-500">
+        입력 후 900ms 뒤에 모의 원격 검색 결과가 도착합니다.
+      </p>
+      {lastAction && (
+        <p className="text-sm text-gray-600">
+          마지막 선택: <strong>{lastAction}</strong>
+        </p>
+      )}
+      <CommandPalette.Root
+        open={open}
+        onOpenChange={setOpen}
+        onSearch={handleSearch}
+      >
+        <CommandPalette.Input placeholder="원격 검색…" />
+        <CommandPalette.Loading />
+        <CommandPalette.List>
+          <ResultItems />
+        </CommandPalette.List>
+        <CommandPalette.Empty />
+        <CommandPalette.Footer />
+      </CommandPalette.Root>
+    </div>
+  );
+}
+
+function EmptyLoadingDemo() {
+  const [open, setOpen] = useState(false);
+
+  const handleSearch = async (q: string): Promise<CommandItem[]> => {
+    await new Promise((r) => setTimeout(r, 1200));
+    if (q.trim() === "") return [];
+    return [];
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Button onClick={() => setOpen(true)}>커스텀 Empty/Loading 열기</Button>
+      <p className="text-xs text-gray-500">
+        항상 빈 결과 + 1200ms 지연 — 커스텀 메시지를 확인해보세요.
+      </p>
+      <CommandPalette.Root
+        open={open}
+        onOpenChange={setOpen}
+        onSearch={handleSearch}
+      >
+        <CommandPalette.Input placeholder="검색…" />
+        <CommandPalette.Loading>원격에서 불러오는 중…</CommandPalette.Loading>
+        <CommandPalette.List>
+          <ResultItems />
+        </CommandPalette.List>
+        <CommandPalette.Empty>
+          일치하는 결과가 없습니다. 다른 키워드를 시도해보세요.
+        </CommandPalette.Empty>
+        <CommandPalette.Footer />
+      </CommandPalette.Root>
+    </div>
+  );
+}
+
 export default function CommandPalettePage() {
   return (
     <div className="p-8 max-w-3xl">
@@ -323,6 +423,26 @@ export default function CommandPalettePage() {
       >
         <Card>
           <ShortcutsDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="async"
+        title="Async"
+        desc="onSearch로 900ms 지연 시뮬레이션 + Loading"
+      >
+        <Card>
+          <AsyncDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="empty-loading"
+        title="Empty / Loading"
+        desc="커스텀 메시지 children 슬롯"
+      >
+        <Card>
+          <EmptyLoadingDemo />
         </Card>
       </Section>
     </div>
