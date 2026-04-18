@@ -426,6 +426,244 @@ function DarkThemeDemo({
   );
 }
 
+// ── Props 테이블 ────────────────────────────────────────────────────────
+function PropsTable({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: [string, string, string, string][];
+}) {
+  return (
+    <div className="mb-4">
+      <p className="text-xs font-medium text-gray-500 mb-2">{title}</p>
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-50 border-b border-gray-200">
+            <tr>
+              {["Prop", "Type", "Default", "Description"].map((h) => (
+                <th
+                  key={h}
+                  className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {rows.map(([prop, type, def, desc]) => (
+              <tr key={prop}>
+                <td className="px-4 py-2.5 font-mono text-xs text-blue-700">
+                  {prop}
+                </td>
+                <td className="px-4 py-2.5 font-mono text-xs text-gray-500">
+                  {type}
+                </td>
+                <td className="px-4 py-2.5 font-mono text-xs text-gray-400">
+                  {def}
+                </td>
+                <td className="px-4 py-2.5 text-gray-600">{desc}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+const PROPS_PROVIDER: [string, string, string, string][] = [
+  ["position", "ToastPosition", '"bottom-right"', "토스트 고정 위치 (6종)"],
+  ["stackOrder", '"newest-first" | "oldest-first"', '"newest-first"', "스택 정렬"],
+  ["maxToasts", "number", "5", "동시 표시 최대 개수"],
+  ["defaultDuration", "number", "5000", "기본 자동 dismiss 시간 (ms)"],
+  ["pauseOnHover", "boolean", "true", "hover 시 타이머 일시정지"],
+  ["swipeDismissible", "boolean", "true", "스와이프 dismiss 허용"],
+  ["swipeThreshold", "number", "100", "스와이프 임계치 (px)"],
+  ["swipeDirection", '"horizontal" | "vertical"', '"horizontal"', "스와이프 축"],
+  ["theme", '"light" | "dark"', '"light"', "색상 테마"],
+  ["label", "string", '"Notifications"', "portal aria-label"],
+  ["onDismiss", "(id: string) => void", "—", "수동/스와이프 dismiss 콜백"],
+  ["onAutoClose", "(id: string) => void", "—", "duration 만료 자동 dismiss 콜백"],
+];
+
+const PROPS_USE_TOAST: [string, string, string, string][] = [
+  ["show", "(options: ShowToastOptions) => string", "—", "토스트 추가, id 반환"],
+  ["dismiss", "(id: string) => void", "—", "특정 토스트 dismiss"],
+  ["dismissAll", "() => void", "—", "모든 토스트 dismiss"],
+  ["promise", "(p, options) => Promise<T>", "—", "loading → success/error 자동 전환"],
+  ["toasts", "readonly ToastData[]", "[]", "현재 활성 토스트 목록 (read-only)"],
+];
+
+const PROPS_SHOW: [string, string, string, string][] = [
+  ["title", "string", "—", "타이틀 (필수)"],
+  ["description", "string", "—", "부가 설명"],
+  ["variant", "ToastVariant", '"default"', "5종: default/success/error/warning/info"],
+  ["duration", "number", "5000", "ms 또는 Infinity (영구)"],
+  ["action", "ToastAction", "—", "액션 버튼 (label + onClick + variant)"],
+  ["render", "({ dismiss }) => ReactNode", "—", "커스텀 렌더 함수"],
+  ["pauseOnHover", "boolean", "inherit", "개별 오버라이드"],
+  ["swipeDismissible", "boolean", "inherit", "개별 오버라이드"],
+  ["ariaLive", '"polite" | "assertive"', "auto", "스크린리더 안내 긴급도"],
+];
+
+const PROPS_ROOT: [string, string, string, string][] = [
+  ["variant", "ToastVariant", '"default"', "색상/아이콘/aria-live 변경"],
+  ["children", "ReactNode", "—", "Icon/Content/Action/Close/Progress 조합"],
+  ["pauseOnHover", "boolean", "inherit", "개별 토스트 오버라이드"],
+  ["swipeDismissible", "boolean", "inherit", "개별 토스트 오버라이드"],
+];
+
+const PROPS_ICON: [string, string, string, string][] = [
+  ["children", "ReactNode", "default SVG", "커스텀 아이콘 (variant별 기본 아이콘 대체)"],
+];
+
+const PROPS_CONTENT: [string, string, string, string][] = [
+  ["title", "string", "—", "타이틀"],
+  ["description", "string", "—", "부가 설명"],
+  ["children", "ReactNode", "—", "완전 커스텀 content slot"],
+];
+
+const PROPS_ACTION: [string, string, string, string][] = [
+  ["label", "string", "—", "버튼 텍스트 (필수)"],
+  ["onClick", "() => void", "—", "클릭 핸들러 (필수)"],
+  ["variant", '"default" | "primary"', '"default"', "버튼 스타일"],
+];
+
+const PROPS_CLOSE: [string, string, string, string][] = [
+  ["children", "ReactNode", "default X SVG", "커스텀 닫기 아이콘"],
+];
+
+const PROPS_PROGRESS: [string, string, string, string][] = [
+  ["variant", "ToastVariant", "inherit", "프로그레스 바 색상 오버라이드"],
+];
+
+// ── Playground ──────────────────────────────────────────────────────────
+function Playground() {
+  const toast = useToast();
+  const [pgVariant, setPgVariant] = useState<ToastVariant>("default");
+  const [pgDuration, setPgDuration] = useState(5000);
+  const [pgTitle, setPgTitle] = useState("플레이그라운드 알림");
+  const [pgDesc, setPgDesc] = useState("모든 prop을 실시간으로 조정하세요.");
+  const [pgAction, setPgAction] = useState(false);
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500">variant</span>
+          <select
+            value={pgVariant}
+            onChange={(e) => setPgVariant(e.target.value as ToastVariant)}
+            className="px-2 py-1 border border-gray-300 rounded"
+          >
+            {(["default", "success", "error", "warning", "info"] as const).map(
+              (v) => (
+                <option key={v} value={v}>
+                  {v}
+                </option>
+              ),
+            )}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500">
+            duration ({pgDuration === Infinity ? "Infinity" : `${pgDuration}ms`})
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={10000}
+            step={500}
+            value={pgDuration === Infinity ? 10500 : pgDuration}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              setPgDuration(v >= 10500 ? Infinity : v);
+            }}
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500">title</span>
+          <input
+            type="text"
+            value={pgTitle}
+            onChange={(e) => setPgTitle(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-gray-500">description</span>
+          <input
+            type="text"
+            value={pgDesc}
+            onChange={(e) => setPgDesc(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={pgAction}
+            onChange={(e) => setPgAction(e.target.checked)}
+          />
+          <span>Action 버튼 포함</span>
+        </label>
+      </div>
+      <DemoButton
+        onClick={() =>
+          toast.show({
+            variant: pgVariant,
+            title: pgTitle,
+            description: pgDesc,
+            duration: pgDuration,
+            action: pgAction
+              ? {
+                  label: "Undo",
+                  variant: "primary",
+                  onClick: () =>
+                    toast.show({ variant: "info", title: "되돌림" }),
+                }
+              : undefined,
+          })
+        }
+      >
+        토스트 표시
+      </DemoButton>
+    </div>
+  );
+}
+
+const USAGE_CODE = `import { ToastProvider, useToast } from "plastic";
+
+function App() {
+  return (
+    <ToastProvider position="bottom-right" maxToasts={5}>
+      <MyPage />
+    </ToastProvider>
+  );
+}
+
+function MyPage() {
+  const toast = useToast();
+  return (
+    <button onClick={() => toast.show({
+      variant: "success",
+      title: "저장 완료",
+      description: "변경사항이 저장되었습니다.",
+      action: { label: "Undo", onClick: () => undo() },
+    })}>
+      저장
+    </button>
+  );
+}
+
+// Promise 추적
+toast.promise(saveData(), {
+  loading: { title: "저장 중..." },
+  success: { title: "완료" },
+  error: (err) => ({ title: "실패", description: String(err) }),
+});`;
+
 // ── Page (ToastProvider wrap) ────────────────────────────────────────────
 function ToastPageInner({
   position,
@@ -520,6 +758,30 @@ function ToastPageInner({
         desc="Provider theme='dark' 토글. 토스트 배경/테두리/텍스트가 전역적으로 변경."
       >
         <DarkThemeDemo theme={theme} setTheme={setTheme} />
+      </Section>
+
+      <Section id="props" title="Props">
+        <PropsTable title="ToastProvider" rows={PROPS_PROVIDER} />
+        <PropsTable title="useToast() 반환" rows={PROPS_USE_TOAST} />
+        <PropsTable title="toast.show() options" rows={PROPS_SHOW} />
+        <PropsTable title="Toast.Root" rows={PROPS_ROOT} />
+        <PropsTable title="Toast.Icon" rows={PROPS_ICON} />
+        <PropsTable title="Toast.Content" rows={PROPS_CONTENT} />
+        <PropsTable title="Toast.Action" rows={PROPS_ACTION} />
+        <PropsTable title="Toast.Close" rows={PROPS_CLOSE} />
+        <PropsTable title="Toast.Progress" rows={PROPS_PROGRESS} />
+      </Section>
+
+      <Section id="usage" title="Usage" desc="기본 사용 패턴 + promise 추적">
+        <CodeView code={USAGE_CODE} language="typescript" />
+      </Section>
+
+      <Section
+        id="playground"
+        title="Playground"
+        desc="variant, duration, title, description, action 인터랙티브 조정"
+      >
+        <Playground />
       </Section>
     </div>
   );
