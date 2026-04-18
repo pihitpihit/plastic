@@ -5,8 +5,9 @@ import { CodeViewPage } from "./pages/CodeViewPage";
 import { ActionablePage } from "./pages/ActionablePage";
 import { PathInputPage } from "./pages/PathInputPage";
 import { ToastPage } from "./pages/ToastPage";
+import { DialogPage } from "./pages/DialogPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog";
 
 interface SubItem { label: string; id: string }
 
@@ -71,6 +72,21 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Stacking", id: "stacking" },
     { label: "Promise", id: "promise" },
     { label: "Persistent", id: "persistent" },
+    { label: "Dark Theme", id: "dark-theme" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Sizes", id: "sizes" },
+    { label: "Alert Dialog", id: "alert-dialog" },
+    { label: "Confirmation", id: "confirmation" },
+    { label: "Scrollable", id: "scrollable" },
+    { label: "Nested", id: "nested" },
+    { label: "Form", id: "form" },
+    { label: "Custom Trigger", id: "custom-trigger" },
+    { label: "Controlled", id: "controlled" },
     { label: "Dark Theme", id: "dark-theme" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
@@ -305,6 +321,7 @@ export function App() {
         {current === "actionable" && <ActionablePage />}
         {current === "pathinput" && <PathInputPage />}
         {current === "toast" && <ToastPage />}
+        {current === "dialog" && <DialogPage />}
       </main>
     </div>
   );
