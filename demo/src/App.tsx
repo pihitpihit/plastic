@@ -8,8 +8,9 @@ import { ToastPage } from "./pages/ToastPage";
 import { DialogPage } from "./pages/DialogPage";
 import { TooltipPopoverPage } from "./pages/TooltipPopoverPage";
 import DataTablePage from "./pages/DataTablePage";
+import { StepperPage } from "./pages/StepperPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper";
 
 interface SubItem { label: string; id: string }
 
@@ -105,6 +106,20 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Pinning", id: "pinning" },
     { label: "Virtual Scroll", id: "virtual" },
     { label: "Custom Cell", id: "custom-cell" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "stepper", label: "Stepper", description: "단계별 Wizard", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Vertical", id: "vertical" },
+    { label: "Non-linear", id: "non-linear" },
+    { label: "Validation", id: "validation" },
+    { label: "Variants", id: "variants" },
+    { label: "Error State", id: "error-state" },
+    { label: "Custom Icons", id: "custom-icons" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Dark Theme", id: "dark-theme" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
@@ -356,6 +371,7 @@ export function App() {
         {current === "dialog" && <DialogPage />}
         {current === "tooltip" && <TooltipPopoverPage />}
         {current === "datatable" && <DataTablePage />}
+        {current === "stepper" && <StepperPage />}
       </main>
     </div>
   );
