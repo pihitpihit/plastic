@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, PointerEvent as ReactPointerEvent } from "react";
 import { useDataTableContext } from "./DataTableContext";
 import type { ColumnDef, HeaderContext, SortDirection } from "./DataTable.types";
 
@@ -68,6 +68,77 @@ export function DataTableHeader({
   const getSortDir = (key: string): SortDirection | undefined => {
     const item = ctx.sortState.find((s) => s.key === key);
     return item?.direction;
+  };
+
+  const getColumnWidth = (col: ColumnDef<unknown>): number => {
+    const ctxWidth = ctx.columnWidths[col.key];
+    if (typeof ctxWidth === "number") return ctxWidth;
+    if (typeof col.width === "number") return col.width;
+    return 150;
+  };
+
+  const leftOffsets = new Map<string, number>();
+  let leftAcc = 0;
+  if (selectionEnabled) leftAcc += 40;
+  if (ctx.expandable) leftAcc += 36;
+  for (const col of ctx.visibleColumns) {
+    if (col.pinned === "left") {
+      leftOffsets.set(col.key, leftAcc);
+      leftAcc += getColumnWidth(col);
+    }
+  }
+
+  const rightOffsets = new Map<string, number>();
+  let rightAcc = 0;
+  for (let i = ctx.visibleColumns.length - 1; i >= 0; i--) {
+    const col = ctx.visibleColumns[i];
+    if (col && col.pinned === "right") {
+      rightOffsets.set(col.key, rightAcc);
+      rightAcc += getColumnWidth(col);
+    }
+  }
+
+  const lastLeftPinnedKey = [...ctx.visibleColumns]
+    .filter((c) => c.pinned === "left")
+    .pop()?.key;
+  const firstRightPinnedKey = ctx.visibleColumns.find(
+    (c) => c.pinned === "right",
+  )?.key;
+
+  const pinnedStyle = (col: ColumnDef<unknown>): CSSProperties => {
+    if (col.pinned === "left") {
+      return {
+        position: "sticky",
+        left: `${leftOffsets.get(col.key) ?? 0}px`,
+        zIndex: 2,
+        background: bg,
+        boxShadow:
+          col.key === lastLeftPinnedKey
+            ? theme === "dark"
+              ? "4px 0 6px -2px rgba(0,0,0,0.4)"
+              : "4px 0 6px -2px rgba(0,0,0,0.08)"
+            : undefined,
+      };
+    }
+    if (col.pinned === "right") {
+      return {
+        position: "sticky",
+        right: `${rightOffsets.get(col.key) ?? 0}px`,
+        zIndex: 2,
+        background: bg,
+        boxShadow:
+          col.key === firstRightPinnedKey
+            ? theme === "dark"
+              ? "-4px 0 6px -2px rgba(0,0,0,0.4)"
+              : "-4px 0 6px -2px rgba(0,0,0,0.08)"
+            : undefined,
+      };
+    }
+    return {};
+  };
+
+  const handleResizeStart = (key: string, e: ReactPointerEvent) => {
+    ctx.onColumnResizeStart(key, e);
   };
 
   const renderHeaderContent = (col: ColumnDef<unknown>) => {
@@ -151,6 +222,8 @@ export function DataTableHeader({
         {ctx.visibleColumns.map((col) => {
           const sortDir = getSortDir(col.key);
           const isSortable = col.sortable === true;
+          const isResizable = col.resizable === true;
+          const isResizing = ctx.resizingKey === col.key;
           return (
             <th
               key={col.key}
@@ -176,6 +249,8 @@ export function DataTableHeader({
                 cursor: isSortable ? "pointer" : "default",
                 userSelect: "none",
                 whiteSpace: "nowrap",
+                position: col.pinned ? "sticky" : "relative",
+                ...pinnedStyle(col),
               }}
             >
               <span
@@ -194,6 +269,35 @@ export function DataTableHeader({
                   />
                 )}
               </span>
+              {isResizable && (
+                <div
+                  role="separator"
+                  aria-orientation="vertical"
+                  aria-label={`Resize ${col.key}`}
+                  onPointerDown={(e) => handleResizeStart(col.key, e)}
+                  onClick={(e) => e.stopPropagation()}
+                  style={{
+                    position: "absolute",
+                    top: 0,
+                    right: 0,
+                    width: "4px",
+                    height: "100%",
+                    cursor: "col-resize",
+                    background: isResizing ? iconActive : "transparent",
+                    transition: "background-color 0.12s ease",
+                    touchAction: "none",
+                    userSelect: "none",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isResizing)
+                      (e.currentTarget as HTMLDivElement).style.background = iconActive;
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isResizing)
+                      (e.currentTarget as HTMLDivElement).style.background = "transparent";
+                  }}
+                />
+              )}
             </th>
           );
         })}

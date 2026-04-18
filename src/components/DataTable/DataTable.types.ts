@@ -1,4 +1,9 @@
-import type { HTMLAttributes, ReactNode, MouseEvent } from "react";
+import type {
+  HTMLAttributes,
+  ReactNode,
+  MouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from "react";
 
 export type DataTableTheme = "light" | "dark";
 export type SortDirection = "asc" | "desc";
@@ -165,6 +170,8 @@ export interface DataTableContextValue<T = unknown> {
 
   columnWidths: Record<string, number>;
   onColumnResize: (key: string, width: number) => void;
+  onColumnResizeStart: (key: string, e: ReactPointerEvent) => void;
+  resizingKey: string | null;
 
   virtualScroll: boolean;
   rowHeight: number;
