@@ -679,7 +679,6 @@ export function HexView(props: HexViewProps) {
           background: palette.headerBg,
           borderBottom: `1px solid ${palette.border}`,
           color: palette.offsetFg,
-          fontSize: "0.85em",
           userSelect: "none",
           whiteSpace: "nowrap",
         }}
