@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { RefObject, UIEvent } from "react";
 
 export interface UseHexVirtualListOptions {
@@ -6,6 +12,11 @@ export interface UseHexVirtualListOptions {
   itemHeight: number;
   overscan?: number;
   threshold?: number;
+  /**
+   * 초기 렌더 때 실제 뷰포트 높이를 아직 측정하지 못한 상태에서 사용할
+   * 추정값. 이 값이 있어야 첫 페인트에서 렌더되는 행 수가 유한해진다.
+   */
+  initialViewportHeight?: number;
 }
 
 export interface UseHexVirtualListReturn {
@@ -32,16 +43,18 @@ export function useHexVirtualList(
     itemHeight,
     overscan = 8,
     threshold = 512,
+    initialViewportHeight = 600,
   } = options;
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(0);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
-    setViewportHeight(el.clientHeight);
+    const h = el.clientHeight;
+    if (h > 0) setViewportHeight(h);
     if (typeof ResizeObserver === "undefined") return;
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
@@ -52,10 +65,13 @@ export function useHexVirtualList(
     return () => ro.disconnect();
   }, []);
 
-  const enabled =
-    itemCount >= threshold && itemHeight > 0 && viewportHeight > 0;
+  // viewportHeight 가 아직 측정되지 않아도 첫 렌더가 무한 행을 만들지 않도록
+  // 추정값을 섞어쓴다. 측정 후에는 실측값이 우선.
+  const effectiveHeight =
+    viewportHeight > 0 ? viewportHeight : initialViewportHeight;
+  const enabled = itemCount >= threshold && itemHeight > 0;
   const visibleCount =
-    itemHeight > 0 ? Math.ceil(viewportHeight / itemHeight) : 0;
+    itemHeight > 0 ? Math.ceil(effectiveHeight / itemHeight) : 0;
 
   const startIndex = useMemo(() => {
     if (!enabled) return 0;
