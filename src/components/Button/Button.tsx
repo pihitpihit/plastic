@@ -1,6 +1,6 @@
+import { forwardRef } from "react";
 import type { ButtonProps } from "./Button.types";
 
-// Internal style maps — not exported
 const variantStyles: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary: "bg-blue-600 text-white hover:bg-blue-700",
   secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300",
@@ -13,19 +13,23 @@ const sizeStyles: Record<NonNullable<ButtonProps["size"]>, string> = {
   lg: "px-6 py-3 text-lg",
 };
 
-export function Button({
-  variant = "primary",
-  size = "md",
-  loading = false,
-  disabled,
-  className = "",
-  children,
-  ...rest
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  {
+    variant = "primary",
+    size = "md",
+    loading = false,
+    disabled,
+    className = "",
+    children,
+    ...rest
+  },
+  ref,
+) {
   const isDisabled = disabled || loading;
 
   return (
     <button
+      ref={ref}
       {...rest}
       disabled={isDisabled}
       className={[
@@ -42,4 +46,4 @@ export function Button({
       {loading ? <span aria-hidden="true">...</span> : children}
     </button>
   );
-}
+});
