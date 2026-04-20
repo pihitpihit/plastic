@@ -6,7 +6,9 @@ export function DialogPortal({ children, container }: DialogPortalProps) {
   const ctx = useDialogContext();
 
   if (typeof document === "undefined") return null;
-  if (ctx.animationState === "closed") return null;
+
+  const shouldRender = ctx.open || ctx.animationState !== "closed";
+  if (!shouldRender) return null;
 
   const target = container ?? document.body;
   return createPortal(children, target);
