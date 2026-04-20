@@ -10,8 +10,9 @@ import { TooltipPopoverPage } from "./pages/TooltipPopoverPage";
 import DataTablePage from "./pages/DataTablePage";
 import { StepperPage } from "./pages/StepperPage";
 import CommandPalettePage from "./pages/CommandPalettePage";
+import HexViewPage from "./pages/HexViewPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview";
 
 interface SubItem { label: string; id: string }
 
@@ -133,6 +134,20 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Async", id: "async" },
     { label: "Empty / Loading", id: "empty-loading" },
     { label: "Controlled", id: "controlled" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "hexview", label: "HexView", description: "바이너리 Hex 뷰어", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Bytes per row", id: "bytes-per-row" },
+    { label: "Grouping + Endian", id: "grouping-endian" },
+    { label: "ASCII toggle", id: "ascii-toggle" },
+    { label: "Offset toggle", id: "offset-toggle" },
+    { label: "Highlight", id: "highlight" },
+    { label: "Selection", id: "selection" },
+    { label: "Virtualized", id: "virtualized" },
     { label: "Dark Theme", id: "dark" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
@@ -387,6 +402,7 @@ export function App() {
         {current === "datatable" && <DataTablePage />}
         {current === "stepper" && <StepperPage />}
         {current === "commandpalette" && <CommandPalettePage />}
+        {current === "hexview" && <HexViewPage />}
       </main>
     </div>
   );
