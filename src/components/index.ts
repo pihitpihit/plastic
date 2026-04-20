@@ -5,6 +5,7 @@ export * from "./CodeView";
 export * from "./CommandPalette";
 export * from "./DataTable";
 export * from "./Dialog";
+export * from "./HexView";
 export * from "./PathInput";
 export * from "./Popover";
 export * from "./Stepper";
