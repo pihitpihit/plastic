@@ -479,11 +479,17 @@ export function HexView(props: HexViewProps) {
   }
 
   // ── 렌더 ────────────────────────────────────────────────────────────────
-
+  //
+  // 그리드 트랙을 고정 폭으로 산정한다. 헤더와 본문은 각기 다른 grid 컨텍스트라
+  // auto 트랙을 쓰면 컨텐츠 차이(헤더의 "ASCII" vs 본문 16글자, 빈 offset span
+  // vs 오프셋 텍스트 등)로 트랙 폭이 미세하게 벌어진다. 폭을 공식으로 고정하면
+  // 어떤 행이든 동일한 컬럼 위치를 가진다.
+  const offsetColCh = offsetDigits + 1;
+  const hexColCh = bytesPerRow * 2 + (groupsPerRow - 1) * 0.5;
   const gridCols = [
-    showOffsetColumn ? `minmax(${offsetDigits + 1}ch, auto)` : null,
-    "auto",
-    showAscii ? "auto" : null,
+    showOffsetColumn ? `${offsetColCh}ch` : null,
+    `${hexColCh}ch`,
+    showAscii ? `calc(${bytesPerRow}ch + 0.75rem + 1px)` : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -684,7 +690,17 @@ export function HexView(props: HexViewProps) {
         }}
         aria-hidden="true"
       >
-        {showOffsetColumn && <span />}
+        {showOffsetColumn && (
+          <span
+            style={{
+              textAlign: "right",
+              paddingRight: "0.25rem",
+              visibility: "hidden",
+            }}
+          >
+            {formatOffset(0, offsetDigits)}
+          </span>
+        )}
         <div style={{ display: "inline-flex" }}>
           {Array.from({ length: groupsPerRow }, (_, gi) => (
             <span
