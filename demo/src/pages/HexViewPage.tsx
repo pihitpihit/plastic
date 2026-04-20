@@ -352,6 +352,7 @@ function Playground() {
   const [showOffsetColumn, setShowOffsetColumn] = useState(true);
   const [showOffsetHeader, setShowOffsetHeader] = useState(true);
   const [linkHover, setLinkHover] = useState(true);
+  const [showCopyButton, setShowCopyButton] = useState(true);
   const [theme, setTheme] = useState<HexViewTheme>("light");
   const [dataKey, setDataKey] = useState<string>("elf");
 
@@ -480,6 +481,14 @@ function Playground() {
           />
           linkHover
         </label>
+        <label className="flex items-center gap-1">
+          <input
+            type="checkbox"
+            checked={showCopyButton}
+            onChange={(e) => setShowCopyButton(e.target.checked)}
+          />
+          showCopyButton
+        </label>
       </div>
       <HexView
         data={data}
@@ -490,6 +499,7 @@ function Playground() {
         showOffsetColumn={showOffsetColumn}
         showOffsetHeader={showOffsetHeader}
         linkHover={linkHover}
+        showCopyButton={showCopyButton}
         theme={theme}
         maxHeight="500px"
       />
