@@ -206,6 +206,8 @@ const STATUS_LEGEND: Array<{ status: PipelineNodeStatus; color: string; label: s
   { status: "cancelled", color: "#f59e0b", label: "cancelled" },
 ];
 
+const LARGE = makeLarge(200);
+
 // ── 섹션 공통 ──────────────────────────────────────────────────────────────
 
 function Section({
@@ -276,6 +278,41 @@ function ControlledDemo() {
     </div>
   );
 }
+
+const THUMBNAIL_SVG =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 64">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#60a5fa"/>
+          <stop offset="1" stop-color="#a78bfa"/>
+        </linearGradient>
+      </defs>
+      <rect width="120" height="64" fill="url(#g)"/>
+      <circle cx="36" cy="32" r="14" fill="#fff" opacity="0.6"/>
+      <rect x="56" y="20" width="46" height="6" rx="3" fill="#fff" opacity="0.8"/>
+      <rect x="56" y="32" width="36" height="4" rx="2" fill="#fff" opacity="0.55"/>
+      <rect x="56" y="42" width="28" height="4" rx="2" fill="#fff" opacity="0.4"/>
+    </svg>`,
+  );
+
+const CUSTOM_NODE_DEMO: { nodes: PipelineNode[]; edges: PipelineEdge[] } = {
+  nodes: [
+    { id: "decode", label: "Decode", status: "success" },
+    {
+      id: "render-frame",
+      label: "Render Frame",
+      status: "success",
+      output: { dataUrl: THUMBNAIL_SVG },
+    },
+    { id: "encode", label: "Encode", status: "running" },
+  ],
+  edges: [
+    { from: "decode", to: "render-frame" },
+    { from: "render-frame", to: "encode" },
+  ],
+};
 
 function InspectorDemo() {
   const [pos, setPos] = useState<"right" | "bottom" | "none">("right");
@@ -469,16 +506,84 @@ export function PipelineGraphPage() {
         <InspectorDemo />
       </Section>
 
-      <Section id="custom-node" title="Custom node render" desc="renderNode 로 카드 완전 대체.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="custom-node"
+        title="Custom node render"
+        desc="기본 카드를 완전히 대체하려면 renderNode prop 을 사용하세요. undefined 를 반환하면 기본 카드로 fallback 됩니다."
+      >
+        <div style={{ height: 260 }}>
+          <PipelineGraph
+            nodes={CUSTOM_NODE_DEMO.nodes}
+            edges={CUSTOM_NODE_DEMO.edges}
+            height="100%"
+            renderNode={(n) => {
+              if (n.id !== "render-frame") return undefined;
+              const src = (n.output as { dataUrl?: string } | undefined)?.dataUrl;
+              if (!src) return undefined;
+              return (
+                <div
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    padding: 6,
+                    boxSizing: "border-box",
+                  }}
+                >
+                  <img
+                    src={src}
+                    alt={n.label}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: 4,
+                      display: "block",
+                    }}
+                  />
+                </div>
+              );
+            }}
+          />
+        </div>
       </Section>
 
-      <Section id="dark" title="Dark theme" desc="theme=dark.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="dark"
+        title="Dark theme"
+        desc="theme prop 으로 라이트/다크 전환. 캔버스·카드·엣지·인스펙터 모두 어두운 톤으로 일관됩니다."
+      >
+        <div
+          style={{
+            padding: 12,
+            background: "#0f172a",
+            borderRadius: 10,
+          }}
+        >
+          <div style={{ height: 440 }}>
+            <PipelineGraph
+              nodes={WITH_LOOP.nodes}
+              edges={WITH_LOOP.edges}
+              theme="dark"
+              defaultExpansion={["train"]}
+              height="100%"
+            />
+          </div>
+        </div>
       </Section>
 
-      <Section id="large" title="Large graph" desc="200 노드 — 팬/줌 + fit 으로 탐색.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="large"
+        title="Large graph"
+        desc="200 노드 격자 그래프. 팬·줌으로 탐색하고 우하단 ⊙ (또는 키보드 0) 로 전체 보기로 돌아옵니다."
+      >
+        <div style={{ height: 640 }}>
+          <PipelineGraph
+            nodes={LARGE.nodes}
+            edges={LARGE.edges}
+            inspector={{ position: "none" }}
+            height="100%"
+          />
+        </div>
       </Section>
 
       <Section id="props" title="Props" desc="전체 prop 레퍼런스.">
