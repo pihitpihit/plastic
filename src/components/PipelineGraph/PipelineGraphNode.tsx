@@ -1,8 +1,21 @@
-import { memo, type MouseEvent } from "react";
+import { memo, useEffect, type MouseEvent } from "react";
 
 import type { PipelineGraphTheme, PipelineNode } from "./PipelineGraph.types";
 import { formatDuration, type NormalizedNode, type VisibleNode } from "./PipelineGraph.utils";
 import { palette as themePalette, statusPalette } from "./theme";
+
+const INJECTED = new WeakSet<Document>();
+function injectOnce(doc: Document): void {
+  if (INJECTED.has(doc)) return;
+  INJECTED.add(doc);
+  const s = doc.createElement("style");
+  s.setAttribute("data-pg-style", "1");
+  s.textContent = `
+@keyframes pg-pulse { 0%,100% { opacity: .4 } 50% { opacity: 1 } }
+[data-pg-running="1"] { animation: pg-pulse 1.2s ease-in-out infinite; }
+`;
+  doc.head.appendChild(s);
+}
 
 export interface PipelineGraphNodeProps {
   node: VisibleNode;
@@ -23,6 +36,12 @@ function PipelineGraphNodeImpl(props: PipelineGraphNodeProps) {
   const { node, normalized, x, y, w, h, selected, theme, onSelect, onDoubleClick } = props;
   const p = themePalette[theme];
   const s = statusPalette[theme][normalized.status];
+  const accent = normalized.raw.accentColor ?? s.accent;
+  const isRunning = normalized.status === "running";
+
+  useEffect(() => {
+    if (typeof document !== "undefined") injectOnce(document);
+  }, []);
 
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -59,13 +78,14 @@ function PipelineGraphNodeImpl(props: PipelineGraphNodeProps) {
       }}
     >
       <div
+        data-pg-running={isRunning ? "1" : "0"}
         style={{
           position: "absolute",
           left: 0,
           top: 0,
           width: 4,
           height: "100%",
-          background: s.accent,
+          background: accent,
         }}
       />
       <header
@@ -77,7 +97,7 @@ function PipelineGraphNodeImpl(props: PipelineGraphNodeProps) {
           fontSize: 13,
         }}
       >
-        <span aria-hidden style={{ color: s.accent }}>
+        <span aria-hidden style={{ color: accent }}>
           {s.icon}
         </span>
         <span
