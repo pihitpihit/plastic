@@ -7,6 +7,7 @@ export * from "./DataTable";
 export * from "./Dialog";
 export * from "./HexView";
 export * from "./PathInput";
+export * from "./PipelineGraph";
 export * from "./Popover";
 export * from "./Stepper";
 export * from "./Toast";
