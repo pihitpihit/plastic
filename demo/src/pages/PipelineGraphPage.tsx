@@ -1,5 +1,11 @@
+import { useState } from "react";
 import { PipelineGraph } from "plastic";
-import type { PipelineEdge, PipelineNode } from "plastic";
+import type {
+  PipelineEdge,
+  PipelineGraphInspectorConfig,
+  PipelineNode,
+  PipelineNodeStatus,
+} from "plastic";
 
 // ── 샘플 데이터 ────────────────────────────────────────────────────────────
 
@@ -145,6 +151,61 @@ export function makeLarge(n: number): {
   return { nodes, edges };
 }
 
+export const INSPECTOR_DEMO: {
+  nodes: PipelineNode[];
+  edges: PipelineEdge[];
+} = {
+  nodes: [
+    {
+      id: "load",
+      label: "Load",
+      status: "success",
+      timing: { startedAt: now - 40_000, endedAt: now - 35_000 },
+      input: { path: "/data/foo.csv", format: "csv" },
+      output: { rows: 1024, cols: 8 },
+    },
+    {
+      id: "transform",
+      label: "Transform",
+      status: "success",
+      timing: { startedAt: now - 35_000, endedAt: now - 30_000 },
+      input: { rows: 1024 },
+      output: [
+        [1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9],
+      ],
+      internal: { timingBreakdown: { parse: 120, cast: 60, pack: 45 } },
+    },
+    {
+      id: "model",
+      label: "Model",
+      status: "failed",
+      timing: { startedAt: now - 30_000, endedAt: now - 29_500 },
+      input: { batch: 32 },
+      error: {
+        message: "ValueError: shape mismatch (got (32,8), expected (32,16))",
+        stack:
+          "  at Model.forward (model.py:142)\n  at train_step (train.py:88)\n  at main (run.py:21)",
+        cause: { kind: "ShapeError", expected: [32, 16], actual: [32, 8] },
+      },
+    },
+  ],
+  edges: [
+    { from: "load", to: "transform" },
+    { from: "transform", to: "model" },
+  ],
+};
+
+const STATUS_LEGEND: Array<{ status: PipelineNodeStatus; color: string; label: string }> = [
+  { status: "success", color: "#16a34a", label: "success" },
+  { status: "running", color: "#2563eb", label: "running (pulse)" },
+  { status: "pending", color: "#94a3b8", label: "pending" },
+  { status: "failed", color: "#dc2626", label: "failed" },
+  { status: "skipped", color: "#a78bfa", label: "skipped" },
+  { status: "cancelled", color: "#f59e0b", label: "cancelled" },
+];
+
 // ── 섹션 공통 ──────────────────────────────────────────────────────────────
 
 function Section({
@@ -170,6 +231,89 @@ function Section({
 }
 
 // ── 페이지 ─────────────────────────────────────────────────────────────────
+
+function ControlledDemo() {
+  const [sel, setSel] = useState<string | null>(null);
+  const ids = BASIC.nodes.map((n) => n.id);
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 10 }}>
+        {ids.map((id) => (
+          <button
+            key={id}
+            onClick={() => setSel(id)}
+            className={[
+              "px-3 py-1 text-xs rounded border transition-colors",
+              sel === id
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
+            ].join(" ")}
+            type="button"
+          >
+            {id}
+          </button>
+        ))}
+        <button
+          onClick={() => setSel(null)}
+          className="px-3 py-1 text-xs rounded border border-gray-300 bg-white text-gray-500 hover:bg-gray-50"
+          type="button"
+        >
+          clear
+        </button>
+        <span className="ml-auto text-xs text-gray-500">
+          selection: <code className="px-1 py-0.5 bg-gray-100 rounded">{sel ?? "null"}</code>
+        </span>
+      </div>
+      <div style={{ height: 380 }}>
+        <PipelineGraph
+          nodes={BASIC.nodes}
+          edges={BASIC.edges}
+          selection={sel}
+          onSelectionChange={setSel}
+          height="100%"
+        />
+      </div>
+    </div>
+  );
+}
+
+function InspectorDemo() {
+  const [pos, setPos] = useState<"right" | "bottom" | "none">("right");
+  const cfg: PipelineGraphInspectorConfig = { position: pos };
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        {(["right", "bottom", "none"] as const).map((p) => (
+          <button
+            key={p}
+            onClick={() => setPos(p)}
+            className={[
+              "px-3 py-1 text-xs rounded border transition-colors",
+              pos === p
+                ? "border-blue-500 bg-blue-50 text-blue-700"
+                : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50",
+            ].join(" ")}
+            type="button"
+          >
+            position = {p}
+          </button>
+        ))}
+      </div>
+      <div style={{ height: 440 }}>
+        <PipelineGraph
+          nodes={INSPECTOR_DEMO.nodes}
+          edges={INSPECTOR_DEMO.edges}
+          inspector={cfg}
+          defaultSelection="transform"
+          height="100%"
+        />
+      </div>
+      <p className="text-xs text-gray-400 mt-2">
+        Load / Transform 선택 시 Output 탭이 기본 노출됩니다. Model (failed) 선택 시 Error 탭이 자동 활성화됩니다.
+      </p>
+    </div>
+  );
+}
 
 export function PipelineGraphPage() {
   return (
@@ -261,20 +405,68 @@ export function PipelineGraphPage() {
         </div>
       </Section>
 
-      <Section id="fanout" title="Fan-out" desc="한 스텝이 N 개 하위 실행으로 분기.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="fanout"
+        title="Fan-out"
+        desc="한 스텝이 N 개 하위 실행으로 분기할 때 엣지 중앙에 fan-out 배지로 표현합니다."
+      >
+        <div style={{ height: 360 }}>
+          <PipelineGraph
+            nodes={WITH_FANOUT.nodes}
+            edges={WITH_FANOUT.edges}
+            height="100%"
+          />
+        </div>
       </Section>
 
-      <Section id="status" title="Status palette" desc="6 종 실행 상태와 running pulse 애니메이션.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="status"
+        title="Status palette"
+        desc="6 종 실행 상태. running 은 pulse 애니메이션으로 진행 중임을 표시합니다."
+      >
+        <div style={{ height: 260 }}>
+          <PipelineGraph
+            nodes={MIXED_STATUS.nodes}
+            edges={MIXED_STATUS.edges}
+            direction="LR"
+            height="100%"
+          />
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 12 }}>
+          {STATUS_LEGEND.map((s) => (
+            <div
+              key={s.status}
+              style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12 }}
+            >
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 2,
+                  background: s.color,
+                  display: "inline-block",
+                }}
+              />
+              <span className="text-gray-600">{s.label}</span>
+            </div>
+          ))}
+        </div>
       </Section>
 
-      <Section id="controlled" title="Controlled" desc="외부 state 로 selection 제어.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="controlled"
+        title="Controlled"
+        desc="외부 state 로 selection 을 제어합니다. 버튼으로 선택을 바꾸고 캔버스 클릭으로도 갱신됩니다."
+      >
+        <ControlledDemo />
       </Section>
 
-      <Section id="inspector" title="Inspector" desc="우측/하단/숨김 및 탭 구성.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="inspector"
+        title="Inspector"
+        desc="선택된 노드의 input / output / internal / logs / timing / error 를 탭으로 표시합니다."
+      >
+        <InspectorDemo />
       </Section>
 
       <Section id="custom-node" title="Custom node render" desc="renderNode 로 카드 완전 대체.">
