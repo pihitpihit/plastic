@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useControllable } from "../_shared/useControllable";
 
@@ -25,6 +25,10 @@ export function PipelineGraph(props: PipelineGraphProps) {
     expansion,
     defaultExpansion,
     onExpansionChange,
+    selection,
+    defaultSelection,
+    onSelectionChange,
+    onNodeDoubleClick,
   } = props;
 
   const normalized = useMemo(() => normalize(nodes, edges), [nodes, edges]);
@@ -35,6 +39,12 @@ export function PipelineGraph(props: PipelineGraphProps) {
     onExpansionChange,
   );
   const expanded = useMemo(() => new Set(expandedArr), [expandedArr]);
+
+  const [selectedId, setSelectedId] = useControllable<string | null>(
+    selection,
+    defaultSelection ?? null,
+    onSelectionChange,
+  );
 
   const layout = useGraphLayout({
     normalized,
@@ -50,12 +60,32 @@ export function PipelineGraph(props: PipelineGraphProps) {
   const p = themePalette[theme];
   const isEmpty = nodes.length === 0;
 
-  const toggleExpand = (id: string) => {
-    const next = new Set(expandedArr);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
-    setExpandedArr([...next]);
-  };
+  const toggleExpand = useCallback(
+    (id: string) => {
+      const next = new Set(expandedArr);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      setExpandedArr([...next]);
+    },
+    [expandedArr, setExpandedArr],
+  );
+
+  const handleBackgroundClick = () => setSelectedId(null);
+
+  useEffect(() => {
+    if (selectedId === null) return;
+    const shownIds = new Set(layout.positions.map((pp) => pp.id));
+    if (shownIds.has(selectedId)) return;
+    let cur = normalized.byId.get(selectedId);
+    while (cur?.parent) {
+      if (shownIds.has(cur.parent)) {
+        setSelectedId(cur.parent);
+        return;
+      }
+      cur = normalized.byId.get(cur.parent);
+    }
+    setSelectedId(null);
+  }, [selectedId, layout.positions, normalized, setSelectedId]);
 
   return (
     <div
@@ -63,6 +93,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
       role="region"
       aria-label="Pipeline graph"
       className={className}
+      onClick={handleBackgroundClick}
       style={{
         position: "relative",
         width,
@@ -125,11 +156,12 @@ export function PipelineGraph(props: PipelineGraphProps) {
                 y={pos.y}
                 w={pos.w}
                 h={pos.h}
-                selected={false}
+                selected={selectedId === pos.id}
                 expanded={expanded.has(pos.id)}
                 theme={theme}
-                onSelect={() => {}}
+                onSelect={setSelectedId}
                 onToggleExpand={toggleExpand}
+                {...(onNodeDoubleClick ? { onDoubleClick: onNodeDoubleClick } : {})}
               />
             );
           })}
