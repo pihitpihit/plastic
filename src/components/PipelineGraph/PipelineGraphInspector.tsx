@@ -15,6 +15,7 @@ import type {
   PipelineGraphInspectorConfig,
   PipelineGraphTheme,
   PipelineInspectorTab,
+  PipelineNode,
   PipelineNodeError,
   PipelineNodeLog,
   PipelineNodeTiming,
@@ -27,6 +28,11 @@ export interface PipelineGraphInspectorProps {
   config: PipelineGraphInspectorConfig;
   theme: PipelineGraphTheme;
   rootRef: React.RefObject<HTMLDivElement | null>;
+  renderInspectorValue?: (
+    node: PipelineNode,
+    tab: PipelineInspectorTab,
+    value: unknown,
+  ) => ReactNode | undefined;
 }
 
 const DIVIDER_SIZE = 6;
@@ -267,7 +273,7 @@ function renderError(
 }
 
 export function PipelineGraphInspector(props: PipelineGraphInspectorProps) {
-  const { selectedNode, config, theme, rootRef } = props;
+  const { selectedNode, config, theme, rootRef, renderInspectorValue } = props;
   const position = config.position ?? "right";
   const defaultSize = config.defaultSize ?? (position === "right" ? 380 : 280);
   const p = themePalette[theme];
@@ -360,6 +366,9 @@ export function PipelineGraphInspector(props: PipelineGraphInspectorProps) {
 
   const renderBody = (): ReactNode => {
     if (!selectedNode || !activeTab) return null;
+    const value = resolveValue(activeTab, selectedNode);
+    const custom = renderInspectorValue?.(selectedNode.raw, activeTab, value);
+    if (custom !== undefined) return custom;
     switch (activeTab) {
       case "logs":
         return renderLogs(selectedNode.raw.logs, theme);
@@ -368,7 +377,7 @@ export function PipelineGraphInspector(props: PipelineGraphInspectorProps) {
       case "error":
         return renderError(selectedNode.raw.error, theme);
       default:
-        return defaultRenderValue(resolveValue(activeTab, selectedNode), theme);
+        return defaultRenderValue(value, theme);
     }
   };
 

@@ -31,6 +31,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
     onSelectionChange,
     onNodeDoubleClick,
     inspector,
+    renderInspectorValue,
   } = props;
 
   const normalized = useMemo(() => normalize(nodes, edges), [nodes, edges]);
@@ -201,6 +202,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
         config={inspectorConfig}
         theme={theme}
         rootRef={rootRef}
+        {...(renderInspectorValue ? { renderInspectorValue } : {})}
       />
     </div>
   );
