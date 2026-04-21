@@ -99,6 +99,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
     inspector,
     renderInspectorValue,
     renderEdgeTooltip,
+    renderNode,
     viewport: viewportProp,
     defaultViewport,
     onViewportChange,
@@ -389,6 +390,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
                 onSelect={setSelectedId}
                 onToggleExpand={toggleExpand}
                 {...(onNodeDoubleClick ? { onDoubleClick: onNodeDoubleClick } : {})}
+                {...(renderNode ? { renderNode } : {})}
               />
             );
           })}

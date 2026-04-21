@@ -1,4 +1,4 @@
-import { Fragment, memo, useEffect, type MouseEvent } from "react";
+import { Fragment, memo, useEffect, type MouseEvent, type ReactNode } from "react";
 
 import type { PipelineGraphTheme, PipelineNode } from "./PipelineGraph.types";
 import { formatDuration, type NormalizedNode, type VisibleNode } from "./PipelineGraph.utils";
@@ -31,6 +31,10 @@ export interface PipelineGraphNodeProps {
   onSelect: (id: string) => void;
   onToggleExpand: (id: string) => void;
   onDoubleClick?: (node: PipelineNode) => void;
+  renderNode?: (
+    node: PipelineNode,
+    ctx: { selected: boolean; expanded: boolean },
+  ) => ReactNode | undefined;
 }
 
 interface ChildAgg {
@@ -101,6 +105,7 @@ function PipelineGraphNodeImpl(props: PipelineGraphNodeProps) {
     onSelect,
     onToggleExpand,
     onDoubleClick,
+    renderNode,
   } = props;
   const p = themePalette[theme];
   const s = statusPalette[theme][normalized.status];
@@ -224,6 +229,75 @@ function PipelineGraphNodeImpl(props: PipelineGraphNodeProps) {
       </button>
     ) : null;
 
+  const custom = renderNode?.(normalized.raw, { selected, expanded });
+
+  const defaultInner = (
+    <>
+      <div
+        data-pg-running={isRunning ? "1" : "0"}
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          width: 4,
+          height: "100%",
+          background: accent,
+        }}
+      />
+      <header
+        style={{
+          padding: "8px 10px 6px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          fontSize: 13,
+        }}
+      >
+        <span aria-hidden style={{ color: accent }}>
+          {headerIcon}
+        </span>
+        <span
+          style={{
+            flex: 1,
+            fontWeight: 500,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {normalized.label}
+          {loopLabelSuffix}
+        </span>
+        {toggleButton}
+      </header>
+      <div style={{ padding: "0 14px", fontSize: 11, color: p.mutedFg }}>
+        {kind === "group" && agg ? formatAggregate(agg) : null}
+        {kind === "loop" && loopIter > 0 ? (
+          <div
+            style={{
+              marginTop: 4,
+              height: 4,
+              background: p.border,
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                width: `${loopPct}%`,
+                height: "100%",
+                background: accent,
+              }}
+            />
+          </div>
+        ) : null}
+      </div>
+      <footer style={{ padding: "4px 14px 8px", fontSize: 10, color: p.mutedFg }}>
+        {kind === "task" ? formatDuration(normalized) : groupFooter}
+      </footer>
+    </>
+  );
+
   return (
     <Fragment>
       {stackShadows}
@@ -235,68 +309,7 @@ function PipelineGraphNodeImpl(props: PipelineGraphNodeProps) {
         onDoubleClick={handleDoubleClick}
         style={cardStyle}
       >
-        <div
-          data-pg-running={isRunning ? "1" : "0"}
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            width: 4,
-            height: "100%",
-            background: accent,
-          }}
-        />
-        <header
-          style={{
-            padding: "8px 10px 6px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            fontSize: 13,
-          }}
-        >
-          <span aria-hidden style={{ color: accent }}>
-            {headerIcon}
-          </span>
-          <span
-            style={{
-              flex: 1,
-              fontWeight: 500,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {normalized.label}
-            {loopLabelSuffix}
-          </span>
-          {toggleButton}
-        </header>
-        <div style={{ padding: "0 14px", fontSize: 11, color: p.mutedFg }}>
-          {kind === "group" && agg ? formatAggregate(agg) : null}
-          {kind === "loop" && loopIter > 0 ? (
-            <div
-              style={{
-                marginTop: 4,
-                height: 4,
-                background: p.border,
-                borderRadius: 2,
-                overflow: "hidden",
-              }}
-            >
-              <div
-                style={{
-                  width: `${loopPct}%`,
-                  height: "100%",
-                  background: accent,
-                }}
-              />
-            </div>
-          ) : null}
-        </div>
-        <footer style={{ padding: "4px 14px 8px", fontSize: 10, color: p.mutedFg }}>
-          {kind === "task" ? formatDuration(normalized) : groupFooter}
-        </footer>
+        {custom !== undefined ? custom : defaultInner}
       </div>
     </Fragment>
   );
