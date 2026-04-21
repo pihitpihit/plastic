@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useControllable } from "../_shared/useControllable";
 
@@ -6,9 +6,13 @@ import { PipelineGraphCluster } from "./PipelineGraphCluster";
 import { PipelineGraphEdge } from "./PipelineGraphEdge";
 import { PipelineGraphInspector } from "./PipelineGraphInspector";
 import { PipelineGraphNode } from "./PipelineGraphNode";
-import type { PipelineGraphProps } from "./PipelineGraph.types";
+import type {
+  PipelineGraphProps,
+  PipelineGraphViewport,
+} from "./PipelineGraph.types";
 import { normalize } from "./PipelineGraph.utils";
 import { useGraphLayout } from "./useGraphLayout";
+import { usePanZoom } from "./usePanZoom";
 import { palette as themePalette } from "./theme";
 
 export function PipelineGraph(props: PipelineGraphProps) {
@@ -32,6 +36,10 @@ export function PipelineGraph(props: PipelineGraphProps) {
     onNodeDoubleClick,
     inspector,
     renderInspectorValue,
+    viewport: viewportProp,
+    defaultViewport,
+    onViewportChange,
+    interactive = true,
   } = props;
 
   const normalized = useMemo(() => normalize(nodes, edges), [nodes, edges]);
@@ -59,6 +67,27 @@ export function PipelineGraph(props: PipelineGraphProps) {
   });
 
   const rootRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const isViewportControlled = viewportProp !== undefined;
+  const [internalViewport, setInternalViewport] = useState<PipelineGraphViewport | null>(
+    defaultViewport ?? null,
+  );
+  const viewport = isViewportControlled ? viewportProp : internalViewport;
+  const setViewport = useCallback(
+    (v: PipelineGraphViewport) => {
+      if (!isViewportControlled) setInternalViewport(v);
+      onViewportChange?.(v);
+    },
+    [isViewportControlled, onViewportChange],
+  );
+
+  usePanZoom({
+    rootRef: canvasRef,
+    viewport,
+    setViewport,
+    interactive,
+  });
 
   const p = themePalette[theme];
   const isEmpty = nodes.length === 0;
@@ -93,8 +122,17 @@ export function PipelineGraph(props: PipelineGraphProps) {
     setSelectedId(null);
   }, [selectedId, layout.positions, normalized, setSelectedId]);
 
+  const transformStyle = viewport
+    ? {
+        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        transformOrigin: "0 0" as const,
+      }
+    : {};
+
   const canvas = (
     <div
+      ref={canvasRef}
+      data-pg-root="1"
       onClick={handleCanvasClick}
       style={{
         position: "relative",
@@ -105,6 +143,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
         background: p.canvasBg,
         color: p.fg,
         boxSizing: "border-box",
+        touchAction: "none",
       }}
     >
       {isEmpty ? (
@@ -129,6 +168,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
             top: 0,
             width: layout.bounds.width,
             height: layout.bounds.height,
+            ...transformStyle,
           }}
         >
           {layout.clusterBounds.map((cb) => {
