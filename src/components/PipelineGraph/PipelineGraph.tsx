@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useControllable } from "../_shared/useControllable";
 
@@ -10,10 +17,53 @@ import type {
   PipelineGraphProps,
   PipelineGraphViewport,
 } from "./PipelineGraph.types";
-import { normalize } from "./PipelineGraph.utils";
+import { clamp, fit, normalize } from "./PipelineGraph.utils";
 import { useGraphLayout } from "./useGraphLayout";
 import { usePanZoom } from "./usePanZoom";
-import { palette as themePalette } from "./theme";
+import { palette as themePalette, Z } from "./theme";
+
+interface ZoomControlButtonProps {
+  theme: "light" | "dark";
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}
+
+function ZoomControlButton(props: ZoomControlButtonProps) {
+  const { theme, onClick, label, children } = props;
+  const p = themePalette[theme];
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      type="button"
+      data-pg-interactive="1"
+      aria-label={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        width: 28,
+        height: 28,
+        border: `1px solid ${p.inspectorBorder}`,
+        borderRadius: 6,
+        background: hover ? p.controlHoverBg : p.controlBg,
+        color: p.controlFg,
+        cursor: "pointer",
+        fontSize: 14,
+        lineHeight: 1,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function PipelineGraph(props: PipelineGraphProps) {
   const {
@@ -88,6 +138,52 @@ export function PipelineGraph(props: PipelineGraphProps) {
     setViewport,
     interactive,
   });
+
+  useLayoutEffect(() => {
+    if (viewport !== null) return;
+    if (isViewportControlled) return;
+    const el = canvasRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    if (layout.bounds.width <= 0 || layout.bounds.height <= 0) return;
+    const next = fit(
+      { width: layout.bounds.width, height: layout.bounds.height },
+      { width: rect.width, height: rect.height },
+    );
+    setViewport(next);
+  }, [viewport, isViewportControlled, layout.bounds.width, layout.bounds.height, setViewport]);
+
+  const zoomBy = useCallback(
+    (factor: number) => {
+      const el = canvasRef.current;
+      const vp = viewport;
+      if (!el || !vp) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.width / 2;
+      const cy = rect.height / 2;
+      const nextZoom = clamp(vp.zoom * factor, 0.25, 2.5);
+      if (nextZoom === vp.zoom) return;
+      const ratio = nextZoom / vp.zoom;
+      const nx = cx - (cx - vp.x) * ratio;
+      const ny = cy - (cy - vp.y) * ratio;
+      setViewport({ x: nx, y: ny, zoom: nextZoom });
+    },
+    [viewport, setViewport],
+  );
+
+  const fitNow = useCallback(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    if (layout.bounds.width <= 0 || layout.bounds.height <= 0) return;
+    setViewport(
+      fit(
+        { width: layout.bounds.width, height: layout.bounds.height },
+        { width: rect.width, height: rect.height },
+      ),
+    );
+  }, [layout.bounds.width, layout.bounds.height, setViewport]);
 
   const p = themePalette[theme];
   const isEmpty = nodes.length === 0;
@@ -215,6 +311,30 @@ export function PipelineGraph(props: PipelineGraphProps) {
           />
         </div>
       )}
+      {!isEmpty && interactive ? (
+        <div
+          data-pg-interactive="1"
+          style={{
+            position: "absolute",
+            right: 12,
+            bottom: 12,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            zIndex: Z.controls,
+          }}
+        >
+          <ZoomControlButton theme={theme} onClick={() => zoomBy(1.2)} label="Zoom in">
+            +
+          </ZoomControlButton>
+          <ZoomControlButton theme={theme} onClick={() => zoomBy(1 / 1.2)} label="Zoom out">
+            −
+          </ZoomControlButton>
+          <ZoomControlButton theme={theme} onClick={fitNow} label="Fit">
+            ⊙
+          </ZoomControlButton>
+        </div>
+      ) : null}
     </div>
   );
 
