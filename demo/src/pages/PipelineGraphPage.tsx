@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { CodeView, PipelineGraph } from "plastic";
 import type {
   PipelineEdge,
+  PipelineGraphDirection,
   PipelineGraphInspectorConfig,
+  PipelineGraphTheme,
   PipelineNode,
   PipelineNodeStatus,
 } from "plastic";
@@ -426,6 +428,228 @@ function InspectorDemo() {
   );
 }
 
+type PlaygroundPreset =
+  | "basic"
+  | "with-group"
+  | "with-loop"
+  | "with-fanout"
+  | "mixed-status"
+  | "large-50"
+  | "large-200";
+
+const PLAYGROUND_PRESETS: Record<
+  PlaygroundPreset,
+  { nodes: PipelineNode[]; edges: PipelineEdge[] }
+> = {
+  basic: BASIC,
+  "with-group": WITH_GROUP,
+  "with-loop": WITH_LOOP,
+  "with-fanout": WITH_FANOUT,
+  "mixed-status": MIXED_STATUS,
+  "large-50": makeLarge(50),
+  "large-200": LARGE,
+};
+
+function Playground() {
+  const [preset, setPreset] = useState<PlaygroundPreset>("basic");
+  const [direction, setDirection] = useState<PipelineGraphDirection>("LR");
+  const [rankSep, setRankSep] = useState<number>(96);
+  const [nodeSep, setNodeSep] = useState<number>(48);
+  const [clusterPadding, setClusterPadding] = useState<number>(24);
+  const [theme, setTheme] = useState<PipelineGraphTheme>("light");
+  const [inspectorPos, setInspectorPos] = useState<"right" | "bottom" | "none">(
+    "right",
+  );
+  const [interactive, setInteractive] = useState<boolean>(true);
+
+  const data = PLAYGROUND_PRESETS[preset];
+  const inspector = useMemo<PipelineGraphInspectorConfig>(
+    () => ({ position: inspectorPos }),
+    [inspectorPos],
+  );
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: "280px 1fr",
+        gap: 12,
+      }}
+    >
+      <aside
+        style={{
+          border: "1px solid #e5e7eb",
+          borderRadius: 8,
+          padding: 14,
+          background: "#fafafa",
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+          fontSize: 12,
+        }}
+      >
+        <Field label="Preset">
+          <select
+            value={preset}
+            onChange={(e) => setPreset(e.target.value as PlaygroundPreset)}
+            className="w-full px-2 py-1 text-xs rounded border border-gray-300 bg-white"
+          >
+            <option value="basic">basic (4)</option>
+            <option value="with-group">with-group</option>
+            <option value="with-loop">with-loop</option>
+            <option value="with-fanout">with-fanout</option>
+            <option value="mixed-status">mixed-status</option>
+            <option value="large-50">large-50</option>
+            <option value="large-200">large-200</option>
+          </select>
+        </Field>
+
+        <Field label="Direction">
+          <div style={{ display: "flex", gap: 8 }}>
+            {(["LR", "TB"] as const).map((d) => (
+              <label
+                key={d}
+                style={{ display: "flex", alignItems: "center", gap: 4 }}
+              >
+                <input
+                  type="radio"
+                  name="pg-direction"
+                  value={d}
+                  checked={direction === d}
+                  onChange={() => setDirection(d)}
+                />
+                {d}
+              </label>
+            ))}
+          </div>
+        </Field>
+
+        <Field label={`rankSep = ${rankSep}`}>
+          <input
+            type="range"
+            min={32}
+            max={160}
+            step={2}
+            value={rankSep}
+            onChange={(e) => setRankSep(Number(e.target.value))}
+            className="w-full"
+          />
+        </Field>
+
+        <Field label={`nodeSep = ${nodeSep}`}>
+          <input
+            type="range"
+            min={16}
+            max={96}
+            step={2}
+            value={nodeSep}
+            onChange={(e) => setNodeSep(Number(e.target.value))}
+            className="w-full"
+          />
+        </Field>
+
+        <Field label={`clusterPadding = ${clusterPadding}`}>
+          <input
+            type="range"
+            min={8}
+            max={48}
+            step={1}
+            value={clusterPadding}
+            onChange={(e) => setClusterPadding(Number(e.target.value))}
+            className="w-full"
+          />
+        </Field>
+
+        <Field label="Theme">
+          <div style={{ display: "flex", gap: 8 }}>
+            {(["light", "dark"] as const).map((t) => (
+              <label
+                key={t}
+                style={{ display: "flex", alignItems: "center", gap: 4 }}
+              >
+                <input
+                  type="radio"
+                  name="pg-theme"
+                  value={t}
+                  checked={theme === t}
+                  onChange={() => setTheme(t)}
+                />
+                {t}
+              </label>
+            ))}
+          </div>
+        </Field>
+
+        <Field label="Inspector position">
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {(["right", "bottom", "none"] as const).map((p) => (
+              <label
+                key={p}
+                style={{ display: "flex", alignItems: "center", gap: 4 }}
+              >
+                <input
+                  type="radio"
+                  name="pg-inspector"
+                  value={p}
+                  checked={inspectorPos === p}
+                  onChange={() => setInspectorPos(p)}
+                />
+                {p}
+              </label>
+            ))}
+          </div>
+        </Field>
+
+        <Field label="Interactive">
+          <label style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input
+              type="checkbox"
+              checked={interactive}
+              onChange={(e) => setInteractive(e.target.checked)}
+            />
+            팬/줌/선택 활성
+          </label>
+        </Field>
+
+        <p style={{ color: "#94a3b8", fontSize: 11, lineHeight: 1.4 }}>
+          preset·direction 변경 시 뷰포트는 유지됩니다. 새 레이아웃에 맞춰 보려면 우하단의{" "}
+          <code>⊙</code> 또는 키보드 <kbd>0</kbd> 으로 fit-to-content 를 실행하세요.
+        </p>
+      </aside>
+
+      <main style={{ height: "70vh" }}>
+        <PipelineGraph
+          nodes={data.nodes}
+          edges={data.edges}
+          direction={direction}
+          rankSep={rankSep}
+          nodeSep={nodeSep}
+          clusterPadding={clusterPadding}
+          theme={theme}
+          inspector={inspector}
+          interactive={interactive}
+          height="100%"
+        />
+      </main>
+    </div>
+  );
+}
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <p className="text-xs font-semibold text-gray-600 mb-1">{label}</p>
+      {children}
+    </div>
+  );
+}
+
 export function PipelineGraphPage() {
   return (
     <div>
@@ -718,8 +942,12 @@ export function PipelineGraphPage() {
         </div>
       </Section>
 
-      <Section id="playground" title="Playground" desc="실시간 prop 토글.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="playground"
+        title="Playground"
+        desc="모든 주요 옵션을 실시간 토글하며 관찰할 수 있습니다."
+      >
+        <Playground />
       </Section>
     </div>
   );
