@@ -41,6 +41,7 @@ function PipelineGraphClusterImpl(props: PipelineGraphClusterProps) {
       }}
     >
       <div
+        data-pg-interactive="1"
         style={{
           position: "absolute",
           top: 4,
@@ -58,6 +59,7 @@ function PipelineGraphClusterImpl(props: PipelineGraphClusterProps) {
       >
         <button
           type="button"
+          data-pg-interactive="1"
           onClick={handleToggle}
           aria-label="collapse"
           style={{

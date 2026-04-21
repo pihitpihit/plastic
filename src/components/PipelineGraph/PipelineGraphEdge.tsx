@@ -57,7 +57,7 @@ function PipelineGraphEdgeImpl(props: PipelineGraphEdgeProps) {
         const stroke = raw0?.color ?? p.edgeFg;
         const dash = dashFor(raw0?.variant);
         return (
-          <g key={`${e.from}->${e.to}`} style={{ pointerEvents: "stroke" }}>
+          <g key={`${e.from}->${e.to}`} data-edge="1" style={{ pointerEvents: "stroke" }}>
             <path
               d={d}
               fill="none"
