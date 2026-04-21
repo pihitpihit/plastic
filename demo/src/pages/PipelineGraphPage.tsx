@@ -185,16 +185,80 @@ export function PipelineGraphPage() {
         </div>
       </Section>
 
-      <Section id="direction" title="Direction" desc="LR / TB 레이아웃 비교.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="direction"
+        title="Direction"
+        desc="LR (기본, 좌→우) 과 TB (상→하) 레이아웃 비교."
+      >
+        <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <p className="text-xs text-gray-400 mb-1">LR</p>
+            <div style={{ height: 320 }}>
+              <PipelineGraph
+                nodes={BASIC.nodes}
+                edges={BASIC.edges}
+                direction="LR"
+                height="100%"
+              />
+            </div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <p className="text-xs text-gray-400 mb-1">TB</p>
+            <div style={{ height: 320 }}>
+              <PipelineGraph
+                nodes={BASIC.nodes}
+                edges={BASIC.edges}
+                direction="TB"
+                height="100%"
+              />
+            </div>
+          </div>
+        </div>
       </Section>
 
-      <Section id="grouping" title="Grouping" desc="group 카드를 펼쳐 내부 스텝을 관찰.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="grouping"
+        title="Grouping"
+        desc="group 카드의 ▸ 를 눌러 내부 스텝을 펼칠 수 있습니다. 펼쳐진 카드는 점선 클러스터로 감싸집니다."
+      >
+        <div style={{ height: 420 }}>
+          <PipelineGraph
+            nodes={WITH_GROUP.nodes}
+            edges={WITH_GROUP.edges}
+            defaultExpansion={["validate"]}
+            height="100%"
+          />
+        </div>
       </Section>
 
-      <Section id="loop" title="Loop" desc="3D 스택 + 진행률 바 + 펼치기.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+      <Section
+        id="loop"
+        title="Loop"
+        desc="loop 카드는 접힌 상태에서 3D 스택 그림자와 진행률 바를 보입니다. 펼치면 내부 바디가 클러스터 안에 드러납니다."
+      >
+        <div style={{ display: "flex", gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <p className="text-xs text-gray-400 mb-1">Collapsed</p>
+            <div style={{ height: 360 }}>
+              <PipelineGraph
+                nodes={WITH_LOOP.nodes}
+                edges={WITH_LOOP.edges}
+                height="100%"
+              />
+            </div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <p className="text-xs text-gray-400 mb-1">Expanded</p>
+            <div style={{ height: 360 }}>
+              <PipelineGraph
+                nodes={WITH_LOOP.nodes}
+                edges={WITH_LOOP.edges}
+                defaultExpansion={["train"]}
+                height="100%"
+              />
+            </div>
+          </div>
+        </div>
       </Section>
 
       <Section id="fanout" title="Fan-out" desc="한 스텝이 N 개 하위 실행으로 분기.">
