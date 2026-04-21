@@ -17,7 +17,7 @@ import type {
   PipelineGraphProps,
   PipelineGraphViewport,
 } from "./PipelineGraph.types";
-import { clamp, fit, normalize } from "./PipelineGraph.utils";
+import { clamp, fit, nextNodeInDirection, normalize } from "./PipelineGraph.utils";
 import { useGraphLayout } from "./useGraphLayout";
 import { usePanZoom } from "./usePanZoom";
 import { palette as themePalette, Z } from "./theme";
@@ -203,6 +203,76 @@ export function PipelineGraph(props: PipelineGraphProps) {
 
   const handleCanvasClick = () => setSelectedId(null);
 
+  const handleCanvasKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const dirKey =
+      e.key === "ArrowUp"
+        ? "up"
+        : e.key === "ArrowDown"
+          ? "down"
+          : e.key === "ArrowLeft"
+            ? "left"
+            : e.key === "ArrowRight"
+              ? "right"
+              : null;
+    if (dirKey) {
+      e.preventDefault();
+      if (layout.positions.length === 0) return;
+      let nextId: string | null;
+      const firstPos = layout.positions[0];
+      if (!selectedId) {
+        nextId = firstPos ? firstPos.id : null;
+      } else {
+        nextId = nextNodeInDirection(selectedId, layout.positions, dirKey);
+      }
+      if (nextId) setSelectedId(nextId);
+      return;
+    }
+    if (e.key === "Escape") {
+      if (selectedId !== null) {
+        e.preventDefault();
+        setSelectedId(null);
+      }
+      return;
+    }
+    if (e.key === "Enter") {
+      if (!selectedId && layout.positions.length > 0) {
+        const first = layout.positions[0];
+        if (first) {
+          e.preventDefault();
+          setSelectedId(first.id);
+        }
+      }
+      return;
+    }
+    if (e.key === " " || e.code === "Space") {
+      if (selectedId) {
+        const sel = normalized.byId.get(selectedId);
+        if (sel && (sel.kind === "group" || sel.kind === "loop")) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleExpand(selectedId);
+          return;
+        }
+      }
+      return;
+    }
+    if (e.key === "+" || e.key === "=") {
+      e.preventDefault();
+      zoomBy(1.2);
+      return;
+    }
+    if (e.key === "-" || e.key === "_") {
+      e.preventDefault();
+      zoomBy(1 / 1.2);
+      return;
+    }
+    if (e.key === "0") {
+      e.preventDefault();
+      fitNow();
+      return;
+    }
+  };
+
   useEffect(() => {
     if (selectedId === null) return;
     const shownIds = new Set(layout.positions.map((pp) => pp.id));
@@ -229,7 +299,9 @@ export function PipelineGraph(props: PipelineGraphProps) {
     <div
       ref={canvasRef}
       data-pg-root="1"
+      tabIndex={0}
       onClick={handleCanvasClick}
+      onKeyDown={handleCanvasKeyDown}
       style={{
         position: "relative",
         flex: 1,
@@ -240,6 +312,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
         color: p.fg,
         boxSizing: "border-box",
         touchAction: "none",
+        outline: "none",
       }}
     >
       {isEmpty ? (
