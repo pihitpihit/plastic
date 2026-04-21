@@ -15,9 +15,12 @@ import type {
   PipelineGraphInspectorConfig,
   PipelineGraphTheme,
   PipelineInspectorTab,
+  PipelineNodeError,
+  PipelineNodeLog,
+  PipelineNodeTiming,
 } from "./PipelineGraph.types";
-import { clamp, type NormalizedNode } from "./PipelineGraph.utils";
-import { palette as themePalette, Z } from "./theme";
+import { clamp, fmtMs, type NormalizedNode } from "./PipelineGraph.utils";
+import { palette as themePalette, statusPalette, Z } from "./theme";
 
 export interface PipelineGraphInspectorProps {
   selectedNode: NormalizedNode | null;
@@ -74,6 +77,193 @@ function defaultRenderValue(value: unknown, theme: PipelineGraphTheme): ReactNod
   }
   const json = JSON.stringify(value, null, 2);
   return <CodeView code={json} language="json" theme={theme} showLineNumbers={false} />;
+}
+
+function levelColor(level: string | undefined, theme: PipelineGraphTheme): string {
+  const p = themePalette[theme];
+  if (level === "warn") return "#f59e0b";
+  if (level === "error") return "#ef4444";
+  if (level === "debug") return p.mutedFg;
+  return p.fg;
+}
+
+function renderLogs(
+  value: unknown,
+  theme: PipelineGraphTheme,
+): ReactNode {
+  const p = themePalette[theme];
+  if (!Array.isArray(value) || value.length === 0) {
+    return <div style={{ color: p.mutedFg, fontSize: 12 }}>Nothing to show</div>;
+  }
+  return (
+    <div style={{ fontFamily: "monospace", fontSize: 11 }}>
+      {(value as Array<string | PipelineNodeLog>).map((l, i) => {
+        const s: PipelineNodeLog = typeof l === "string" ? { message: l } : l;
+        return (
+          <div
+            key={i}
+            style={{
+              display: "flex",
+              gap: 8,
+              padding: "2px 0",
+              alignItems: "flex-start",
+            }}
+          >
+            {s.t != null ? (
+              <span style={{ color: p.mutedFg, width: 96, flexShrink: 0 }}>
+                {new Date(s.t).toISOString().slice(11, 23)}
+              </span>
+            ) : null}
+            {s.level ? (
+              <span
+                style={{
+                  color: levelColor(s.level, theme),
+                  width: 48,
+                  flexShrink: 0,
+                  textTransform: "uppercase",
+                }}
+              >
+                {s.level}
+              </span>
+            ) : null}
+            <span style={{ flex: 1, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+              {s.message}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function fmtTs(ms: number | undefined): string {
+  if (ms == null) return "—";
+  const d = new Date(ms);
+  const date = d.toISOString().slice(0, 10);
+  const time = d.toISOString().slice(11, 23);
+  return `${date} ${time}`;
+}
+
+function renderTiming(node: NormalizedNode, theme: PipelineGraphTheme): ReactNode {
+  const p = themePalette[theme];
+  const t: PipelineNodeTiming | null = node.timing;
+  const rows: Array<[string, string]> = [];
+  const duration =
+    t?.durationMs ??
+    (t?.startedAt != null && t.endedAt != null ? t.endedAt - t.startedAt : null);
+
+  if (t) {
+    rows.push(["started", fmtTs(t.startedAt)]);
+    rows.push(["ended", fmtTs(t.endedAt)]);
+    if (duration != null) rows.push(["duration", fmtMs(duration)]);
+  }
+  if (node.kind === "loop") {
+    rows.push(["iterations", String(node.iterations ?? "?")]);
+    if (node.currentIteration != null) {
+      rows.push(["current", String(node.currentIteration)]);
+    }
+    if (
+      duration != null &&
+      node.iterations != null &&
+      node.iterations > 0 &&
+      node.currentIteration != null &&
+      node.currentIteration > 0
+    ) {
+      rows.push(["avg / iter", fmtMs(duration / node.currentIteration)]);
+    }
+  }
+
+  if (rows.length === 0) {
+    return <div style={{ color: p.mutedFg, fontSize: 12 }}>Nothing to show</div>;
+  }
+
+  const timelineBar =
+    node.kind === "group" && t?.startedAt != null && duration != null && duration > 0 ? (
+      <div style={{ marginTop: 12 }}>
+        <div style={{ fontSize: 11, color: p.mutedFg, marginBottom: 6 }}>children</div>
+        <div
+          style={{
+            position: "relative",
+            height: 10 * Math.max(1, node.children.length),
+            background: p.border,
+            borderRadius: 2,
+          }}
+        />
+      </div>
+    ) : null;
+
+  return (
+    <div>
+      <table
+        style={{
+          width: "100%",
+          borderCollapse: "collapse",
+          fontSize: 12,
+          fontFamily: "monospace",
+        }}
+      >
+        <tbody>
+          {rows.map(([k, v]) => (
+            <tr key={k}>
+              <td
+                style={{
+                  color: p.mutedFg,
+                  padding: "2px 8px 2px 0",
+                  width: 96,
+                  verticalAlign: "top",
+                }}
+              >
+                {k}
+              </td>
+              <td style={{ padding: "2px 0" }}>{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {timelineBar}
+    </div>
+  );
+}
+
+function renderError(
+  err: PipelineNodeError | undefined,
+  theme: PipelineGraphTheme,
+): ReactNode {
+  const p = themePalette[theme];
+  if (!err) {
+    return <div style={{ color: p.mutedFg, fontSize: 12 }}>Nothing to show</div>;
+  }
+  const accent = statusPalette[theme].failed.accent;
+  return (
+    <div>
+      <div style={{ fontWeight: 600, color: accent, marginBottom: 8, fontSize: 13 }}>
+        {err.message}
+      </div>
+      {err.stack ? (
+        <CodeView
+          code={err.stack}
+          language="markup"
+          theme={theme}
+          showLineNumbers={false}
+        />
+      ) : null}
+      {err.cause !== undefined ? (
+        <details style={{ marginTop: 12 }}>
+          <summary style={{ cursor: "pointer", fontSize: 11, color: p.mutedFg }}>
+            cause
+          </summary>
+          <div style={{ marginTop: 6 }}>
+            <CodeView
+              code={JSON.stringify(err.cause, null, 2)}
+              language="json"
+              theme={theme}
+              showLineNumbers={false}
+            />
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
 }
 
 export function PipelineGraphInspector(props: PipelineGraphInspectorProps) {
@@ -170,8 +360,16 @@ export function PipelineGraphInspector(props: PipelineGraphInspectorProps) {
 
   const renderBody = (): ReactNode => {
     if (!selectedNode || !activeTab) return null;
-    const value = resolveValue(activeTab, selectedNode);
-    return defaultRenderValue(value, theme);
+    switch (activeTab) {
+      case "logs":
+        return renderLogs(selectedNode.raw.logs, theme);
+      case "timing":
+        return renderTiming(selectedNode, theme);
+      case "error":
+        return renderError(selectedNode.raw.error, theme);
+      default:
+        return defaultRenderValue(resolveValue(activeTab, selectedNode), theme);
+    }
   };
 
   return (
