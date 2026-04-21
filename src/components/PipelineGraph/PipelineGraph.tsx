@@ -10,7 +10,7 @@ import {
 import { useControllable } from "../_shared/useControllable";
 
 import { PipelineGraphCluster } from "./PipelineGraphCluster";
-import { PipelineGraphEdge } from "./PipelineGraphEdge";
+import { PipelineGraphEdge, type HoveredEdge } from "./PipelineGraphEdge";
 import { PipelineGraphInspector } from "./PipelineGraphInspector";
 import { PipelineGraphNode } from "./PipelineGraphNode";
 import type {
@@ -21,6 +21,18 @@ import { clamp, fit, nextNodeInDirection, normalize } from "./PipelineGraph.util
 import { useGraphLayout } from "./useGraphLayout";
 import { usePanZoom } from "./usePanZoom";
 import { palette as themePalette, Z } from "./theme";
+
+function defaultEdgeTooltipText(edge: HoveredEdge): string {
+  if (edge.raws.length > 1) return `${edge.raws.length} connections`;
+  const raw0 = edge.raws[0];
+  if (raw0?.label) return raw0.label;
+  if (raw0?.fanOut) {
+    return raw0.fanOut.label
+      ? `${raw0.fanOut.label} (×${raw0.fanOut.count})`
+      : `×${raw0.fanOut.count}`;
+  }
+  return `${edge.from} → ${edge.to}`;
+}
 
 interface ZoomControlButtonProps {
   theme: "light" | "dark";
@@ -86,11 +98,14 @@ export function PipelineGraph(props: PipelineGraphProps) {
     onNodeDoubleClick,
     inspector,
     renderInspectorValue,
+    renderEdgeTooltip,
     viewport: viewportProp,
     defaultViewport,
     onViewportChange,
     interactive = true,
   } = props;
+
+  const [hoveredEdge, setHoveredEdge] = useState<HoveredEdge | null>(null);
 
   const normalized = useMemo(() => normalize(nodes, edges), [nodes, edges]);
 
@@ -381,9 +396,32 @@ export function PipelineGraph(props: PipelineGraphProps) {
             edgePoints={layout.edgePoints}
             bounds={layout.bounds}
             theme={theme}
+            onHoverChange={setHoveredEdge}
           />
         </div>
       )}
+      {hoveredEdge && viewport ? (
+        <div
+          style={{
+            position: "absolute",
+            left: viewport.x + hoveredEdge.mid.x * viewport.zoom + 8,
+            top: viewport.y + hoveredEdge.mid.y * viewport.zoom + 8,
+            background: p.tooltipBg,
+            color: p.tooltipFg,
+            padding: "6px 10px",
+            borderRadius: 6,
+            fontSize: 11,
+            pointerEvents: "none",
+            zIndex: Z.tooltip,
+            maxWidth: 240,
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+          }}
+        >
+          {renderEdgeTooltip && hoveredEdge.raws[0]
+            ? (renderEdgeTooltip(hoveredEdge.raws[0]) ?? defaultEdgeTooltipText(hoveredEdge))
+            : defaultEdgeTooltipText(hoveredEdge)}
+        </div>
+      ) : null}
       {!isEmpty && interactive ? (
         <div
           data-pg-interactive="1"
