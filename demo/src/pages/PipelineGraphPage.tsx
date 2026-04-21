@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PipelineGraph } from "plastic";
+import { CodeView, PipelineGraph } from "plastic";
 import type {
   PipelineEdge,
   PipelineGraphInspectorConfig,
@@ -207,6 +207,80 @@ const STATUS_LEGEND: Array<{ status: PipelineNodeStatus; color: string; label: s
 ];
 
 const LARGE = makeLarge(200);
+
+const PROPS_ROWS: Array<[string, string, string, string]> = [
+  ["nodes", "PipelineNode[]", "—", "파이프라인 노드 배열 (필수)"],
+  ["edges", "PipelineEdge[]", "—", "노드 간 연결 (필수)"],
+  ["direction", '"LR" | "TB"', '"LR"', "Dagre 레이아웃 방향"],
+  ["rankSep", "number", "96", "Dagre rank 간 간격"],
+  ["nodeSep", "number", "48", "동일 rank 내 노드 간격"],
+  ["clusterPadding", "number", "24", "group/loop 클러스터 내부 패딩"],
+  ["selection", "string | null", "—", "Controlled 선택 id"],
+  ["defaultSelection", "string | null", "null", "초기 선택 (uncontrolled)"],
+  ["onSelectionChange", "(id) => void", "—", "선택 변경 콜백"],
+  ["expansion", "string[]", "—", "Controlled 펼침 id 집합"],
+  ["defaultExpansion", "string[]", "[]", "초기 펼침 (uncontrolled)"],
+  ["onExpansionChange", "(ids) => void", "—", "펼침 변경 콜백"],
+  ["viewport", "{x,y,zoom}", "—", "Controlled 뷰포트"],
+  ["defaultViewport", "{x,y,zoom}", "fit", "초기 뷰포트 (미지정 시 fit)"],
+  ["onViewportChange", "(vp) => void", "—", "뷰포트 변경 콜백"],
+  [
+    "inspector",
+    "{ position?, defaultSize?, defaultTab?, tabs? }",
+    "{position:\"right\"}",
+    "인스펙터 설정",
+  ],
+  ["renderInspectorValue", "(node, tab, v) => ReactNode", "—", "탭 값 커스텀 렌더"],
+  ["renderNode", "(node, ctx) => ReactNode", "—", "카드 커스텀 렌더"],
+  ["renderEdgeTooltip", "(edge) => ReactNode", "—", "엣지 hover 툴팁 커스텀"],
+  ["onNodeDoubleClick", "(node) => void", "—", "노드 더블클릭 콜백"],
+  ["theme", '"light" | "dark"', '"light"', "색상 테마"],
+  ["width", "number | string", '"100%"', "컨테이너 너비"],
+  ["height", "number | string", '"70vh"', "컨테이너 높이"],
+  ["interactive", "boolean", "true", "팬/줌/선택 활성"],
+  ["className", "string", "—", "추가 className"],
+];
+
+const USAGE_MIN = `import { PipelineGraph } from "plastic";
+
+const NODES = [
+  { id: "a", label: "Load", status: "success" },
+  { id: "b", label: "Run",  status: "running" },
+];
+const EDGES = [{ from: "a", to: "b" }];
+
+<PipelineGraph nodes={NODES} edges={EDGES} />`;
+
+const USAGE_CONTROLLED = `const [sel, setSel] = useState<string | null>(null);
+
+<PipelineGraph
+  nodes={NODES}
+  edges={EDGES}
+  selection={sel}
+  onSelectionChange={setSel}
+/>`;
+
+const USAGE_INSPECTOR = `<PipelineGraph
+  nodes={NODES}
+  edges={EDGES}
+  renderInspectorValue={(n, tab, v) => {
+    if (tab === "output" && v instanceof Uint8Array) {
+      return <ImagePreview bytes={v} />;
+    }
+    return undefined; // fallback: 기본 JSON 렌더
+  }}
+/>`;
+
+const USAGE_LIVE = `const [nodes, setNodes] = useState<PipelineNode[]>(INITIAL);
+
+useEffect(() => {
+  const t = setInterval(() => {
+    setNodes((prev) => simulateTick(prev));
+  }, 500);
+  return () => clearInterval(t);
+}, []);
+
+<PipelineGraph nodes={nodes} edges={EDGES} />`;
 
 // ── 섹션 공통 ──────────────────────────────────────────────────────────────
 
@@ -587,11 +661,61 @@ export function PipelineGraphPage() {
       </Section>
 
       <Section id="props" title="Props" desc="전체 prop 레퍼런스.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-50 border-b border-gray-200">
+              <tr>
+                {["Prop", "Type", "Default", "Description"].map((h) => (
+                  <th
+                    key={h}
+                    className="text-left px-4 py-2.5 text-xs font-semibold text-gray-500"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {PROPS_ROWS.map(([name, type, def, desc]) => (
+                <tr key={name}>
+                  <td className="px-4 py-2.5 font-mono text-xs text-gray-800">{name}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-gray-500">{type}</td>
+                  <td className="px-4 py-2.5 font-mono text-xs text-gray-500">{def}</td>
+                  <td className="px-4 py-2.5 text-gray-600">{desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Section>
 
       <Section id="usage" title="Usage" desc="자주 쓰는 패턴 스니펫.">
-        <p className="text-sm text-gray-500 mb-3">(다음 이슈에서 채움)</p>
+        <div className="space-y-5">
+          <div>
+            <p className="text-sm text-gray-500 mb-2">
+              1) 최소 예시 — nodes / edges 만으로 동작합니다.
+            </p>
+            <CodeView code={USAGE_MIN} language="tsx" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-2">
+              2) Controlled selection — 외부 state 로 선택 동기화.
+            </p>
+            <CodeView code={USAGE_CONTROLLED} language="tsx" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-2">
+              3) 인스펙터 탭 커스텀 — 바이너리 · 이미지 등을 특수 렌더.
+            </p>
+            <CodeView code={USAGE_INSPECTOR} language="tsx" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 mb-2">
+              4) 실시간 업데이트 — setInterval 로 node 상태를 스트리밍.
+            </p>
+            <CodeView code={USAGE_LIVE} language="tsx" />
+          </div>
+        </div>
       </Section>
 
       <Section id="playground" title="Playground" desc="실시간 prop 토글.">
