@@ -4,6 +4,7 @@ import { useControllable } from "../_shared/useControllable";
 
 import { PipelineGraphCluster } from "./PipelineGraphCluster";
 import { PipelineGraphEdge } from "./PipelineGraphEdge";
+import { PipelineGraphInspector } from "./PipelineGraphInspector";
 import { PipelineGraphNode } from "./PipelineGraphNode";
 import type { PipelineGraphProps } from "./PipelineGraph.types";
 import { normalize } from "./PipelineGraph.utils";
@@ -29,6 +30,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
     defaultSelection,
     onSelectionChange,
     onNodeDoubleClick,
+    inspector,
   } = props;
 
   const normalized = useMemo(() => normalize(nodes, edges), [nodes, edges]);
@@ -59,6 +61,9 @@ export function PipelineGraph(props: PipelineGraphProps) {
 
   const p = themePalette[theme];
   const isEmpty = nodes.length === 0;
+  const inspectorConfig = inspector ?? {};
+  const inspectorPosition = inspectorConfig.position ?? "right";
+  const selectedNode = selectedId ? (normalized.byId.get(selectedId) ?? null) : null;
 
   const toggleExpand = useCallback(
     (id: string) => {
@@ -70,7 +75,7 @@ export function PipelineGraph(props: PipelineGraphProps) {
     [expandedArr, setExpandedArr],
   );
 
-  const handleBackgroundClick = () => setSelectedId(null);
+  const handleCanvasClick = () => setSelectedId(null);
 
   useEffect(() => {
     if (selectedId === null) return;
@@ -87,17 +92,14 @@ export function PipelineGraph(props: PipelineGraphProps) {
     setSelectedId(null);
   }, [selectedId, layout.positions, normalized, setSelectedId]);
 
-  return (
+  const canvas = (
     <div
-      ref={rootRef}
-      role="region"
-      aria-label="Pipeline graph"
-      className={className}
-      onClick={handleBackgroundClick}
+      onClick={handleCanvasClick}
       style={{
         position: "relative",
-        width,
-        height,
+        flex: 1,
+        minWidth: 0,
+        minHeight: 0,
         overflow: "hidden",
         background: p.canvasBg,
         color: p.fg,
@@ -172,6 +174,34 @@ export function PipelineGraph(props: PipelineGraphProps) {
           />
         </div>
       )}
+    </div>
+  );
+
+  return (
+    <div
+      ref={rootRef}
+      role="region"
+      aria-label="Pipeline graph"
+      className={className}
+      style={{
+        position: "relative",
+        width,
+        height,
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: inspectorPosition === "bottom" ? "column" : "row",
+        background: p.canvasBg,
+        color: p.fg,
+        boxSizing: "border-box",
+      }}
+    >
+      {canvas}
+      <PipelineGraphInspector
+        selectedNode={selectedNode}
+        config={inspectorConfig}
+        theme={theme}
+        rootRef={rootRef}
+      />
     </div>
   );
 }
