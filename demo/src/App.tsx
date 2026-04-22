@@ -11,8 +11,9 @@ import DataTablePage from "./pages/DataTablePage";
 import { StepperPage } from "./pages/StepperPage";
 import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
+import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph";
 
 interface SubItem { label: string; id: string }
 
@@ -149,6 +150,22 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Selection", id: "selection" },
     { label: "Virtualized", id: "virtualized" },
     { label: "Dark Theme", id: "dark" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "pipelinegraph", label: "PipelineGraph", description: "스텝 기반 DAG 뷰어", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Direction", id: "direction" },
+    { label: "Grouping", id: "grouping" },
+    { label: "Loop", id: "loop" },
+    { label: "Fan-out", id: "fanout" },
+    { label: "Status palette", id: "status" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Inspector", id: "inspector" },
+    { label: "Custom node render", id: "custom-node" },
+    { label: "Dark theme", id: "dark" },
+    { label: "Large graph", id: "large" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
@@ -403,6 +420,7 @@ export function App() {
         {current === "stepper" && <StepperPage />}
         {current === "commandpalette" && <CommandPalettePage />}
         {current === "hexview" && <HexViewPage />}
+        {current === "pipelinegraph" && <PipelineGraphPage />}
       </main>
     </div>
   );
