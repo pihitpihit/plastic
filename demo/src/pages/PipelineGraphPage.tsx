@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CodeView, PipelineGraph } from "plastic";
 import type {
   PipelineEdge,
@@ -308,6 +308,41 @@ function Section({
   );
 }
 
+function LazyMount({ children }: { children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (mounted) return;
+    const el = ref.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setMounted(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            setMounted(true);
+            obs.disconnect();
+            break;
+          }
+        }
+      },
+      { rootMargin: "600px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [mounted]);
+
+  return (
+    <div ref={ref} style={{ width: "100%", height: "100%" }}>
+      {mounted ? children : null}
+    </div>
+  );
+}
+
 // ── 페이지 ─────────────────────────────────────────────────────────────────
 
 function ControlledDemo() {
@@ -343,13 +378,15 @@ function ControlledDemo() {
         </span>
       </div>
       <div style={{ height: 380 }}>
-        <PipelineGraph
-          nodes={BASIC.nodes}
-          edges={BASIC.edges}
-          selection={sel}
-          onSelectionChange={setSel}
-          height="100%"
-        />
+        <LazyMount>
+          <PipelineGraph
+            nodes={BASIC.nodes}
+            edges={BASIC.edges}
+            selection={sel}
+            onSelectionChange={setSel}
+            height="100%"
+          />
+        </LazyMount>
       </div>
     </div>
   );
@@ -413,13 +450,15 @@ function InspectorDemo() {
         ))}
       </div>
       <div style={{ height: 440 }}>
-        <PipelineGraph
-          nodes={INSPECTOR_DEMO.nodes}
-          edges={INSPECTOR_DEMO.edges}
-          inspector={cfg}
-          defaultSelection="transform"
-          height="100%"
-        />
+        <LazyMount>
+          <PipelineGraph
+            nodes={INSPECTOR_DEMO.nodes}
+            edges={INSPECTOR_DEMO.edges}
+            inspector={cfg}
+            defaultSelection="transform"
+            height="100%"
+          />
+        </LazyMount>
       </div>
       <p className="text-xs text-gray-400 mt-2">
         Load / Transform 선택 시 Output 탭이 기본 노출됩니다. Model (failed) 선택 시 Error 탭이 자동 활성화됩니다.
@@ -618,18 +657,20 @@ function Playground() {
       </aside>
 
       <main style={{ height: "70vh" }}>
-        <PipelineGraph
-          nodes={data.nodes}
-          edges={data.edges}
-          direction={direction}
-          rankSep={rankSep}
-          nodeSep={nodeSep}
-          clusterPadding={clusterPadding}
-          theme={theme}
-          inspector={inspector}
-          interactive={interactive}
-          height="100%"
-        />
+        <LazyMount>
+          <PipelineGraph
+            nodes={data.nodes}
+            edges={data.edges}
+            direction={direction}
+            rankSep={rankSep}
+            nodeSep={nodeSep}
+            clusterPadding={clusterPadding}
+            theme={theme}
+            inspector={inspector}
+            interactive={interactive}
+            height="100%"
+          />
+        </LazyMount>
       </main>
     </div>
   );
@@ -660,7 +701,9 @@ export function PipelineGraphPage() {
 
       <Section id="basic" title="Basic" desc="가장 단순한 4 스텝 직렬 파이프라인.">
         <div style={{ height: 360 }}>
-          <PipelineGraph nodes={BASIC.nodes} edges={BASIC.edges} height="100%" />
+          <LazyMount>
+            <PipelineGraph nodes={BASIC.nodes} edges={BASIC.edges} height="100%" />
+          </LazyMount>
         </div>
       </Section>
 
@@ -673,23 +716,27 @@ export function PipelineGraphPage() {
           <div style={{ flex: 1 }}>
             <p className="text-xs text-gray-400 mb-1">LR</p>
             <div style={{ height: 320 }}>
-              <PipelineGraph
-                nodes={BASIC.nodes}
-                edges={BASIC.edges}
-                direction="LR"
-                height="100%"
-              />
+              <LazyMount>
+                <PipelineGraph
+                  nodes={BASIC.nodes}
+                  edges={BASIC.edges}
+                  direction="LR"
+                  height="100%"
+                />
+              </LazyMount>
             </div>
           </div>
           <div style={{ flex: 1 }}>
             <p className="text-xs text-gray-400 mb-1">TB</p>
             <div style={{ height: 320 }}>
-              <PipelineGraph
-                nodes={BASIC.nodes}
-                edges={BASIC.edges}
-                direction="TB"
-                height="100%"
-              />
+              <LazyMount>
+                <PipelineGraph
+                  nodes={BASIC.nodes}
+                  edges={BASIC.edges}
+                  direction="TB"
+                  height="100%"
+                />
+              </LazyMount>
             </div>
           </div>
         </div>
@@ -701,12 +748,14 @@ export function PipelineGraphPage() {
         desc="group 카드의 ▸ 를 눌러 내부 스텝을 펼칠 수 있습니다. 펼쳐진 카드는 점선 클러스터로 감싸집니다."
       >
         <div style={{ height: 420 }}>
-          <PipelineGraph
-            nodes={WITH_GROUP.nodes}
-            edges={WITH_GROUP.edges}
-            defaultExpansion={["validate"]}
-            height="100%"
-          />
+          <LazyMount>
+            <PipelineGraph
+              nodes={WITH_GROUP.nodes}
+              edges={WITH_GROUP.edges}
+              defaultExpansion={["validate"]}
+              height="100%"
+            />
+          </LazyMount>
         </div>
       </Section>
 
@@ -719,22 +768,26 @@ export function PipelineGraphPage() {
           <div style={{ flex: 1 }}>
             <p className="text-xs text-gray-400 mb-1">Collapsed</p>
             <div style={{ height: 360 }}>
-              <PipelineGraph
-                nodes={WITH_LOOP.nodes}
-                edges={WITH_LOOP.edges}
-                height="100%"
-              />
+              <LazyMount>
+                <PipelineGraph
+                  nodes={WITH_LOOP.nodes}
+                  edges={WITH_LOOP.edges}
+                  height="100%"
+                />
+              </LazyMount>
             </div>
           </div>
           <div style={{ flex: 1 }}>
             <p className="text-xs text-gray-400 mb-1">Expanded</p>
             <div style={{ height: 360 }}>
-              <PipelineGraph
-                nodes={WITH_LOOP.nodes}
-                edges={WITH_LOOP.edges}
-                defaultExpansion={["train"]}
-                height="100%"
-              />
+              <LazyMount>
+                <PipelineGraph
+                  nodes={WITH_LOOP.nodes}
+                  edges={WITH_LOOP.edges}
+                  defaultExpansion={["train"]}
+                  height="100%"
+                />
+              </LazyMount>
             </div>
           </div>
         </div>
@@ -746,11 +799,13 @@ export function PipelineGraphPage() {
         desc="한 스텝이 N 개 하위 실행으로 분기할 때 엣지 중앙에 fan-out 배지로 표현합니다."
       >
         <div style={{ height: 360 }}>
-          <PipelineGraph
-            nodes={WITH_FANOUT.nodes}
-            edges={WITH_FANOUT.edges}
-            height="100%"
-          />
+          <LazyMount>
+            <PipelineGraph
+              nodes={WITH_FANOUT.nodes}
+              edges={WITH_FANOUT.edges}
+              height="100%"
+            />
+          </LazyMount>
         </div>
       </Section>
 
@@ -760,12 +815,14 @@ export function PipelineGraphPage() {
         desc="6 종 실행 상태. running 은 pulse 애니메이션으로 진행 중임을 표시합니다."
       >
         <div style={{ height: 260 }}>
-          <PipelineGraph
-            nodes={MIXED_STATUS.nodes}
-            edges={MIXED_STATUS.edges}
-            direction="LR"
-            height="100%"
-          />
+          <LazyMount>
+            <PipelineGraph
+              nodes={MIXED_STATUS.nodes}
+              edges={MIXED_STATUS.edges}
+              direction="LR"
+              height="100%"
+            />
+          </LazyMount>
         </div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 12 }}>
           {STATUS_LEGEND.map((s) => (
@@ -810,38 +867,40 @@ export function PipelineGraphPage() {
         desc="기본 카드를 완전히 대체하려면 renderNode prop 을 사용하세요. undefined 를 반환하면 기본 카드로 fallback 됩니다."
       >
         <div style={{ height: 260 }}>
-          <PipelineGraph
-            nodes={CUSTOM_NODE_DEMO.nodes}
-            edges={CUSTOM_NODE_DEMO.edges}
-            height="100%"
-            renderNode={(n) => {
-              if (n.id !== "render-frame") return undefined;
-              const src = (n.output as { dataUrl?: string } | undefined)?.dataUrl;
-              if (!src) return undefined;
-              return (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    padding: 6,
-                    boxSizing: "border-box",
-                  }}
-                >
-                  <img
-                    src={src}
-                    alt={n.label}
+          <LazyMount>
+            <PipelineGraph
+              nodes={CUSTOM_NODE_DEMO.nodes}
+              edges={CUSTOM_NODE_DEMO.edges}
+              height="100%"
+              renderNode={(n) => {
+                if (n.id !== "render-frame") return undefined;
+                const src = (n.output as { dataUrl?: string } | undefined)?.dataUrl;
+                if (!src) return undefined;
+                return (
+                  <div
                     style={{
                       width: "100%",
                       height: "100%",
-                      objectFit: "cover",
-                      borderRadius: 4,
-                      display: "block",
+                      padding: 6,
+                      boxSizing: "border-box",
                     }}
-                  />
-                </div>
-              );
-            }}
-          />
+                  >
+                    <img
+                      src={src}
+                      alt={n.label}
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        borderRadius: 4,
+                        display: "block",
+                      }}
+                    />
+                  </div>
+                );
+              }}
+            />
+          </LazyMount>
         </div>
       </Section>
 
@@ -858,13 +917,15 @@ export function PipelineGraphPage() {
           }}
         >
           <div style={{ height: 440 }}>
-            <PipelineGraph
-              nodes={WITH_LOOP.nodes}
-              edges={WITH_LOOP.edges}
-              theme="dark"
-              defaultExpansion={["train"]}
-              height="100%"
-            />
+            <LazyMount>
+              <PipelineGraph
+                nodes={WITH_LOOP.nodes}
+                edges={WITH_LOOP.edges}
+                theme="dark"
+                defaultExpansion={["train"]}
+                height="100%"
+              />
+            </LazyMount>
           </div>
         </div>
       </Section>
@@ -875,12 +936,14 @@ export function PipelineGraphPage() {
         desc="200 노드 격자 그래프. 팬·줌으로 탐색하고 우하단 ⊙ (또는 키보드 0) 로 전체 보기로 돌아옵니다."
       >
         <div style={{ height: 640 }}>
-          <PipelineGraph
-            nodes={LARGE.nodes}
-            edges={LARGE.edges}
-            inspector={{ position: "none" }}
-            height="100%"
-          />
+          <LazyMount>
+            <PipelineGraph
+              nodes={LARGE.nodes}
+              edges={LARGE.edges}
+              inspector={{ position: "none" }}
+              height="100%"
+            />
+          </LazyMount>
         </div>
       </Section>
 
