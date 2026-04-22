@@ -207,10 +207,34 @@ export function buildVisibleGraph(n: Normalized, expanded: Set<string>): Visible
     }
   }
 
+  const isExpandedCluster = (id: string): boolean => {
+    const nn = n.byId.get(id);
+    if (!nn) return false;
+    return (nn.kind === "group" || nn.kind === "loop") && expanded.has(id);
+  };
+  const leafOf = (clusterId: string, preferFirst: boolean): string => {
+    const visited = new Set<string>();
+    let cur = clusterId;
+    while (isExpandedCluster(cur) && !visited.has(cur)) {
+      visited.add(cur);
+      const cluster = n.byId.get(cur);
+      if (!cluster || cluster.children.length === 0) return cur;
+      const visibleChildren = cluster.children.filter((c) => shownIds.has(c));
+      if (visibleChildren.length === 0) return cur;
+      const next = preferFirst
+        ? visibleChildren[0]!
+        : visibleChildren[visibleChildren.length - 1]!;
+      cur = next;
+    }
+    return cur;
+  };
+
   const seen = new Map<string, VisibleEdge>();
   for (const e of n.edges) {
-    const f = visibleAncestorOf.get(e.from) ?? e.from;
-    const t = visibleAncestorOf.get(e.to) ?? e.to;
+    let f = visibleAncestorOf.get(e.from) ?? e.from;
+    let t = visibleAncestorOf.get(e.to) ?? e.to;
+    if (isExpandedCluster(f)) f = leafOf(f, false);
+    if (isExpandedCluster(t)) t = leafOf(t, true);
     if (f === t) continue;
     const key = `${f}->${t}`;
     const existing = seen.get(key);
