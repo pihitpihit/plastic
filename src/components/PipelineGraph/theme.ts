@@ -9,6 +9,7 @@ export interface PipelinePalette {
   selectionRing: string;
   edgeFg: string;
   edgeFgDim: string;
+  edgeArrowFill: string;
   clusterBg: string;
   clusterBorder: string;
   inspectorBg: string;
@@ -36,6 +37,7 @@ export const palette: Record<PipelineGraphTheme, PipelinePalette> = {
     selectionRing: "#2563eb",
     edgeFg: "rgba(0,0,0,0.45)",
     edgeFgDim: "rgba(0,0,0,0.18)",
+    edgeArrowFill: "#4b5563",
     clusterBg: "rgba(0,0,0,0.025)",
     clusterBorder: "rgba(0,0,0,0.10)",
     inspectorBg: "#ffffff",
@@ -55,6 +57,7 @@ export const palette: Record<PipelineGraphTheme, PipelinePalette> = {
     selectionRing: "#60a5fa",
     edgeFg: "rgba(255,255,255,0.55)",
     edgeFgDim: "rgba(255,255,255,0.22)",
+    edgeArrowFill: "#cbd5e1",
     clusterBg: "rgba(255,255,255,0.03)",
     clusterBorder: "rgba(255,255,255,0.10)",
     inspectorBg: "#111827",

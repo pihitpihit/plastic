@@ -73,7 +73,7 @@ function PipelineGraphEdgeImpl(props: PipelineGraphEdgeProps) {
           markerHeight={8}
           orient="auto"
         >
-          <path d="M 0 0 L 10 5 L 0 10 z" fill={p.edgeFg} />
+          <path d="M 0 0 L 10 5 L 0 10 z" fill={p.edgeArrowFill} />
         </marker>
       </defs>
       {edgePoints.map((e) => {
