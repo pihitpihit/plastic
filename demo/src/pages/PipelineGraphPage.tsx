@@ -506,6 +506,20 @@ function Playground() {
     () => ({ position: inspectorPos }),
     [inspectorPos],
   );
+  const autoExpand = useMemo(
+    () =>
+      data.nodes
+        .filter((n) => n.kind === "group" || n.kind === "loop")
+        .map((n) => n.id),
+    [data],
+  );
+  const hasParallelRank = useMemo(() => {
+    const outDeg = new Map<string, number>();
+    for (const e of data.edges) outDeg.set(e.from, (outDeg.get(e.from) ?? 0) + 1);
+    for (const v of outDeg.values()) if (v > 1) return true;
+    return false;
+  }, [data]);
+  const hasCluster = autoExpand.length > 0;
 
   return (
     <div
@@ -585,6 +599,17 @@ function Playground() {
             onChange={(e) => setNodeSep(Number(e.target.value))}
             className="w-full"
           />
+          <p
+            style={{
+              marginTop: 4,
+              fontSize: 10,
+              color: hasParallelRank ? "#9ca3af" : "#f59e0b",
+            }}
+          >
+            {hasParallelRank
+              ? "같은 rank 노드 간 간격 (현재 preset 에서 효과 있음)"
+              : "현재 preset 은 선형이라 효과가 없음 — large-50/200 로 시도"}
+          </p>
         </Field>
 
         <Field label={`clusterPadding = ${clusterPadding}`}>
@@ -597,6 +622,17 @@ function Playground() {
             onChange={(e) => setClusterPadding(Number(e.target.value))}
             className="w-full"
           />
+          <p
+            style={{
+              marginTop: 4,
+              fontSize: 10,
+              color: hasCluster ? "#9ca3af" : "#f59e0b",
+            }}
+          >
+            {hasCluster
+              ? "expanded cluster 내부 패딩 (자동 펼침 적용됨)"
+              : "현재 preset 에 group/loop 없음 — with-group/with-loop 로 시도"}
+          </p>
         </Field>
 
         <Field label="Theme">
@@ -659,6 +695,7 @@ function Playground() {
       <main style={{ height: "70vh" }}>
         <LazyMount>
           <PipelineGraph
+            key={preset}
             nodes={data.nodes}
             edges={data.edges}
             direction={direction}
@@ -668,6 +705,7 @@ function Playground() {
             theme={theme}
             inspector={inspector}
             interactive={interactive}
+            defaultExpansion={autoExpand}
             height="100%"
           />
         </LazyMount>
