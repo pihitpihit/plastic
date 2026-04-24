@@ -12,8 +12,9 @@ import { StepperPage } from "./pages/StepperPage";
 import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
+import SelectPage from "./pages/SelectPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select";
 
 interface SubItem { label: string; id: string }
 
@@ -166,6 +167,19 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Custom node render", id: "custom-node" },
     { label: "Dark theme", id: "dark" },
     { label: "Large graph", id: "large" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
+  ]},
+  { id: "select", label: "Select", description: "단일 값 드롭다운", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Grouped", id: "grouped" },
+    { label: "Disabled", id: "disabled" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Form", id: "form" },
+    { label: "Custom Render", id: "custom-render" },
+    { label: "Long List", id: "long-list" },
+    { label: "Dark Theme", id: "dark" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
@@ -421,6 +435,7 @@ export function App() {
         {current === "commandpalette" && <CommandPalettePage />}
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
+        {current === "select" && <SelectPage />}
       </main>
     </div>
   );
