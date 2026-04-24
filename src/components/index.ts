@@ -3,6 +3,7 @@ export * from "./Button";
 export * from "./Card";
 export * from "./CodeView";
 export * from "./CommandPalette";
+export * from "./ContextMenu";
 export * from "./DataTable";
 export * from "./Dialog";
 export * from "./HexView";
