@@ -87,6 +87,17 @@ export function SelectContent(props: SelectContentProps) {
   }, [open, triggerRef]);
 
   useEffect(() => {
+    if (!open || !isPositioned) return;
+    const raf = requestAnimationFrame(() => {
+      const active = ctx.activeValue;
+      if (active == null) return;
+      const item = ctx.getItems().find((i) => i.value === active);
+      item?.node.scrollIntoView({ block: "nearest", inline: "nearest" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [open, isPositioned, ctx]);
+
+  useEffect(() => {
     if (!open || !closeOnOutsideClick) return;
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as Node | null;
@@ -176,6 +187,7 @@ export function SelectContent(props: SelectContentProps) {
       ref={mergedRef}
       role="listbox"
       id={listboxId}
+      tabIndex={-1}
       aria-labelledby={triggerId}
       aria-hidden={isVisible ? undefined : true}
       data-state={open ? "open" : "closed"}
