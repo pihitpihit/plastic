@@ -364,6 +364,14 @@ export function ComboboxRoot(props: ComboboxRootProps) {
     ],
   );
 
+  const anchorRefCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      (anchorRef as React.MutableRefObject<HTMLDivElement | null>).current =
+        node;
+    },
+    [],
+  );
+
   const rootStyle = {
     position: "relative" as const,
     ...style,
@@ -372,6 +380,7 @@ export function ComboboxRoot(props: ComboboxRootProps) {
   return (
     <ComboboxContext.Provider value={ctxValue}>
       <div
+        ref={anchorRefCallback}
         className={className}
         style={rootStyle}
         data-theme={theme}
