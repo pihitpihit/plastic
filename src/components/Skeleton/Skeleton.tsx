@@ -1,7 +1,9 @@
+import { SkeletonRoot } from "./SkeletonRoot";
+
 const Noop = () => null;
 
 export const Skeleton = {
-  Root: Noop,
+  Root: SkeletonRoot,
   Text: Noop,
   Avatar: Noop,
   Card: Noop,
