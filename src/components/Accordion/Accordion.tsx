@@ -5,9 +5,11 @@ import {
   useId,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type MouseEvent,
 } from "react";
+import { useContentHeight } from "./useContentHeight";
 import { useReducedMotion } from "../_shared/useReducedMotion";
 import { injectAccordionStyles } from "./Accordion.css";
 import {
@@ -262,23 +264,76 @@ AccordionTrigger.displayName = "Accordion.Trigger";
 
 function AccordionContent(props: AccordionContentProps) {
   const { children, className, style, forceMount, ...rest } = props;
+  const root = useAccordionRootContext();
   const item = useAccordionItemContext();
-  const cls = ["acc-content", className].filter(Boolean).join(" ");
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const contentHeight = useContentHeight(innerRef);
 
-  if (!item.isOpen && !forceMount) return null;
+  const isOpen = item.isOpen;
+  const [hiddenAttr, setHiddenAttr] = useState<boolean>(!isOpen);
+
+  useEffect(() => {
+    if (isOpen) {
+      setHiddenAttr(false);
+      return;
+    }
+    if (root.reducedMotion) {
+      setHiddenAttr(true);
+      return;
+    }
+    const el = outerRef.current;
+    if (!el) {
+      setHiddenAttr(true);
+      return;
+    }
+    const onEnd = (e: TransitionEvent) => {
+      if (e.propertyName !== "max-height") return;
+      if (el.getAttribute("data-state") !== "closed") return;
+      setHiddenAttr(true);
+    };
+    el.addEventListener("transitionend", onEnd);
+    return () => el.removeEventListener("transitionend", onEnd);
+  }, [isOpen, root.reducedMotion]);
+
+  if (!isOpen && !forceMount && hiddenAttr) return null;
+
+  const measuredMaxHeight =
+    contentHeight == null ? undefined : `${contentHeight}px`;
+
+  const baseStyle: CSSProperties = {
+    overflow: "hidden",
+    maxHeight: root.reducedMotion
+      ? isOpen
+        ? "none"
+        : 0
+      : isOpen
+        ? measuredMaxHeight ?? "none"
+        : 0,
+    transition: root.reducedMotion
+      ? "none"
+      : "max-height 200ms cubic-bezier(0.4, 0, 0.2, 1)",
+  };
+
+  const mergedStyle: CSSProperties = { ...baseStyle, ...style };
+
+  const cls = ["acc-content", className].filter(Boolean).join(" ");
 
   return (
     <div
+      ref={outerRef}
       role="region"
       id={item.contentId}
       aria-labelledby={item.triggerId}
-      data-state={item.isOpen ? "open" : "closed"}
+      data-state={isOpen ? "open" : "closed"}
       className={cls}
-      style={style}
-      {...(!item.isOpen ? { hidden: true } : {})}
+      style={mergedStyle}
+      {...(!isOpen && hiddenAttr ? { hidden: true } : {})}
       {...rest}
     >
-      <div className="acc-content-inner">{children}</div>
+      <div ref={innerRef} className="acc-content-inner">
+        {children}
+      </div>
     </div>
   );
 }
