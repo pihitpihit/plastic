@@ -4,6 +4,7 @@ export * from "./Card";
 export * from "./CodeView";
 export * from "./CommandPalette";
 export * from "./DataTable";
+export * from "./DatePicker";
 export * from "./Dialog";
 export * from "./HexView";
 export * from "./PathInput";
