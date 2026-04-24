@@ -15,6 +15,7 @@ import {
   type RegisteredItem,
   type SelectContextValue,
 } from "./SelectContext";
+import { useSelectTypeahead } from "./useSelectTypeahead";
 import type { SelectAlign, SelectRootProps, SelectValue } from "./Select.types";
 
 function toPlacement(side: Side, align: SelectAlign): Placement {
@@ -89,8 +90,6 @@ export function SelectRoot(props: SelectRootProps) {
   const triggerId = useId();
 
   const itemsRef = useRef<Map<SelectValue, RegisteredItem>>(new Map());
-  const typeaheadBufferRef = useRef("");
-  const typeaheadTimerRef = useRef<number | null>(null);
   const activeValueRef = useRef<SelectValue | null>(null);
   activeValueRef.current = activeValue;
 
@@ -166,45 +165,13 @@ export function SelectRoot(props: SelectRootProps) {
     return itemsRef.current.get(activeValue)?.id;
   }, [activeValue]);
 
-  const onTypeAhead = useCallback((char: string) => {
-    if (!/^[\w\s-]$/.test(char)) return;
-    typeaheadBufferRef.current += char.toLowerCase();
-    if (typeaheadTimerRef.current !== null) {
-      window.clearTimeout(typeaheadTimerRef.current);
-    }
-    typeaheadTimerRef.current = window.setTimeout(() => {
-      typeaheadBufferRef.current = "";
-      typeaheadTimerRef.current = null;
-    }, 500);
+  const getActiveValue = useCallback(() => activeValueRef.current, []);
 
-    const items = sortByDocumentPosition(
-      Array.from(itemsRef.current.values()),
-    ).filter((i) => !i.disabled);
-    if (items.length === 0) return;
-
-    const current = activeValueRef.current;
-    const startFrom = current != null ? items.findIndex((i) => i.value === current) : -1;
-    const ordered = [
-      ...items.slice(startFrom + 1),
-      ...items.slice(0, startFrom + 1),
-    ];
-    const buffer = typeaheadBufferRef.current;
-    const match = ordered.find((i) =>
-      i.textValue.toLowerCase().startsWith(buffer),
-    );
-    if (match) {
-      setActiveValue(match.value);
-      match.node.scrollIntoView({ block: "nearest", inline: "nearest" });
-    }
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (typeaheadTimerRef.current !== null) {
-        window.clearTimeout(typeaheadTimerRef.current);
-      }
-    };
-  }, []);
+  const onTypeAhead = useSelectTypeahead({
+    getItems,
+    getActiveValue,
+    setActiveValue,
+  });
 
   useEffect(() => {
     if (activeValue == null) return;
