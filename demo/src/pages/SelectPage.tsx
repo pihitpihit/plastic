@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Select } from "plastic";
+import { Button, Select } from "plastic";
 
 function Section({
   id,
@@ -131,6 +131,70 @@ function DisabledDemo() {
   );
 }
 
+function ControlledDemo() {
+  const [value, setValue] = useState<string>("ts");
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <Button variant="outline" onClick={() => setValue("ts")}>
+        TS
+      </Button>
+      <Button variant="outline" onClick={() => setValue("py")}>
+        Python
+      </Button>
+      <Button variant="outline" onClick={() => setValue("go")}>
+        Go
+      </Button>
+      <Select.Root value={value} onValueChange={setValue}>
+        <Select.Trigger aria-label="언어" style={{ minWidth: 200 }}>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="ts">TypeScript</Select.Item>
+          <Select.Item value="py">Python</Select.Item>
+          <Select.Item value="go">Go</Select.Item>
+        </Select.Content>
+      </Select.Root>
+      <span className="text-sm text-gray-500">
+        현재: <code className="font-mono">{value}</code>
+      </span>
+    </div>
+  );
+}
+
+function FormDemo() {
+  const [submitted, setSubmitted] = useState<string | null>(null);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        setSubmitted(String(data.get("lang") ?? ""));
+      }}
+      className="flex items-center gap-3 flex-wrap"
+    >
+      <Select.Root name="lang" required defaultValue="ts">
+        <Select.Trigger aria-label="언어" style={{ minWidth: 200 }}>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="ts">TypeScript</Select.Item>
+          <Select.Item value="js">JavaScript</Select.Item>
+          <Select.Item value="py">Python</Select.Item>
+          <Select.Item value="go">Go</Select.Item>
+        </Select.Content>
+      </Select.Root>
+      <Button type="submit">제출</Button>
+      {submitted !== null && (
+        <span className="text-sm text-gray-600">
+          제출됨: <code className="font-mono">lang={submitted}</code>
+        </span>
+      )}
+    </form>
+  );
+}
+
 export default function SelectPage() {
   return (
     <div className="max-w-4xl">
@@ -165,6 +229,26 @@ export default function SelectPage() {
       >
         <Card>
           <DisabledDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="controlled"
+        title="Controlled"
+        desc="외부 state 로 value 제어. 외부 버튼 변경 → Trigger 라벨 즉시 갱신."
+      >
+        <Card>
+          <ControlledDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="form"
+        title="Form"
+        desc="name prop 을 주면 hidden input 으로 값이 form submit 에 포함됨."
+      >
+        <Card>
+          <FormDemo />
         </Card>
       </Section>
     </div>
