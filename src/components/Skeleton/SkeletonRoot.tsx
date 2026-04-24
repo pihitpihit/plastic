@@ -64,6 +64,22 @@ export function SkeletonRoot(props: InternalRootProps) {
     ...style,
   };
 
+  const isVisible = visible ?? true;
+  const ms = fadeMs ?? 180;
+
+  if (!isVisible) {
+    if (children === undefined || children === null) return null;
+    if (ms === 0) return <>{children}</>;
+    return (
+      <div
+        className="sk-content-fadein"
+        style={{ animationDuration: `${ms}ms` }}
+      >
+        {children}
+      </div>
+    );
+  }
+
   const ariaProps: Record<string, string | undefined> = _suppressAria
     ? {}
     : {
@@ -71,10 +87,6 @@ export function SkeletonRoot(props: InternalRootProps) {
         "aria-busy": "true",
         "aria-label": ariaLabel ?? "Loading",
       };
-
-  void visible;
-  void fadeMs;
-  void children;
 
   return (
     <div
