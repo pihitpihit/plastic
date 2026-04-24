@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Button, Select } from "plastic";
+import { Button, CodeView, Select } from "plastic";
 
 function Section({
   id,
@@ -30,6 +30,174 @@ function Card({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
+function PropsTable({
+  rows,
+}: {
+  rows: Array<[string, string, string, string]>;
+}) {
+  return (
+    <table className="w-full text-left text-sm border border-gray-200 rounded-lg overflow-hidden">
+      <thead className="bg-gray-50">
+        <tr>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">
+            Prop
+          </th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">
+            Type
+          </th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">
+            Default
+          </th>
+          <th className="px-4 py-2 border-b border-gray-200 font-semibold">
+            Description
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map(([prop, type, def, desc]) => (
+          <tr key={prop} className="border-t border-gray-100">
+            <td className="px-4 py-2 font-mono text-xs">{prop}</td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">
+              {type}
+            </td>
+            <td className="px-4 py-2 font-mono text-xs text-gray-600">{def}</td>
+            <td className="px-4 py-2 text-gray-700">{desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+const ROOT_PROPS: Array<[string, string, string, string]> = [
+  ["value", "string", "—", "선택값 (controlled)"],
+  ["defaultValue", "string", "—", "초기 선택값 (uncontrolled)"],
+  ["onValueChange", "(value: string) => void", "—", "선택값 변경 콜백"],
+  ["open", "boolean", "—", "열림 상태 (controlled)"],
+  ["defaultOpen", "boolean", "false", "초기 열림 상태"],
+  ["onOpenChange", "(open: boolean) => void", "—", "열림 상태 변경 콜백"],
+  ["placeholder", "string", "—", "선택값 없을 때 Trigger 표시 문구"],
+  ["disabled", "boolean", "false", "전체 비활성"],
+  ["name", "string", "—", "form hidden input name (있으면 hidden input 렌더)"],
+  ["required", "boolean", "false", "form required"],
+  ["theme", "'light' | 'dark'", "'light'", "테마"],
+];
+
+const TRIGGER_PROPS: Array<[string, string, string, string]> = [
+  [
+    "...ButtonHTMLAttributes",
+    "—",
+    "—",
+    "type / onClick 제외한 button 속성 전부 전달",
+  ],
+  ["style / className", "—", "—", "스타일 오버라이드"],
+];
+
+const CONTENT_PROPS: Array<[string, string, string, string]> = [
+  ["side", "'top' | 'right' | 'bottom' | 'left'", "'bottom'", "팝업 배치 면"],
+  ["align", "'start' | 'center' | 'end'", "'start'", "Trigger 기준 정렬"],
+  ["sideOffset", "number", "4", "Trigger ↔ 팝업 간격 (px)"],
+  ["maxHeight", "number", "320", "팝업 최대 높이 (px)"],
+  ["matchTriggerWidth", "boolean", "true", "Trigger 너비에 맞춤"],
+  ["minWidth", "number", "—", "matchTriggerWidth=false 일 때 최소 너비"],
+  ["closeOnOutsideClick", "boolean", "true", "바깥 클릭 시 닫힘"],
+  ["closeOnEscape", "boolean", "true", "Escape 시 닫힘"],
+];
+
+const ITEM_PROPS: Array<[string, string, string, string]> = [
+  ["value", "string", "—", "아이템 값 (필수, 고유)"],
+  ["disabled", "boolean", "false", "비활성 — 마우스/키보드 선택 불가"],
+  [
+    "textValue",
+    "string",
+    "(textContent)",
+    "type-ahead 매칭용 문자열. 커스텀 render 시 명시 권장",
+  ],
+];
+
+const GROUP_PROPS: Array<[string, string, string, string]> = [
+  ["label", "ReactNode", "—", "그룹 헤더 — 내부에 Label 자동 렌더"],
+];
+
+const VALUE_PROPS: Array<[string, string, string, string]> = [
+  ["placeholder", "string", "—", "ctx.placeholder 대신 로컬 override"],
+  [
+    "children",
+    "ReactNode | (value) => ReactNode",
+    "—",
+    "커스텀 표시. 함수 형태면 render-prop",
+  ],
+];
+
+const USAGE_BASIC = `import { Select } from "plastic";
+
+function App() {
+  return (
+    <Select.Root placeholder="언어 선택…">
+      <Select.Trigger>
+        <Select.Value />
+        <Select.Icon />
+      </Select.Trigger>
+      <Select.Content>
+        <Select.Item value="ts">TypeScript</Select.Item>
+        <Select.Item value="js">JavaScript</Select.Item>
+        <Select.Item value="py">Python</Select.Item>
+      </Select.Content>
+    </Select.Root>
+  );
+}`;
+
+const USAGE_GROUPED = `<Select.Root defaultValue="ts">
+  <Select.Trigger>
+    <Select.Value />
+    <Select.Icon />
+  </Select.Trigger>
+  <Select.Content>
+    <Select.Group label="프론트엔드">
+      <Select.Item value="ts">
+        <Select.ItemIndicator />
+        <span>TypeScript</span>
+      </Select.Item>
+      <Select.Item value="js">
+        <Select.ItemIndicator />
+        <span>JavaScript</span>
+      </Select.Item>
+    </Select.Group>
+    <Select.Separator />
+    <Select.Group label="백엔드">
+      <Select.Item value="py">
+        <Select.ItemIndicator />
+        <span>Python</span>
+      </Select.Item>
+    </Select.Group>
+  </Select.Content>
+</Select.Root>`;
+
+const USAGE_CONTROLLED_FORM = `function FormSelect() {
+  const [lang, setLang] = useState("ts");
+  return (
+    <form onSubmit={handleSubmit}>
+      <Select.Root name="lang" required value={lang} onValueChange={setLang}>
+        <Select.Trigger>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="ts">TypeScript</Select.Item>
+          <Select.Item value="py">Python</Select.Item>
+        </Select.Content>
+      </Select.Root>
+      <button type="submit">제출</button>
+    </form>
+  );
+}`;
+
+const USAGE_CUSTOM = `<Select.Item value="ts" textValue="TypeScript">
+  <TSBadge />
+  <span style={{ flex: 1 }}>TypeScript</span>
+  <span style={{ marginLeft: "auto", color: "#9ca3af" }}>.ts</span>
+</Select.Item>`;
 
 function BasicDemo() {
   const [value, setValue] = useState<string | undefined>(undefined);
@@ -616,6 +784,56 @@ export default function SelectPage() {
         desc="theme='dark' — Trigger / Content / Item / Group label 전체가 어두운 팔레트로 전환."
       >
         <DarkDemo />
+      </Section>
+
+      <Section id="props" title="Props">
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="text-sm font-semibold mb-2">Select.Root</p>
+            <PropsTable rows={ROOT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Select.Trigger</p>
+            <PropsTable rows={TRIGGER_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Select.Value</p>
+            <PropsTable rows={VALUE_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Select.Content</p>
+            <PropsTable rows={CONTENT_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Select.Item</p>
+            <PropsTable rows={ITEM_PROPS} />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">Select.Group</p>
+            <PropsTable rows={GROUP_PROPS} />
+          </div>
+        </div>
+      </Section>
+
+      <Section id="usage" title="Usage">
+        <div className="flex flex-col gap-6">
+          <div>
+            <p className="text-sm font-semibold mb-2">1. 기본 Select</p>
+            <CodeView code={USAGE_BASIC} language="tsx" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">2. 그룹 + 구분선 + ✓</p>
+            <CodeView code={USAGE_GROUPED} language="tsx" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">3. Controlled + form</p>
+            <CodeView code={USAGE_CONTROLLED_FORM} language="tsx" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold mb-2">4. Custom render</p>
+            <CodeView code={USAGE_CUSTOM} language="tsx" />
+          </div>
+        </div>
       </Section>
 
       <Section
