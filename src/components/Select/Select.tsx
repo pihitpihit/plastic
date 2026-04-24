@@ -1,8 +1,6 @@
 import type {
   SelectGroupProps,
   SelectLabelProps,
-  SelectItemProps,
-  SelectItemIndicatorProps,
   SelectSeparatorProps,
 } from "./Select.types";
 import { SelectRoot } from "./SelectRoot";
@@ -10,11 +8,11 @@ import { SelectTrigger } from "./SelectTrigger";
 import { SelectValue } from "./SelectValue";
 import { SelectIcon } from "./SelectIcon";
 import { SelectContent } from "./SelectContent";
+import { SelectItem } from "./SelectItem";
+import { SelectItemIndicator } from "./SelectItemIndicator";
 
 const SelectGroup = (_p: SelectGroupProps) => null;
 const SelectLabel = (_p: SelectLabelProps) => null;
-const SelectItem = (_p: SelectItemProps) => null;
-const SelectItemIndicator = (_p: SelectItemIndicatorProps) => null;
 const SelectSeparator = (_p: SelectSeparatorProps) => null;
 
 export const Select = {
