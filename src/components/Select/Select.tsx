@@ -1,7 +1,4 @@
 import type {
-  SelectTriggerProps,
-  SelectValueProps,
-  SelectIconProps,
   SelectContentProps,
   SelectGroupProps,
   SelectLabelProps,
@@ -10,10 +7,10 @@ import type {
   SelectSeparatorProps,
 } from "./Select.types";
 import { SelectRoot } from "./SelectRoot";
+import { SelectTrigger } from "./SelectTrigger";
+import { SelectValue } from "./SelectValue";
+import { SelectIcon } from "./SelectIcon";
 
-const SelectTrigger = (_p: SelectTriggerProps) => null;
-const SelectValue = (_p: SelectValueProps) => null;
-const SelectIcon = (_p: SelectIconProps) => null;
 const SelectContent = (_p: SelectContentProps) => null;
 const SelectGroup = (_p: SelectGroupProps) => null;
 const SelectLabel = (_p: SelectLabelProps) => null;
