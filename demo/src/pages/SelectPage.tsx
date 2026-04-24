@@ -351,6 +351,155 @@ function DarkDemo() {
   );
 }
 
+type Side = "top" | "right" | "bottom" | "left";
+type Align = "start" | "center" | "end";
+
+function PlaygroundDemo() {
+  const [placeholder, setPlaceholder] = useState("선택하세요…");
+  const [side, setSide] = useState<Side>("bottom");
+  const [align, setAlign] = useState<Align>("start");
+  const [sideOffset, setSideOffset] = useState(4);
+  const [maxHeight, setMaxHeight] = useState(320);
+  const [matchTriggerWidth, setMatchTriggerWidth] = useState(true);
+  const [disabled, setDisabled] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [value, setValue] = useState<string | undefined>(undefined);
+
+  const demoBg = theme === "dark" ? "#0f172a" : "#f9fafb";
+  const demoFg = theme === "dark" ? "#e5e7eb" : "#374151";
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-gray-50 rounded-md border border-gray-200">
+        <label className="flex flex-col gap-1 text-xs text-gray-600">
+          placeholder
+          <input
+            type="text"
+            value={placeholder}
+            onChange={(e) => setPlaceholder(e.target.value)}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-gray-600">
+          side
+          <select
+            value={side}
+            onChange={(e) => setSide(e.target.value as Side)}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value="top">top</option>
+            <option value="right">right</option>
+            <option value="bottom">bottom</option>
+            <option value="left">left</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-gray-600">
+          align
+          <select
+            value={align}
+            onChange={(e) => setAlign(e.target.value as Align)}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value="start">start</option>
+            <option value="center">center</option>
+            <option value="end">end</option>
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-gray-600">
+          sideOffset
+          <input
+            type="number"
+            value={sideOffset}
+            onChange={(e) => setSideOffset(Number(e.target.value))}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-gray-600">
+          maxHeight
+          <input
+            type="number"
+            value={maxHeight}
+            onChange={(e) => setMaxHeight(Number(e.target.value))}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          />
+        </label>
+        <label className="flex items-center gap-2 text-xs text-gray-600 pt-4">
+          <input
+            type="checkbox"
+            checked={matchTriggerWidth}
+            onChange={(e) => setMatchTriggerWidth(e.target.checked)}
+          />
+          matchTriggerWidth
+        </label>
+        <label className="flex items-center gap-2 text-xs text-gray-600 pt-4">
+          <input
+            type="checkbox"
+            checked={disabled}
+            onChange={(e) => setDisabled(e.target.checked)}
+          />
+          disabled
+        </label>
+        <label className="flex flex-col gap-1 text-xs text-gray-600">
+          theme
+          <select
+            value={theme}
+            onChange={(e) => setTheme(e.target.value as "light" | "dark")}
+            className="px-2 py-1 border border-gray-300 rounded text-sm"
+          >
+            <option value="light">light</option>
+            <option value="dark">dark</option>
+          </select>
+        </label>
+      </div>
+
+      <div
+        style={{
+          background: demoBg,
+          color: demoFg,
+          padding: 40,
+          borderRadius: 8,
+          display: "flex",
+          gap: 16,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <Select.Root
+          value={value}
+          onValueChange={setValue}
+          placeholder={placeholder}
+          disabled={disabled}
+          theme={theme}
+        >
+          <Select.Trigger aria-label="Playground" style={{ minWidth: 220 }}>
+            <Select.Value />
+            <Select.Icon />
+          </Select.Trigger>
+          <Select.Content
+            side={side}
+            align={align}
+            sideOffset={sideOffset}
+            maxHeight={maxHeight}
+            matchTriggerWidth={matchTriggerWidth}
+          >
+            <Select.Item value="ts">TypeScript</Select.Item>
+            <Select.Item value="js">JavaScript</Select.Item>
+            <Select.Item value="py">Python</Select.Item>
+            <Select.Item value="go">Go</Select.Item>
+            <Select.Item value="rs">Rust</Select.Item>
+            <Select.Item value="java">Java</Select.Item>
+            <Select.Item value="kt">Kotlin</Select.Item>
+            <Select.Item value="swift">Swift</Select.Item>
+          </Select.Content>
+        </Select.Root>
+        <span style={{ fontSize: 13 }}>
+          value: <code className="font-mono">{value ?? "(없음)"}</code>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function FormDemo() {
   const [submitted, setSubmitted] = useState<string | null>(null);
   return (
@@ -467,6 +616,14 @@ export default function SelectPage() {
         desc="theme='dark' — Trigger / Content / Item / Group label 전체가 어두운 팔레트로 전환."
       >
         <DarkDemo />
+      </Section>
+
+      <Section
+        id="playground"
+        title="Playground"
+        desc="모든 제어 가능한 옵션을 실시간으로 조합해 볼 수 있는 섹션."
+      >
+        <PlaygroundDemo />
       </Section>
     </div>
   );
