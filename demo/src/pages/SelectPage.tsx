@@ -162,6 +162,195 @@ function ControlledDemo() {
   );
 }
 
+function CustomRenderDemo() {
+  const languages = [
+    { value: "ts", label: "TypeScript", ext: ".ts", badge: "TS", color: "#3178c6" },
+    { value: "js", label: "JavaScript", ext: ".js", badge: "JS", color: "#f7df1e" },
+    { value: "py", label: "Python", ext: ".py", badge: "Py", color: "#306998" },
+    { value: "go", label: "Go", ext: ".go", badge: "Go", color: "#00add8" },
+    { value: "rs", label: "Rust", ext: ".rs", badge: "Rs", color: "#dea584" },
+  ];
+  return (
+    <Select.Root defaultValue="ts" placeholder="언어">
+      <Select.Trigger aria-label="언어" style={{ minWidth: 260 }}>
+        <Select.Value />
+        <Select.Icon />
+      </Select.Trigger>
+      <Select.Content minWidth={260}>
+        {languages.map((l) => (
+          <Select.Item key={l.value} value={l.value} textValue={l.label}>
+            <span
+              style={{
+                width: 18,
+                height: 18,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: l.color,
+                color: l.value === "js" ? "#000" : "#fff",
+                fontSize: 10,
+                fontWeight: 700,
+                borderRadius: 3,
+                flexShrink: 0,
+              }}
+            >
+              {l.badge}
+            </span>
+            <span style={{ flex: 1 }}>{l.label}</span>
+            <span style={{ fontSize: 11, color: "#9ca3af", marginLeft: "auto" }}>
+              {l.ext}
+            </span>
+          </Select.Item>
+        ))}
+      </Select.Content>
+    </Select.Root>
+  );
+}
+
+const TIMEZONES = [
+  "Africa/Cairo",
+  "Africa/Johannesburg",
+  "Africa/Lagos",
+  "Africa/Nairobi",
+  "America/Anchorage",
+  "America/Argentina/Buenos_Aires",
+  "America/Bogota",
+  "America/Chicago",
+  "America/Denver",
+  "America/Halifax",
+  "America/Lima",
+  "America/Los_Angeles",
+  "America/Mexico_City",
+  "America/New_York",
+  "America/Phoenix",
+  "America/Santiago",
+  "America/Sao_Paulo",
+  "America/Toronto",
+  "America/Vancouver",
+  "Asia/Bangkok",
+  "Asia/Dhaka",
+  "Asia/Dubai",
+  "Asia/Ho_Chi_Minh",
+  "Asia/Hong_Kong",
+  "Asia/Jakarta",
+  "Asia/Jerusalem",
+  "Asia/Kolkata",
+  "Asia/Kuala_Lumpur",
+  "Asia/Manila",
+  "Asia/Riyadh",
+  "Asia/Seoul",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Taipei",
+  "Asia/Tehran",
+  "Asia/Tokyo",
+  "Atlantic/Azores",
+  "Atlantic/Reykjavik",
+  "Australia/Adelaide",
+  "Australia/Brisbane",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Australia/Sydney",
+  "Europe/Amsterdam",
+  "Europe/Athens",
+  "Europe/Berlin",
+  "Europe/Brussels",
+  "Europe/Dublin",
+  "Europe/Helsinki",
+  "Europe/Istanbul",
+  "Europe/Lisbon",
+  "Europe/London",
+  "Europe/Madrid",
+  "Europe/Moscow",
+  "Europe/Oslo",
+  "Europe/Paris",
+  "Europe/Prague",
+  "Europe/Rome",
+  "Europe/Stockholm",
+  "Europe/Vienna",
+  "Europe/Warsaw",
+  "Europe/Zurich",
+  "Pacific/Auckland",
+  "Pacific/Fiji",
+  "Pacific/Honolulu",
+  "UTC",
+];
+
+function LongListDemo() {
+  return (
+    <div className="flex items-center gap-3 flex-wrap">
+      <Select.Root defaultValue="Asia/Seoul" placeholder="타임존">
+        <Select.Trigger aria-label="타임존" style={{ minWidth: 260 }}>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content maxHeight={320}>
+          {TIMEZONES.map((tz) => (
+            <Select.Item key={tz} value={tz}>
+              {tz}
+            </Select.Item>
+          ))}
+        </Select.Content>
+      </Select.Root>
+      <span className="text-sm text-gray-500">
+        팝업 open 상태에서 <code className="font-mono">"as"</code> 타이핑 → Asia 로 점프
+      </span>
+    </div>
+  );
+}
+
+function DarkDemo() {
+  return (
+    <div
+      style={{
+        background: "#0f172a",
+        padding: 24,
+        borderRadius: 8,
+        display: "flex",
+        gap: 16,
+        alignItems: "center",
+        flexWrap: "wrap",
+      }}
+    >
+      <Select.Root theme="dark" defaultValue="ts" placeholder="언어">
+        <Select.Trigger aria-label="언어" style={{ minWidth: 200 }}>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Group label="프론트엔드">
+            <Select.Item value="ts">
+              <Select.ItemIndicator />
+              <span>TypeScript</span>
+            </Select.Item>
+            <Select.Item value="js">
+              <Select.ItemIndicator />
+              <span>JavaScript</span>
+            </Select.Item>
+          </Select.Group>
+          <Select.Separator />
+          <Select.Group label="백엔드">
+            <Select.Item value="py">
+              <Select.ItemIndicator />
+              <span>Python</span>
+            </Select.Item>
+            <Select.Item value="go">
+              <Select.ItemIndicator />
+              <span>Go</span>
+            </Select.Item>
+            <Select.Item value="rs" disabled>
+              Rust (준비 중)
+            </Select.Item>
+          </Select.Group>
+        </Select.Content>
+      </Select.Root>
+      <span style={{ color: "#94a3b8", fontSize: 13 }}>
+        dark theme — Trigger/Content/Item 전체 색상 전환
+      </span>
+    </div>
+  );
+}
+
 function FormDemo() {
   const [submitted, setSubmitted] = useState<string | null>(null);
   return (
@@ -250,6 +439,34 @@ export default function SelectPage() {
         <Card>
           <FormDemo />
         </Card>
+      </Section>
+
+      <Section
+        id="custom-render"
+        title="Custom Render"
+        desc="Item 에 임의 children. textValue prop 으로 type-ahead 문자열 명시."
+      >
+        <Card>
+          <CustomRenderDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="long-list"
+        title="Long List + Type-ahead"
+        desc="많은 옵션 + maxHeight 스크롤. 팝업 open 중 문자 타이핑 → startsWith 매칭으로 점프. 500ms 미입력 시 버퍼 리셋."
+      >
+        <Card>
+          <LongListDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="dark"
+        title="Dark Theme"
+        desc="theme='dark' — Trigger / Content / Item / Group label 전체가 어두운 팔레트로 전환."
+      >
+        <DarkDemo />
       </Section>
     </div>
   );
