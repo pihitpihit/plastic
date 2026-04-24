@@ -1161,7 +1161,7 @@ cd demo && npm run dev
 | pointer drag 훅 패턴 (가장 유사) | `/Users/neo/workspace/plastic/src/components/DataTable/useColumnResize.ts` |
 | divider 리사이즈 prior impl (추출 대상) | `/Users/neo/workspace/plastic/src/components/PipelineGraph/PipelineGraphInspector.tsx` (line 315~340) |
 | 데모 App 내부 사이드바 리사이즈 (prior, 중복) | `/Users/neo/workspace/plastic/demo/src/App.tsx` (line 191~296) |
-| 이전 plan 포맷 참고 (템플릿) | `/Users/neo/workspace/plastic/docs/plans/012-pipelinegraph-component.md` |
+| 이전 plan 포맷 참고 (템플릿) | `/Users/neo/workspace/plastic/docs/plans/complete/012-pipelinegraph-component.md` |
 | 배럴 등록 | `/Users/neo/workspace/plastic/src/components/index.ts` |
 | 데모 페이지 레이아웃 패턴 | `/Users/neo/workspace/plastic/demo/src/pages/PipelineGraphPage.tsx`, `/Users/neo/workspace/plastic/demo/src/pages/HexViewPage.tsx` |
 | 데모 App 라우팅 / NAV | `/Users/neo/workspace/plastic/demo/src/App.tsx` |
