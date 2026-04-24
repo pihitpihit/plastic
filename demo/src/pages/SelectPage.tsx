@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { Select } from "plastic";
 
 function Section({
   id,
@@ -30,6 +31,106 @@ function Card({ children }: { children: ReactNode }) {
   );
 }
 
+function BasicDemo() {
+  const [value, setValue] = useState<string | undefined>(undefined);
+  return (
+    <div className="flex items-center gap-4">
+      <Select.Root
+        value={value}
+        onValueChange={setValue}
+        placeholder="언어 선택…"
+      >
+        <Select.Trigger aria-label="언어" style={{ minWidth: 180 }}>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="ts">TypeScript</Select.Item>
+          <Select.Item value="js">JavaScript</Select.Item>
+          <Select.Item value="py">Python</Select.Item>
+          <Select.Item value="go">Go</Select.Item>
+          <Select.Item value="rs">Rust</Select.Item>
+        </Select.Content>
+      </Select.Root>
+      <span className="text-sm text-gray-500">
+        현재: <code className="font-mono">{value ?? "(없음)"}</code>
+      </span>
+    </div>
+  );
+}
+
+function GroupedDemo() {
+  return (
+    <Select.Root defaultValue="ts" placeholder="언어">
+      <Select.Trigger aria-label="언어" style={{ minWidth: 220 }}>
+        <Select.Value />
+        <Select.Icon />
+      </Select.Trigger>
+      <Select.Content>
+        <Select.Group label="프론트엔드">
+          <Select.Item value="ts">
+            <Select.ItemIndicator />
+            <span>TypeScript</span>
+          </Select.Item>
+          <Select.Item value="js">
+            <Select.ItemIndicator />
+            <span>JavaScript</span>
+          </Select.Item>
+        </Select.Group>
+        <Select.Separator />
+        <Select.Group label="백엔드">
+          <Select.Item value="py">
+            <Select.ItemIndicator />
+            <span>Python</span>
+          </Select.Item>
+          <Select.Item value="go">
+            <Select.ItemIndicator />
+            <span>Go</span>
+          </Select.Item>
+          <Select.Item value="rs">
+            <Select.ItemIndicator />
+            <span>Rust</span>
+          </Select.Item>
+        </Select.Group>
+      </Select.Content>
+    </Select.Root>
+  );
+}
+
+function DisabledDemo() {
+  return (
+    <div className="flex items-center gap-4">
+      <Select.Root defaultValue="ts" placeholder="언어">
+        <Select.Trigger aria-label="언어 (Item 일부 disabled)" style={{ minWidth: 220 }}>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="ts">TypeScript</Select.Item>
+          <Select.Item value="js">JavaScript</Select.Item>
+          <Select.Item value="rs" disabled>
+            Rust (준비 중)
+          </Select.Item>
+          <Select.Item value="ko" disabled>
+            Kotlin (준비 중)
+          </Select.Item>
+          <Select.Item value="py">Python</Select.Item>
+        </Select.Content>
+      </Select.Root>
+      <Select.Root disabled defaultValue="ts" placeholder="비활성">
+        <Select.Trigger aria-label="Select 전체 disabled" style={{ minWidth: 180 }}>
+          <Select.Value />
+          <Select.Icon />
+        </Select.Trigger>
+        <Select.Content>
+          <Select.Item value="ts">TypeScript</Select.Item>
+          <Select.Item value="js">JavaScript</Select.Item>
+        </Select.Content>
+      </Select.Root>
+    </div>
+  );
+}
+
 export default function SelectPage() {
   return (
     <div className="max-w-4xl">
@@ -42,7 +143,29 @@ export default function SelectPage() {
       </header>
 
       <Section id="basic" title="Basic" desc="Trigger + Content + Item 기본 구조.">
-        <Card>TODO</Card>
+        <Card>
+          <BasicDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="grouped"
+        title="Grouped + ItemIndicator"
+        desc="Group/Label/Separator. 선택된 항목에 ✓ 인디케이터."
+      >
+        <Card>
+          <GroupedDemo />
+        </Card>
+      </Section>
+
+      <Section
+        id="disabled"
+        title="Disabled"
+        desc="개별 Item 과 Select 전체 disabled. 키보드 이동 시 disabled Item 은 건너뜀."
+      >
+        <Card>
+          <DisabledDemo />
+        </Card>
       </Section>
     </div>
   );
