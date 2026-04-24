@@ -11,5 +11,6 @@ export * from "./PipelineGraph";
 export * from "./Popover";
 export * from "./Select";
 export * from "./Stepper";
+export * from "./Tabs";
 export * from "./Toast";
 export * from "./Tooltip";
