@@ -1,17 +1,32 @@
 import {
+  createElement,
   useCallback,
+  useEffect,
+  useId,
   useMemo,
   useRef,
   type CSSProperties,
+  type MouseEvent,
 } from "react";
 import { useReducedMotion } from "../_shared/useReducedMotion";
+import { injectAccordionStyles } from "./Accordion.css";
 import {
+  AccordionItemContext,
   AccordionRootContext,
+  useAccordionItemContext,
+  useAccordionRootContext,
+  type AccordionItemContextValue,
   type AccordionRootContextValue,
   type AccordionTriggerEntry,
 } from "./AccordionContext";
 import { paletteToCssVars } from "./theme";
-import type { AccordionRootProps } from "./Accordion.types";
+import type {
+  AccordionContentProps,
+  AccordionHeaderProps,
+  AccordionItemProps,
+  AccordionRootProps,
+  AccordionTriggerProps,
+} from "./Accordion.types";
 import { useAccordionState } from "./useAccordionState";
 
 function AccordionRoot(props: AccordionRootProps) {
@@ -24,6 +39,7 @@ function AccordionRoot(props: AccordionRootProps) {
     children,
   } = props;
 
+  injectAccordionStyles();
   const state = useAccordionState(props);
   const reducedMotion = useReducedMotion();
 
@@ -124,12 +140,154 @@ function AccordionRoot(props: AccordionRootProps) {
 }
 AccordionRoot.displayName = "Accordion.Root";
 
-const Noop = () => null;
+function AccordionItem(props: AccordionItemProps) {
+  const { value, disabled: itemDisabled = false, className, style, children } =
+    props;
+  const root = useAccordionRootContext();
+  const itemId = useId();
+  const triggerId = `${itemId}-trigger`;
+  const contentId = `${itemId}-content`;
+
+  const isOpen =
+    root.type === "multiple"
+      ? Array.isArray(root.value) && root.value.includes(value)
+      : root.value === value;
+  const isDisabled = root.disabled || itemDisabled;
+
+  const ctx = useMemo<AccordionItemContextValue>(
+    () => ({
+      value,
+      itemId,
+      triggerId,
+      contentId,
+      isOpen,
+      isDisabled,
+    }),
+    [value, itemId, triggerId, contentId, isOpen, isDisabled],
+  );
+
+  const itemClass = ["acc-item", className].filter(Boolean).join(" ");
+
+  return (
+    <AccordionItemContext.Provider value={ctx}>
+      <div
+        className={itemClass}
+        data-state={isOpen ? "open" : "closed"}
+        {...(isDisabled ? { "data-disabled": "true" } : {})}
+        style={style}
+      >
+        {children}
+      </div>
+    </AccordionItemContext.Provider>
+  );
+}
+AccordionItem.displayName = "Accordion.Item";
+
+function AccordionHeader(props: AccordionHeaderProps) {
+  const { as = "h3", className, style, children } = props;
+  const cls = ["acc-header", className].filter(Boolean).join(" ");
+  return createElement(
+    as,
+    { className: cls, style },
+    children,
+  );
+}
+AccordionHeader.displayName = "Accordion.Header";
+
+function Chevron() {
+  return (
+    <svg
+      className="acc-chevron"
+      aria-hidden="true"
+      width="12"
+      height="12"
+      viewBox="0 0 12 12"
+    >
+      <path
+        d="M3 4.5 L6 7.5 L9 4.5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function AccordionTrigger(props: AccordionTriggerProps) {
+  const { children, className, style, onClick, hideChevron, ...rest } = props;
+  const root = useAccordionRootContext();
+  const item = useAccordionItemContext();
+  const ref = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    root.registerTrigger(item.value, ref.current, item.isDisabled);
+    return () => root.registerTrigger(item.value, null, false);
+  }, [root, item.value, item.isDisabled]);
+
+  const cls = ["acc-trigger", className].filter(Boolean).join(" ");
+
+  const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
+    if (item.isDisabled) return;
+    root.toggle(item.value);
+    onClick?.(e);
+  };
+
+  const tabIndex =
+    item.isDisabled && root.disabledFocus === "skip" ? -1 : undefined;
+
+  return (
+    <button
+      ref={ref}
+      type="button"
+      id={item.triggerId}
+      aria-expanded={item.isOpen}
+      aria-controls={item.contentId}
+      {...(item.isDisabled ? { "aria-disabled": true } : {})}
+      {...(item.isDisabled ? { disabled: true } : {})}
+      {...(tabIndex !== undefined ? { tabIndex } : {})}
+      data-state={item.isOpen ? "open" : "closed"}
+      className={cls}
+      style={style}
+      onClick={handleClick}
+      {...rest}
+    >
+      <span className="acc-trigger-label">{children}</span>
+      {!hideChevron && <Chevron />}
+    </button>
+  );
+}
+AccordionTrigger.displayName = "Accordion.Trigger";
+
+function AccordionContent(props: AccordionContentProps) {
+  const { children, className, style, forceMount, ...rest } = props;
+  const item = useAccordionItemContext();
+  const cls = ["acc-content", className].filter(Boolean).join(" ");
+
+  if (!item.isOpen && !forceMount) return null;
+
+  return (
+    <div
+      role="region"
+      id={item.contentId}
+      aria-labelledby={item.triggerId}
+      data-state={item.isOpen ? "open" : "closed"}
+      className={cls}
+      style={style}
+      {...(!item.isOpen ? { hidden: true } : {})}
+      {...rest}
+    >
+      <div className="acc-content-inner">{children}</div>
+    </div>
+  );
+}
+AccordionContent.displayName = "Accordion.Content";
 
 export const Accordion = {
   Root: AccordionRoot,
-  Item: Noop,
-  Header: Noop,
-  Trigger: Noop,
-  Content: Noop,
+  Item: AccordionItem,
+  Header: AccordionHeader,
+  Trigger: AccordionTrigger,
+  Content: AccordionContent,
 };
