@@ -249,6 +249,7 @@ export function SelectRoot(props: SelectRootProps) {
           type="hidden"
           name={name}
           value={value ?? ""}
+          {...(disabled ? { disabled: true } : {})}
           {...(required ? { required: true } : {})}
         />
       ) : null}
