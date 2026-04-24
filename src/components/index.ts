@@ -13,3 +13,4 @@ export * from "./Select";
 export * from "./Stepper";
 export * from "./Toast";
 export * from "./Tooltip";
+export * from "./Tree";
