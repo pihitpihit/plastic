@@ -20,14 +20,17 @@ export function useAnimationState(
   const [animationState, setAnimationState] = useState<AnimationState>("idle");
   const rafRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const animationStateRef = useRef<AnimationState>(animationState);
+  animationStateRef.current = animationState;
 
   useEffect(() => {
+    const currentState = animationStateRef.current;
     if (open) {
       if (timerRef.current !== null) {
         clearTimeout(timerRef.current);
         timerRef.current = null;
       }
-      if (animationState === "idle" || animationState === "exiting") {
+      if (currentState === "idle" || currentState === "exiting") {
         setAnimationState("mounting");
         const raf1 = requestAnimationFrame(() => {
           const raf2 = requestAnimationFrame(() => {
@@ -42,7 +45,7 @@ export function useAnimationState(
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
-      if (animationState === "mounting" || animationState === "entering") {
+      if (currentState === "mounting" || currentState === "entering") {
         setAnimationState("exiting");
         if (exitDuration !== undefined) {
           timerRef.current = setTimeout(() => {
@@ -59,7 +62,7 @@ export function useAnimationState(
         rafRef.current = null;
       }
     };
-  }, [open, animationState, exitDuration]);
+  }, [open, exitDuration]);
 
   useEffect(() => {
     return () => {
