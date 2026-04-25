@@ -14,8 +14,9 @@ import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
 import AccordionPage from "./pages/AccordionPage";
+import { SplitPanePage } from "./pages/SplitPanePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "accordion";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "accordion" | "splitpane";
 
 interface SubItem { label: string; id: string }
 
@@ -191,6 +192,20 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Disabled", id: "disabled" },
     { label: "Controlled", id: "controlled" },
     { label: "Dark Theme", id: "dark" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+  ]},
+  { id: "splitpane", label: "SplitPane", description: "드래그 분할 레이아웃", sections: [
+    { label: "Basic horizontal", id: "basic" },
+    { label: "Vertical", id: "vertical" },
+    { label: "Min / Max", id: "minmax" },
+    { label: "Collapsible", id: "collapsible" },
+    { label: "Nested (2×2)", id: "nested" },
+    { label: "Snap", id: "snap" },
+    { label: "Persist", id: "persist" },
+    { label: "Dark", id: "dark" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Playground", id: "playground" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
   ]},
@@ -447,6 +462,7 @@ export function App() {
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
         {current === "accordion" && <AccordionPage />}
+        {current === "splitpane" && <SplitPanePage />}
       </main>
     </div>
   );
