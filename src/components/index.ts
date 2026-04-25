@@ -10,6 +10,7 @@ export * from "./HexView";
 export * from "./PathInput";
 export * from "./PipelineGraph";
 export * from "./Popover";
+export * from "./Progress";
 export * from "./Select";
 export * from "./Skeleton";
 export * from "./SplitPane";
