@@ -13,8 +13,9 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import ProgressPage from "./pages/ProgressPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "progress";
 
 interface SubItem { label: string; id: string }
 
@@ -183,6 +184,21 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "progress", label: "Progress", description: "진행 상태 인디케이터", sections: [
+    { label: "Linear Basic", id: "linear" },
+    { label: "Indeterminate", id: "indeterminate" },
+    { label: "Buffer", id: "buffer" },
+    { label: "Segmented", id: "segmented" },
+    { label: "Circular", id: "circular" },
+    { label: "States (variant)", id: "states" },
+    { label: "Striped + Animated", id: "striped" },
+    { label: "Sizes", id: "sizes" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Controlled Counter", id: "controlled" },
+    { label: "Playground", id: "playground" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },
@@ -436,6 +452,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "progress" && <ProgressPage />}
       </main>
     </div>
   );
