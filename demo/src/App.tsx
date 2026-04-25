@@ -13,8 +13,9 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import TreePage from "./pages/TreePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "tree";
 
 interface SubItem { label: string; id: string }
 
@@ -183,6 +184,17 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "tree", label: "Tree", description: "계층 트리 + 선택/체크/async", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Single Select", id: "single" },
+    { label: "Multiple Select", id: "multiple" },
+    { label: "Checkbox + Cascade", id: "checkbox" },
+    { label: "Async loadChildren", id: "async" },
+    { label: "Imperative Handle", id: "imperative" },
+    { label: "Custom Render", id: "custom-render" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Usage", id: "usage" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },
@@ -436,6 +448,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "tree" && <TreePage />}
       </main>
     </div>
   );
