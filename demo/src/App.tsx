@@ -13,6 +13,7 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import ContextMenuPage from "./pages/ContextMenuPage";
 import DatePickerPage from "./pages/DatePickerPage";
 import TabsPage from "./pages/TabsPage";
 import ComboboxPage from "./pages/ComboboxPage";
@@ -21,7 +22,7 @@ import SkeletonPage from "./pages/SkeletonPage";
 import AccordionPage from "./pages/AccordionPage";
 import { SplitPanePage } from "./pages/SplitPanePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "datepicker" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "contextmenu" | "datepicker" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
 
 interface SubItem { label: string; id: string }
 
@@ -204,6 +205,15 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "contextmenu", label: "ContextMenu", description: "우클릭 메뉴", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Checkbox / Radio", id: "checkbox-radio" },
+    { label: "Submenu", id: "submenu" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Disabled", id: "disabled" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Usage", id: "usage" },
   ]},
   { id: "datepicker", label: "DatePicker", description: "캘린더 날짜 선택", sections: [
     { label: "Basic Calendar", id: "basic" },
@@ -524,6 +534,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "contextmenu" && <ContextMenuPage />}
         {current === "datepicker" && <DatePickerPage />}
         {current === "tabs" && <TabsPage />}
         {current === "combobox" && <ComboboxPage />}

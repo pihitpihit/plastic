@@ -5,6 +5,7 @@ export * from "./Card";
 export * from "./CodeView";
 export * from "./Combobox";
 export * from "./CommandPalette";
+export * from "./ContextMenu";
 export * from "./DataTable";
 export * from "./DatePicker";
 export * from "./Dialog";
