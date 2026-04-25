@@ -11,6 +11,7 @@ export * from "./PathInput";
 export * from "./PipelineGraph";
 export * from "./Popover";
 export * from "./Select";
+export * from "./Skeleton";
 export * from "./SplitPane";
 export * from "./Stepper";
 export * from "./Toast";
