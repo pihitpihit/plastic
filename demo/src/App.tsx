@@ -13,8 +13,9 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import SkeletonPage from "./pages/SkeletonPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "skeleton";
 
 interface SubItem { label: string; id: string }
 
@@ -183,6 +184,20 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "skeleton", label: "Skeleton", description: "로딩 플레이스홀더", sections: [
+    { label: "Basic shapes", id: "basic" },
+    { label: "Text multi-line", id: "text" },
+    { label: "Avatar", id: "avatar" },
+    { label: "Card preset", id: "card" },
+    { label: "Table preset", id: "table" },
+    { label: "Pulse vs Shimmer", id: "animation" },
+    { label: "Reduced motion", id: "reduced" },
+    { label: "Dark", id: "dark" },
+    { label: "Swap to real content", id: "swap" },
+    { label: "Playground", id: "playground" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },
@@ -436,6 +451,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "skeleton" && <SkeletonPage />}
       </main>
     </div>
   );
