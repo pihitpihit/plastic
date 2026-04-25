@@ -14,8 +14,11 @@ import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
 import ProgressPage from "./pages/ProgressPage";
+import SkeletonPage from "./pages/SkeletonPage";
+import AccordionPage from "./pages/AccordionPage";
+import { SplitPanePage } from "./pages/SplitPanePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "progress";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "progress" | "skeleton" | "accordion" | "splitpane";
 
 interface SubItem { label: string; id: string }
 
@@ -196,6 +199,41 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Sizes", id: "sizes" },
     { label: "Dark Theme", id: "dark" },
     { label: "Controlled Counter", id: "controlled" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+  ]},
+  { id: "skeleton", label: "Skeleton", description: "로딩 플레이스홀더", sections: [
+    { label: "Basic shapes", id: "basic" },
+    { label: "Text multi-line", id: "text" },
+    { label: "Avatar", id: "avatar" },
+    { label: "Card preset", id: "card" },
+    { label: "Table preset", id: "table" },
+    { label: "Pulse vs Shimmer", id: "animation" },
+    { label: "Reduced motion", id: "reduced" },
+    { label: "Dark", id: "dark" },
+    { label: "Swap to real content", id: "swap" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+  ]},
+  { id: "accordion", label: "Accordion", description: "접고 펼치는 패널 그룹", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Multiple", id: "multiple" },
+    { label: "Disabled", id: "disabled" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Props", id: "props" },
+    { label: "Usage", id: "usage" },
+  ]},
+  { id: "splitpane", label: "SplitPane", description: "드래그 분할 레이아웃", sections: [
+    { label: "Basic horizontal", id: "basic" },
+    { label: "Vertical", id: "vertical" },
+    { label: "Min / Max", id: "minmax" },
+    { label: "Collapsible", id: "collapsible" },
+    { label: "Nested (2×2)", id: "nested" },
+    { label: "Snap", id: "snap" },
+    { label: "Persist", id: "persist" },
+    { label: "Dark", id: "dark" },
+    { label: "Controlled", id: "controlled" },
     { label: "Playground", id: "playground" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
@@ -453,6 +491,9 @@ export function App() {
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
         {current === "progress" && <ProgressPage />}
+        {current === "skeleton" && <SkeletonPage />}
+        {current === "accordion" && <AccordionPage />}
+        {current === "splitpane" && <SplitPanePage />}
       </main>
     </div>
   );
