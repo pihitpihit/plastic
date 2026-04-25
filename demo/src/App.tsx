@@ -13,8 +13,9 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import TabsPage from "./pages/TabsPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "tabs";
 
 interface SubItem { label: string; id: string }
 
@@ -170,6 +171,20 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "tabs", label: "Tabs", description: "탭 전환 프리미티브", sections: [
+    { label: "Basic",            id: "basic" },
+    { label: "Icons",            id: "icons" },
+    { label: "Vertical",         id: "vertical" },
+    { label: "Closable",         id: "closable" },
+    { label: "Overflow scroll",  id: "overflow" },
+    { label: "Auto vs Manual",   id: "activation" },
+    { label: "Lazy mount",       id: "lazy" },
+    { label: "Dark",             id: "dark" },
+    { label: "Controlled",       id: "controlled" },
+    { label: "Playground",       id: "playground" },
+    { label: "Props",            id: "props" },
+    { label: "Usage",            id: "usage" },
   ]},
   { id: "select", label: "Select", description: "단일 값 드롭다운", sections: [
     { label: "Basic", id: "basic" },
@@ -436,6 +451,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "tabs" && <TabsPage />}
       </main>
     </div>
   );
