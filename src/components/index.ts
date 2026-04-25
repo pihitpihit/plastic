@@ -21,3 +21,4 @@ export * from "./Stepper";
 export * from "./Tabs";
 export * from "./Toast";
 export * from "./Tooltip";
+export * from "./Tree";
