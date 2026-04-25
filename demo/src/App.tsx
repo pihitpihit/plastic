@@ -13,8 +13,9 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import ComboboxPage from "./pages/ComboboxPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "combobox";
 
 interface SubItem { label: string; id: string }
 
@@ -183,6 +184,15 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "combobox", label: "Combobox", description: "검색형 선택 입력", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Grouped", id: "grouped" },
+    { label: "Multiple", id: "multiple" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Freeform", id: "freeform" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Usage", id: "usage" },
   ]},
   { id: "dialog", label: "Dialog", description: "모달 다이얼로그", sections: [
     { label: "Basic", id: "basic" },
@@ -436,6 +446,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "combobox" && <ComboboxPage />}
       </main>
     </div>
   );
