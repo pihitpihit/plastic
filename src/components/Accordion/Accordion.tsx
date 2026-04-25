@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type KeyboardEvent,
   type MouseEvent,
 } from "react";
 import { useContentHeight } from "./useContentHeight";
@@ -218,7 +219,8 @@ function Chevron() {
 }
 
 function AccordionTrigger(props: AccordionTriggerProps) {
-  const { children, className, style, onClick, hideChevron, ...rest } = props;
+  const { children, className, style, onClick, onKeyDown, hideChevron, ...rest } =
+    props;
   const root = useAccordionRootContext();
   const item = useAccordionItemContext();
   const ref = useRef<HTMLButtonElement>(null);
@@ -234,6 +236,38 @@ function AccordionTrigger(props: AccordionTriggerProps) {
     if (item.isDisabled) return;
     root.toggle(item.value);
     onClick?.(e);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    const all = root.getTriggers();
+    const candidates =
+      root.disabledFocus === "skip" ? all.filter((t) => !t.disabled) : all;
+    const idx = candidates.findIndex((t) => t.id === item.value);
+
+    const moveTo = (targetIdx: number) => {
+      if (candidates.length === 0) return;
+      const safeIdx =
+        ((targetIdx % candidates.length) + candidates.length) %
+        candidates.length;
+      const target = candidates[safeIdx];
+      if (target) root.focusTrigger(target.id);
+    };
+
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveTo(idx + 1);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveTo(idx - 1);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      moveTo(0);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      moveTo(candidates.length - 1);
+    }
+
+    onKeyDown?.(e);
   };
 
   const tabIndex =
@@ -253,6 +287,7 @@ function AccordionTrigger(props: AccordionTriggerProps) {
       className={cls}
       style={style}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
       {...rest}
     >
       <span className="acc-trigger-label">{children}</span>
