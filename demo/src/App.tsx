@@ -13,12 +13,13 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import ComboboxPage from "./pages/ComboboxPage";
 import ProgressPage from "./pages/ProgressPage";
 import SkeletonPage from "./pages/SkeletonPage";
 import AccordionPage from "./pages/AccordionPage";
 import { SplitPanePage } from "./pages/SplitPanePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "progress" | "skeleton" | "accordion" | "splitpane";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
 
 interface SubItem { label: string; id: string }
 
@@ -187,6 +188,15 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "combobox", label: "Combobox", description: "검색형 선택 입력", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Grouped", id: "grouped" },
+    { label: "Multiple", id: "multiple" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Freeform", id: "freeform" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Usage", id: "usage" },
   ]},
   { id: "progress", label: "Progress", description: "진행 상태 인디케이터", sections: [
     { label: "Linear Basic", id: "linear" },
@@ -490,6 +500,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "combobox" && <ComboboxPage />}
         {current === "progress" && <ProgressPage />}
         {current === "skeleton" && <SkeletonPage />}
         {current === "accordion" && <AccordionPage />}
