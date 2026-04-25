@@ -1,3 +1,4 @@
+export * from "./Accordion";
 export * from "./Actionable";
 export * from "./Button";
 export * from "./Card";
@@ -10,7 +11,10 @@ export * from "./HexView";
 export * from "./PathInput";
 export * from "./PipelineGraph";
 export * from "./Popover";
+export * from "./Progress";
 export * from "./Select";
+export * from "./Skeleton";
+export * from "./SplitPane";
 export * from "./Stepper";
 export * from "./Toast";
 export * from "./Tooltip";
