@@ -13,6 +13,7 @@ import CommandPalettePage from "./pages/CommandPalettePage";
 import HexViewPage from "./pages/HexViewPage";
 import { PipelineGraphPage } from "./pages/PipelineGraphPage";
 import SelectPage from "./pages/SelectPage";
+import DatePickerPage from "./pages/DatePickerPage";
 import TabsPage from "./pages/TabsPage";
 import ComboboxPage from "./pages/ComboboxPage";
 import ProgressPage from "./pages/ProgressPage";
@@ -20,7 +21,7 @@ import SkeletonPage from "./pages/SkeletonPage";
 import AccordionPage from "./pages/AccordionPage";
 import { SplitPanePage } from "./pages/SplitPanePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "datepicker" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
 
 interface SubItem { label: string; id: string }
 
@@ -203,6 +204,14 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
     { label: "Playground", id: "playground" },
+  ]},
+  { id: "datepicker", label: "DatePicker", description: "캘린더 날짜 선택", sections: [
+    { label: "Basic Calendar", id: "basic" },
+    { label: "Input + Popover", id: "input" },
+    { label: "Controlled", id: "controlled" },
+    { label: "Min/Max", id: "min-max" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Usage", id: "usage" },
   ]},
   { id: "combobox", label: "Combobox", description: "검색형 선택 입력", sections: [
     { label: "Basic", id: "basic" },
@@ -515,6 +524,7 @@ export function App() {
         {current === "hexview" && <HexViewPage />}
         {current === "pipelinegraph" && <PipelineGraphPage />}
         {current === "select" && <SelectPage />}
+        {current === "datepicker" && <DatePickerPage />}
         {current === "tabs" && <TabsPage />}
         {current === "combobox" && <ComboboxPage />}
         {current === "progress" && <ProgressPage />}

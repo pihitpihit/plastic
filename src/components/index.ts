@@ -6,6 +6,7 @@ export * from "./CodeView";
 export * from "./Combobox";
 export * from "./CommandPalette";
 export * from "./DataTable";
+export * from "./DatePicker";
 export * from "./Dialog";
 export * from "./HexView";
 export * from "./PathInput";
