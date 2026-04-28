@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Highlight, themes } from "prism-react-renderer";
 import type { CodeViewProps } from "./CodeView.types";
 import { renderWithInvisibles } from "./CodeView.invisibles";
@@ -163,6 +163,25 @@ export function CodeView({
   // 편집 UI 활성 여부 (textarea 렌더/이벤트).
   const isEditingActive =
     editable === "enable" || (editable === "click" && isEditingClick);
+
+  // ── WKWebView (Tauri / macOS) textarea fresh-mount quirk 회피 ──────────────
+  // textarea 가 *consecutive `\n` 을 포함한 multi-line value* 로 fresh-mount 되면
+  // WKWebView 의 internal selection-anchor 가 stale 상태로 stuck 되어, 빈 줄에서
+  // 두 글자 연속 입력 시 두 번째 글자가 첫 번째를 replace 하는 bug 가 발생한다.
+  // (https://github.com/pihitpihit/plastic/issues/451)
+  //
+  // mount 시점에는 빈 value 로 textarea 를 mount → useLayoutEffect 에서 즉시
+  // actual value 로 swap. issue 보고서 §3.4 에서 setEditValue 호출(=React
+  // controlled value 갱신)은 quirk 를 트리거하지 않음이 검증되었다.
+  // useLayoutEffect 는 paint 직전 동기 실행이므로 사용자는 primer 상태를 보지 못함.
+  const [taPrimed, setTaPrimed] = useState(false);
+  useLayoutEffect(() => {
+    if (isEditingActive && !taPrimed) setTaPrimed(true);
+  }, [isEditingActive, taPrimed]);
+  useEffect(() => {
+    // textarea unmount(편집 비활성)되면 primer 상태 reset → 다음 mount 시 재 primer
+    if (!isEditingActive && taPrimed) setTaPrimed(false);
+  }, [isEditingActive, taPrimed]);
 
   // click 모드에서 편집 진입 직후 textarea 에 포커스 + 클릭 위치로 caret 이동
   useEffect(() => {
@@ -579,7 +598,16 @@ export function CodeView({
                   // bundled 모드: PUA 치환 문자열을 textarea 에 보여 폰트가
                   // 3ch glyph 로 렌더하게 한다. 1:1 substitution 이므로
                   // selectionStart/End 는 raw 인덱스와 동일.
-                  value={useBundledFont ? toPuaDisplay(editValue) : editValue}
+                  //
+                  // !taPrimed 인 첫 render 에서는 빈 value 로 mount 하여
+                  // WKWebView 의 multi-line+empty-line fresh-mount quirk 를 회피.
+                  // useLayoutEffect 가 같은 paint 사이클 내에서 taPrimed=true 로
+                  // 전환하므로 두 번째 render 에서 즉시 actual value 로 swap 된다.
+                  value={
+                    taPrimed
+                      ? (useBundledFont ? toPuaDisplay(editValue) : editValue)
+                      : ""
+                  }
                   onChange={handleChange}
                   onCopy={(e) => {
                     if (!useBundledFont) return;
