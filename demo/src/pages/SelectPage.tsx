@@ -303,13 +303,13 @@ function ControlledDemo() {
   const [value, setValue] = useState<string>("ts");
   return (
     <div className="flex items-center gap-3 flex-wrap">
-      <Button variant="outline" onClick={() => setValue("ts")}>
+      <Button variant="secondary" onClick={() => setValue("ts")}>
         TS
       </Button>
-      <Button variant="outline" onClick={() => setValue("py")}>
+      <Button variant="secondary" onClick={() => setValue("py")}>
         Python
       </Button>
-      <Button variant="outline" onClick={() => setValue("go")}>
+      <Button variant="secondary" onClick={() => setValue("go")}>
         Go
       </Button>
       <Select.Root value={value} onValueChange={setValue}>
