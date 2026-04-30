@@ -2,6 +2,7 @@ export * from "./Accordion";
 export * from "./Actionable";
 export * from "./Button";
 export * from "./Card";
+export * from "./ChatBubble";
 export * from "./CodeView";
 export * from "./Combobox";
 export * from "./CommandPalette";

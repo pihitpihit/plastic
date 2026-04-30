@@ -22,8 +22,9 @@ import ProgressPage from "./pages/ProgressPage";
 import SkeletonPage from "./pages/SkeletonPage";
 import AccordionPage from "./pages/AccordionPage";
 import { SplitPanePage } from "./pages/SplitPanePage";
+import { ChatBubblePage } from "./pages/ChatBubblePage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "tree" | "contextmenu" | "datepicker" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
+type Page = "button" | "card" | "chatbubble" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "tree" | "contextmenu" | "datepicker" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
 
 interface SubItem { label: string; id: string }
 
@@ -34,6 +35,24 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "States", id: "states" },
     { label: "Props", id: "props" },
     { label: "Usage", id: "usage" },
+  ]},
+  { id: "chatbubble", label: "ChatBubble", description: "채팅 말풍선", sections: [
+    { label: "Basic", id: "basic" },
+    { label: "Tail", id: "tail" },
+    { label: "Color", id: "color" },
+    { label: "Time — 위치", id: "time-position" },
+    { label: "Time — 모드", id: "time-mode" },
+    { label: "Avatar", id: "avatar" },
+    { label: "Actions", id: "actions" },
+    { label: "Loading", id: "loading" },
+    { label: "Dark Theme", id: "dark" },
+    { label: "Conversation", id: "conversation" },
+    { label: "Props — Root", id: "props-root" },
+    { label: "Props — Tail", id: "props-tail" },
+    { label: "Props — Time", id: "props-time" },
+    { label: "Props — Avatar", id: "props-avatar" },
+    { label: "Usage", id: "usage" },
+    { label: "Playground", id: "playground" },
   ]},
   { id: "card", label: "Card", description: "Compound 컴포넌트", sections: [
     { label: "Full Card", id: "full-card" },
@@ -534,6 +553,7 @@ export function App() {
       <main ref={mainRef} className="flex-1 p-10 overflow-y-auto">
         {current === "button" && <ButtonPage />}
         {current === "card" && <CardPage />}
+        {current === "chatbubble" && <ChatBubblePage />}
         {current === "codeview" && <CodeViewPage />}
         {current === "actionable" && <ActionablePage />}
         {current === "pathinput" && <PathInputPage />}
