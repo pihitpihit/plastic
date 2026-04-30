@@ -126,10 +126,21 @@ const USAGE_TIME = `// absolute (기본) — "오후 3:24"
   absoluteFormatter={(d) => d.toLocaleString("ko-KR")}
 />
 
-// 위치 지정
+// 위치 지정 (outside / inside / inline)
 <ChatBubble.Time t={Date.now()} position="inside-bottom-end" />
 <ChatBubble.Time t={Date.now()} position="outside-top-start" />
-<ChatBubble.Time t={Date.now()} position="inline-after" />`;
+<ChatBubble.Time t={Date.now()} position="inline-after" />
+
+// side 위치 — 말풍선과 같은 행, 우측 외부 상단
+<ChatBubble.Time t={Date.now()} position="side-right-top" />
+
+// side 위치 + 좁아지면 외부 하단으로 자동 전환
+<ChatBubble.Time
+  t={Date.now()}
+  position="side-right-top"
+  fallbackPosition="outside-bottom-end"
+  fallbackWidth={280}
+/>`;
 
 const USAGE_AVATAR = `// 이미지 아바타
 <ChatBubble.Root>
@@ -190,12 +201,14 @@ const TAIL_PROPS: Array<[string, string, string, string]> = [
 
 const TIME_PROPS: Array<[string, string, string, string]> = [
   ["t", "number | Date | string", "—", "시간 값. epoch ms / Date / ISO string"],
-  ["position", "ChatBubbleTimePosition", '"outside-bottom-end"', "표시 위치"],
+  ["position", "ChatBubbleTimePosition", '"outside-bottom-end"', "표시 위치. side-* = 말풍선 좌/우 외부 동일 행"],
   ["mode", '"absolute" | "relative" | "both"', '"absolute"', "표기 모드. both = 절대+상대 동시"],
   ["absoluteFormatter", "(d: Date) => string", "toLocaleTimeString", "절대 시간 커스텀 포매터"],
   ["relativeFormatter", "(deltaMs: number) => string", "ko 내장", '"5분 전" 형식 커스텀 포매터'],
   ["separator", "string", '" · "', '"both" 모드 구분자'],
   ["refreshInterval", "number", "60_000", "relative/both 자동 갱신 주기 (ms). 0 = 비활성"],
+  ["fallbackPosition", "ChatBubbleTimePosition", '"outside-bottom-end"', "side-* 전용. 컨테이너가 좁아질 때 대체 위치"],
+  ["fallbackWidth", "number", "280", "side-* 전용. 이 폭(px) 미만이면 fallbackPosition으로 전환"],
 ];
 
 const AVATAR_PROPS: Array<[string, string, string, string]> = [
@@ -326,6 +339,15 @@ function TimePositionDemo() {
     "inside-bottom-start",
     "inline-after",
   ];
+  const sidePositions: Array<{
+    pos: ChatBubbleTimePosition;
+    align: "start" | "end";
+  }> = [
+    { pos: "side-right-top", align: "start" },
+    { pos: "side-right-bottom", align: "start" },
+    { pos: "side-left-top", align: "end" },
+    { pos: "side-left-bottom", align: "end" },
+  ];
   return (
     <Card>
       <div className="flex flex-col gap-5">
@@ -338,6 +360,36 @@ function TimePositionDemo() {
             </ChatBubble.Root>
           </div>
         ))}
+
+        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-2">
+          Side positions (같은 행, 좌/우 외부)
+        </p>
+        {sidePositions.map(({ pos, align }) => (
+          <div key={pos} className="flex flex-col gap-1">
+            <p className="text-xs text-gray-400 font-mono">{pos}</p>
+            <ChatBubble.Root color="#3b82f6" align={align}>
+              <ChatBubble.Content>메시지 내용</ChatBubble.Content>
+              <ChatBubble.Time t={T.m3} position={pos} />
+            </ChatBubble.Root>
+          </div>
+        ))}
+
+        <div className="flex flex-col gap-1">
+          <p className="text-xs text-gray-400 font-mono">
+            side-right-top + side-right-bottom (동시)
+          </p>
+          <ChatBubble.Root color="#3b82f6">
+            <ChatBubble.Content>
+              두 개의 side time — 상단과 하단 동시 표시
+            </ChatBubble.Content>
+            <ChatBubble.Time t={T.m3} position="side-right-top" />
+            <ChatBubble.Time
+              t={T.m3}
+              position="side-right-bottom"
+              mode="relative"
+            />
+          </ChatBubble.Root>
+        </div>
       </div>
     </Card>
   );
@@ -598,6 +650,20 @@ function Sel<T extends string>({
   );
 }
 
+const ALL_TIME_POSITIONS: ChatBubbleTimePosition[] = [
+  "outside-bottom-end",
+  "outside-bottom-start",
+  "outside-top-end",
+  "outside-top-start",
+  "inside-bottom-end",
+  "inside-bottom-start",
+  "inline-after",
+  "side-right-top",
+  "side-right-bottom",
+  "side-left-top",
+  "side-left-bottom",
+];
+
 function PlaygroundSection() {
   const [align, setAlign] = useState<ChatBubbleAlign>("start");
   const [theme, setTheme] = useState<ChatBubbleTheme>("light");
@@ -609,6 +675,8 @@ function PlaygroundSection() {
   const [tailSize, setTailSize] = useState(8);
   const [timeMode, setTimeMode] = useState<ChatBubbleTimeMode>("absolute");
   const [timePos, setTimePos] = useState<ChatBubbleTimePosition>("outside-bottom-end");
+  const [fallbackPos, setFallbackPos] = useState<ChatBubbleTimePosition>("outside-bottom-end");
+  const [fallbackWidth, setFallbackWidth] = useState(280);
   const [showTime, setShowTime] = useState(true);
   const [showAvatar, setShowAvatar] = useState(false);
   const [maxWidth, setMaxWidth] = useState("70%");
@@ -616,6 +684,7 @@ function PlaygroundSection() {
   const [loading, setLoading] = useState(false);
   const [msgText, setMsgText] = useState("메시지 내용을 여기에 입력하세요.");
 
+  const isSidePos = timePos.startsWith("side-");
   const tail: boolean | ChatBubbleTailConfig = tailEnabled
     ? { side: tailSide, align: tailAlign, size: tailSize }
     : false;
@@ -636,7 +705,15 @@ function PlaygroundSection() {
         >
           {showAvatar && <ChatBubble.Avatar fallback="B" size={32} />}
           <ChatBubble.Content>{msgText}</ChatBubble.Content>
-          {showTime && <ChatBubble.Time t={NOW - 5 * 60_000} mode={timeMode} position={timePos} />}
+          {showTime && (
+            <ChatBubble.Time
+              t={NOW - 5 * 60_000}
+              mode={timeMode}
+              position={timePos}
+              fallbackPosition={isSidePos ? fallbackPos : undefined}
+              fallbackWidth={isSidePos ? fallbackWidth : undefined}
+            />
+          )}
         </ChatBubble.Root>
       </div>
 
@@ -758,17 +835,32 @@ function PlaygroundSection() {
               <Sel
                 value={timePos}
                 onChange={setTimePos}
-                options={[
-                  "outside-bottom-end",
-                  "outside-bottom-start",
-                  "outside-top-end",
-                  "outside-top-start",
-                  "inside-bottom-end",
-                  "inside-bottom-start",
-                  "inline-after",
-                ]}
+                options={ALL_TIME_POSITIONS}
               />
             </Row>
+            {isSidePos && (
+              <>
+                <Row label="fallbackPos">
+                  <Sel
+                    value={fallbackPos}
+                    onChange={setFallbackPos}
+                    options={ALL_TIME_POSITIONS}
+                  />
+                </Row>
+                <Row label="fallbackWidth">
+                  <input
+                    type="range"
+                    min={100}
+                    max={600}
+                    step={10}
+                    value={fallbackWidth}
+                    onChange={(e) => setFallbackWidth(Number(e.target.value))}
+                    className="w-28"
+                  />
+                  <span className="text-xs text-gray-400 font-mono">{fallbackWidth}px</span>
+                </Row>
+              </>
+            )}
           </>
         )}
 
@@ -830,7 +922,7 @@ export function ChatBubblePage() {
         <ColorDemo />
       </Section>
 
-      <Section id="time-position" title="Time — 위치" desc="position prop으로 시간 표시 위치를 7가지 중 선택합니다.">
+      <Section id="time-position" title="Time — 위치" desc="position prop으로 시간 표시 위치를 선택합니다. side-* 는 말풍선과 같은 행에 옆으로 표시되며, 컨테이너가 좁아지면 fallbackPosition으로 자동 전환됩니다.">
         <TimePositionDemo />
       </Section>
 

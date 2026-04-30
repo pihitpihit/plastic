@@ -22,6 +22,8 @@ export type ChatBubbleTimeMode = "absolute" | "relative" | "both";
  *   - outside-* : 말풍선 바깥(위/아래), align 기준 좌우
  *   - inside-*  : 말풍선 내부(상/하), align 기준 좌우
  *   - inline-after : Content 바로 뒤에 인라인 표기
+ *   - side-right-* : 말풍선과 같은 행, 우측 외부 (상/하 정렬)
+ *   - side-left-*  : 말풍선과 같은 행, 좌측 외부 (상/하 정렬)
  */
 export type ChatBubbleTimePosition =
   | "outside-bottom-start"
@@ -30,7 +32,11 @@ export type ChatBubbleTimePosition =
   | "outside-top-end"
   | "inside-bottom-start"
   | "inside-bottom-end"
-  | "inline-after";
+  | "inline-after"
+  | "side-right-top"
+  | "side-right-bottom"
+  | "side-left-top"
+  | "side-left-bottom";
 
 export type ChatBubbleAvatarPosition = "outside" | "inside-leading";
 
@@ -104,6 +110,13 @@ export interface ChatBubbleTimeProps {
   separator?: string;
   /** relative/both 자동 갱신 주기 (ms). 0 이면 비활성. 기본 60_000. */
   refreshInterval?: number;
+  /**
+   * side-* 위치에서 컨테이너 폭이 이 값(px) 미만이면 fallbackPosition으로 자동 전환.
+   * 기본 280.
+   */
+  fallbackWidth?: number;
+  /** 폭이 좁아질 때 대체할 위치. 기본 "outside-bottom-end". */
+  fallbackPosition?: ChatBubbleTimePosition;
   className?: string;
   style?: CSSProperties;
 }

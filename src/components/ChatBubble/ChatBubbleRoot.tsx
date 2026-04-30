@@ -2,6 +2,8 @@ import {
   Children,
   isValidElement,
   useEffect,
+  useRef,
+  useState,
   useMemo,
   type CSSProperties,
   type ReactElement,
@@ -36,11 +38,10 @@ interface Slots {
   avatar: ReactElement | null;
   avatarPosition: ChatBubbleAvatarPosition;
   content: ReactElement | null;
-  times: Partial<Record<ChatBubbleTimePosition, ReactElement>>;
+  timeChildren: ReactElement[];
   footer: ReactElement | null;
   actions: ReactElement | null;
   actionsPosition: ChatBubbleActionsPosition;
-  /** content 가 명시되지 않았을 때 자동으로 content 로 사용할 raw 자식들. */
   rawBody: ReactNode[];
 }
 
@@ -49,7 +50,7 @@ function partitionChildren(children: ReactNode): Slots {
     avatar: null,
     avatarPosition: "outside",
     content: null,
-    times: {},
+    timeChildren: [],
     footer: null,
     actions: null,
     actionsPosition: "outside-bottom",
@@ -66,9 +67,7 @@ function partitionChildren(children: ReactNode): Slots {
     } else if (part === "content" && isValidElement(child)) {
       slots.content = child;
     } else if (part === "time" && isValidElement(child)) {
-      const props = child.props as ChatBubbleTimeProps;
-      const position = props.position ?? "outside-bottom-end";
-      slots.times[position] = child;
+      slots.timeChildren.push(child);
     } else if (part === "footer" && isValidElement(child)) {
       slots.footer = child;
     } else if (part === "actions" && isValidElement(child)) {
@@ -81,6 +80,29 @@ function partitionChildren(children: ReactNode): Slots {
   });
 
   return slots;
+}
+
+function resolveEffectivePosition(
+  el: ReactElement,
+  containerWidth: number,
+): ChatBubbleTimePosition {
+  const props = el.props as ChatBubbleTimeProps;
+  const pos = props.position ?? "outside-bottom-end";
+  if (!pos.startsWith("side-")) return pos;
+  const threshold = props.fallbackWidth ?? 280;
+  if (containerWidth < threshold) {
+    return props.fallbackPosition ?? "outside-bottom-end";
+  }
+  return pos;
+}
+
+function pickTimes(
+  times: Partial<Record<ChatBubbleTimePosition, ReactElement>>,
+  positions: ChatBubbleTimePosition[],
+): ReactElement[] {
+  return positions
+    .map((p) => times[p])
+    .filter((x): x is ReactElement => Boolean(x));
 }
 
 function resolveTail(
@@ -104,7 +126,6 @@ function tailStyle(
 ): CSSProperties {
   const { side, align, size } = cfg;
 
-  // 기본 위치 (꼬리 박스의 한쪽 모서리)
   const base: CSSProperties = {
     position: "absolute",
     width: size,
@@ -113,17 +134,14 @@ function tailStyle(
     pointerEvents: "none",
   };
 
-  // 좌/우 위치 — 박스를 말풍선 옆에 살짝 겹쳐 배치
   if (side === "start") {
     base.left = -size + 1;
-    // 좌측에서 우측 방향으로 가는 삼각형 (말풍선 쪽)
     base.clipPath = "polygon(100% 0, 100% 100%, 0 50%)";
   } else {
     base.right = -size + 1;
     base.clipPath = "polygon(0 0, 0 100%, 100% 50%)";
   }
 
-  // 세로 위치
   if (align === "start") {
     base.top = 8;
   } else if (align === "end") {
@@ -136,13 +154,37 @@ function tailStyle(
   return base;
 }
 
-function pickTimes(
-  times: Slots["times"],
-  positions: ChatBubbleTimePosition[],
-): ReactElement[] {
-  return positions
-    .map((p) => times[p])
-    .filter((x): x is ReactElement => Boolean(x));
+function timeAlignFor(pos: ChatBubbleTimePosition): "flex-start" | "flex-end" {
+  if (pos.endsWith("-end")) return "flex-end";
+  return "flex-start";
+}
+
+function SideSlot({
+  top,
+  bottom,
+  paddingInline,
+}: {
+  top: ReactElement | undefined;
+  bottom: ReactElement | undefined;
+  paddingInline: string;
+}) {
+  const justifyContent =
+    top && bottom ? "space-between" : top ? "flex-start" : "flex-end";
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent,
+        alignSelf: "stretch",
+        padding: `0.125rem ${paddingInline}`,
+        flexShrink: 0,
+      }}
+    >
+      {top}
+      {bottom}
+    </div>
+  );
 }
 
 export function ChatBubbleRoot({
@@ -173,52 +215,81 @@ export function ChatBubbleRoot({
     [align, theme, bg, fg],
   );
 
+  // Observe parent width for side-* fallback narrowing
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(Infinity);
+
+  useEffect(() => {
+    const parent = rootRef.current?.parentElement;
+    if (!parent) return;
+    const measure = () =>
+      setContainerWidth(parent.getBoundingClientRect().width);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(parent);
+    return () => ro.disconnect();
+  }, []);
+
   const slots = partitionChildren(children);
   const tailCfg = resolveTail(tail, align);
 
-  // raw children 이 있고 명시 Content 가 없으면 자동으로 Content 처리
+  // Compute effective positions (side-* → fallback when narrow)
+  const effectiveTimes: Partial<Record<ChatBubbleTimePosition, ReactElement>> =
+    {};
+  for (const el of slots.timeChildren) {
+    const pos = resolveEffectivePosition(el, containerWidth);
+    effectiveTimes[pos] = el;
+  }
+
+  const insideBottomTimes = pickTimes(effectiveTimes, [
+    "inside-bottom-start",
+    "inside-bottom-end",
+  ]);
+  const inlineAfterTimes = pickTimes(effectiveTimes, ["inline-after"]);
+  const outsideTopTimes = pickTimes(effectiveTimes, [
+    "outside-top-start",
+    "outside-top-end",
+  ]);
+  const outsideBottomTimes = pickTimes(effectiveTimes, [
+    "outside-bottom-start",
+    "outside-bottom-end",
+  ]);
+
+  const sideRightTop = effectiveTimes["side-right-top"];
+  const sideRightBottom = effectiveTimes["side-right-bottom"];
+  const sideLeftTop = effectiveTimes["side-left-top"];
+  const sideLeftBottom = effectiveTimes["side-left-bottom"];
+  const hasSideRight = Boolean(sideRightTop || sideRightBottom);
+  const hasSideLeft = Boolean(sideLeftTop || sideLeftBottom);
+
   const bubbleBody =
     slots.content ??
     (slots.rawBody.length > 0 ? (
       <ChatBubbleContent>{slots.rawBody}</ChatBubbleContent>
     ) : null);
 
-  const insideBottomTimes = pickTimes(slots.times, [
-    "inside-bottom-start",
-    "inside-bottom-end",
-  ]);
-  const inlineAfterTimes = pickTimes(slots.times, ["inline-after"]);
-  const outsideTopTimes = pickTimes(slots.times, [
-    "outside-top-start",
-    "outside-top-end",
-  ]);
-  const outsideBottomTimes = pickTimes(slots.times, [
-    "outside-bottom-start",
-    "outside-bottom-end",
-  ]);
-
-  // outside time 정렬
-  function timeAlignFor(pos: ChatBubbleTimePosition): "flex-start" | "flex-end" {
-    if (pos.endsWith("-end")) return "flex-end";
-    return "flex-start";
-  }
-
   const outsideAvatar = slots.avatarPosition === "outside" ? slots.avatar : null;
   const insideAvatar =
     slots.avatarPosition === "inside-leading" ? slots.avatar : null;
   const inlineActions =
-    slots.actions && slots.actionsPosition === "inline-end" ? slots.actions : null;
+    slots.actions && slots.actionsPosition === "inline-end"
+      ? slots.actions
+      : null;
   const outsideActions =
     slots.actions && slots.actionsPosition === "outside-bottom"
       ? slots.actions
       : null;
 
-  // hover 시에만 표시되는 actions 의 CSS — :hover 로 visibility 토글
-  // (data-show-on-hover 속성을 Actions 본체에 부여해두고 Root 가 group-hover 처리)
-
   return (
     <ChatBubbleContext.Provider value={ctxValue}>
+      {/*
+       * Outer row: always flex-direction row (not row-reverse).
+       * For align=end, justify-content: flex-end pushes everything right.
+       * DOM order for align=start: [Avatar][SideLeft][Column][SideRight]
+       * DOM order for align=end:   [SideLeft][Column][SideRight][Avatar]
+       */}
       <div
+        ref={rootRef}
         {...rest}
         data-plastic-chat-bubble=""
         data-align={align}
@@ -226,14 +297,24 @@ export function ChatBubbleRoot({
         className={className}
         style={{
           display: "flex",
-          flexDirection: align === "end" ? "row-reverse" : "row",
+          flexDirection: "row",
           alignItems: "flex-start",
-          gap: outsideAvatar ? "0.5rem" : 0,
+          justifyContent: align === "end" ? "flex-end" : "flex-start",
+          gap: "0.5rem",
           ...style,
         }}
       >
-        {outsideAvatar}
+        {align === "start" && outsideAvatar}
 
+        {hasSideLeft && (
+          <SideSlot
+            top={sideLeftTop}
+            bottom={sideLeftBottom}
+            paddingInline="0"
+          />
+        )}
+
+        {/* Main bubble column */}
         <div
           style={{
             display: "flex",
@@ -245,8 +326,8 @@ export function ChatBubbleRoot({
         >
           {/* outside-top times */}
           {outsideTopTimes.map((el) => {
-            const pos = (el.props as ChatBubbleTimeProps).position ??
-              "outside-top-end";
+            const pos =
+              (el.props as ChatBubbleTimeProps).position ?? "outside-top-end";
             return (
               <div
                 key={`top-${pos}`}
@@ -275,14 +356,15 @@ export function ChatBubbleRoot({
               gap: insideAvatar ? "0.5rem" : 0,
               maxWidth: "100%",
               boxSizing: "border-box",
-              // 사용자 색이 옅을 때 가독성을 위한 미세 그림자
               boxShadow:
                 theme === "dark"
                   ? "0 1px 2px rgba(0,0,0,0.4)"
                   : "0 1px 2px rgba(0,0,0,0.06)",
             }}
           >
-            {tailCfg && <span aria-hidden="true" style={tailStyle(tailCfg, bg)} />}
+            {tailCfg && (
+              <span aria-hidden="true" style={tailStyle(tailCfg, bg)} />
+            )}
             {insideAvatar}
             <div
               style={{
@@ -312,8 +394,9 @@ export function ChatBubbleRoot({
                   style={{
                     display: "flex",
                     justifyContent: insideBottomTimes.some((el) =>
-                      ((el.props as ChatBubbleTimeProps).position ?? "")
-                        .endsWith("-end"),
+                      (
+                        (el.props as ChatBubbleTimeProps).position ?? ""
+                      ).endsWith("-end"),
                     )
                       ? "flex-end"
                       : "flex-start",
@@ -331,7 +414,8 @@ export function ChatBubbleRoot({
 
           {/* outside-bottom times */}
           {outsideBottomTimes.map((el) => {
-            const pos = (el.props as ChatBubbleTimeProps).position ??
+            const pos =
+              (el.props as ChatBubbleTimeProps).position ??
               "outside-bottom-end";
             return (
               <div
@@ -351,6 +435,16 @@ export function ChatBubbleRoot({
           {outsideActions}
           {slots.footer}
         </div>
+
+        {hasSideRight && (
+          <SideSlot
+            top={sideRightTop}
+            bottom={sideRightBottom}
+            paddingInline="0"
+          />
+        )}
+
+        {align === "end" && outsideAvatar}
       </div>
     </ChatBubbleContext.Provider>
   );
