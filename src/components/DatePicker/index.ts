@@ -27,7 +27,7 @@ export type {
   DatePickerFooterProps,
   DatePickerMode,
   DatePickerTheme,
-  CalendarDate,
   SingleValue,
   RangeValue,
 } from "./DatePicker.types";
+// CalendarDate and WeekStart are re-exported from Calendar's barrel.

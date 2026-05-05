@@ -1,22 +1,23 @@
 import type { CSSProperties, ReactNode } from "react";
+import type {
+  CalendarDate,
+  WeekStart,
+  CalendarSingleValue,
+  CalendarRangeValue,
+  CalendarDayInfo,
+} from "../Calendar/Calendar.types";
+
+// Re-export Calendar types so users can import from "@pihitpihit/plastic" via DatePicker barrel.
+// Canonical source: Calendar.
+export type { CalendarDate, WeekStart, CalendarDayInfo } from "../Calendar/Calendar.types";
 
 export type DatePickerTheme = "light" | "dark";
 export type DatePickerMode = "single" | "range";
 
-export interface CalendarDate {
-  year: number;
-  month: number;
-  day: number;
-}
+/** Backwards-compatible aliases for DatePicker users. */
+export type SingleValue = CalendarSingleValue;
+export type RangeValue = CalendarRangeValue;
 
-export type SingleValue = CalendarDate | null;
-
-export interface RangeValue {
-  start: CalendarDate | null;
-  end: CalendarDate | null;
-}
-
-export type WeekStart = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 export type ParseMode = "lenient" | "strict";
 
 interface DatePickerRootBaseProps {
@@ -110,13 +111,16 @@ export interface DatePickerNavProps {
 }
 
 export interface DatePickerGridProps {
-  children?: (day: DatePickerDayInfo) => ReactNode;
+  children?: (day: CalendarDayInfo) => ReactNode;
   className?: string;
   style?: CSSProperties;
 }
 
+/** @deprecated Renamed to CalendarDayInfo (re-exported from Calendar). */
+export type DatePickerDayInfo = CalendarDayInfo;
+
 export interface DatePickerDayProps {
-  day: DatePickerDayInfo;
+  day: CalendarDayInfo;
   className?: string;
   style?: CSSProperties;
 }
@@ -125,17 +129,4 @@ export interface DatePickerFooterProps {
   className?: string;
   style?: CSSProperties;
   children?: ReactNode;
-}
-
-export interface DatePickerDayInfo {
-  date: CalendarDate;
-  inCurrentMonth: boolean;
-  isToday: boolean;
-  isSelected: boolean;
-  isRangeStart: boolean;
-  isRangeEnd: boolean;
-  isInRange: boolean;
-  isRangePreview: boolean;
-  isDisabled: boolean;
-  isFocused: boolean;
 }
