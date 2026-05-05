@@ -22,8 +22,9 @@ import ProgressPage from "./pages/ProgressPage";
 import SkeletonPage from "./pages/SkeletonPage";
 import AccordionPage from "./pages/AccordionPage";
 import { SplitPanePage } from "./pages/SplitPanePage";
+import CalendarPage from "./pages/CalendarPage";
 
-type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "tree" | "contextmenu" | "datepicker" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
+type Page = "button" | "card" | "codeview" | "actionable" | "pathinput" | "toast" | "dialog" | "tooltip" | "datatable" | "stepper" | "commandpalette" | "hexview" | "pipelinegraph" | "select" | "tree" | "contextmenu" | "datepicker" | "calendar" | "tabs" | "combobox" | "progress" | "skeleton" | "accordion" | "splitpane";
 
 interface SubItem { label: string; id: string }
 
@@ -234,6 +235,16 @@ const NAV: { id: Page; label: string; description: string; sections: SubItem[] }
     { label: "Min/Max", id: "min-max" },
     { label: "Dark Theme", id: "dark" },
     { label: "Usage", id: "usage" },
+  ]},
+  { id: "calendar", label: "Calendar", description: "월 그리드 단독 컴포넌트", sections: [
+    { label: "Single mode", id: "single" },
+    { label: "Range mode", id: "range" },
+    { label: "Multiple mode", id: "multiple" },
+    { label: "Constrained", id: "constrained" },
+    { label: "Locale (ko-KR)", id: "locale-ko" },
+    { label: "Custom day render", id: "custom-day" },
+    { label: "Dark theme", id: "dark" },
+    { label: "Disabled", id: "disabled" },
   ]},
   { id: "combobox", label: "Combobox", description: "검색형 선택 입력", sections: [
     { label: "Basic", id: "basic" },
@@ -549,6 +560,7 @@ export function App() {
         {current === "tree" && <TreePage />}
         {current === "contextmenu" && <ContextMenuPage />}
         {current === "datepicker" && <DatePickerPage />}
+        {current === "calendar" && <CalendarPage />}
         {current === "tabs" && <TabsPage />}
         {current === "combobox" && <ComboboxPage />}
         {current === "progress" && <ProgressPage />}
