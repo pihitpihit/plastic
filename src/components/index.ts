@@ -1,6 +1,7 @@
 export * from "./Accordion";
 export * from "./Actionable";
 export * from "./Button";
+export * from "./Calendar";
 export * from "./Card";
 export * from "./CodeView";
 export * from "./Combobox";
